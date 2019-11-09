@@ -77,6 +77,7 @@ if (!isProduction) {
 } else {
   app.use(errorHandler());
 }
+app.get('/', (req, res) => res.redirect('/v1'));
 app.use(morgan('dev'));
 app.use('*', apiLimiter);
 app.use('/v1', RouteV1);
@@ -88,6 +89,7 @@ app.use((req, res, next) => {
   err.status = 404;
   next(err);
 });
+
 
 passport.use('bearer', bearerStrategy());
 

@@ -49,7 +49,7 @@ class UserController {
       mobile_number,
     });
 
-    const VERIFY_LINK = (isProduction) ? `https://koogah-staging.herokuapp.com/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER` : `http://localhost:4000/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER`;
+    const VERIFY_LINK = (isProduction) ? `https://koogah.herokuapp.com/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER` : `http://localhost:4000/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER`;
 
     const USR_OBJ = {
       first_name,
@@ -227,7 +227,7 @@ class UserController {
       return res.status(400).json({
         status: 400,
         error: 'The code you supplied do not match the code you received. Please try again or resend code',
-        resend_link: (isProduction) ? `https://koogah-staging.herokuapp.com/v1/user/verify/email?key=${key}&code=COURIER` : `http://localhost:4000/v1/user/verify/email?key=${key}&code=COURIER`,
+        resend_link: (isProduction) ? `https://koogah.herokuapp.com/v1/user/verify/email?key=${key}&code=COURIER` : `http://localhost:4000/v1/user/verify/email?key=${key}&code=COURIER`,
       });
     }
 
@@ -239,7 +239,7 @@ class UserController {
     };
 
     const APPROVAL_TOKEN = await jwt.sign(payload, '1440h');
-    const APPROVAL_LINK = (isProduction) ? `https://koogah-staging.herokuapp.com/v1/user/approved/welcome?key=${APPROVAL_TOKEN}&code=APPROVED` : `http://localhost:4000/v1/user/approved/welcome?key=${APPROVAL_TOKEN}&code=APPROVED`;
+    const APPROVAL_LINK = (isProduction) ? `https://koogah.herokuapp.com/v1/user/approved/welcome?key=${APPROVAL_TOKEN}&code=APPROVED` : `http://localhost:4000/v1/user/approved/welcome?key=${APPROVAL_TOKEN}&code=APPROVED`;
 
     const AWAITING_USER_OBJ = {
       first_name: payload.first_name,
@@ -400,7 +400,7 @@ class UserController {
       last_name,
     });
 
-    const VERIFY_LINK = (isProduction) ? `https://koogah-staging.herokuapp.com/v1/user/customer/verify/email?key=${VERIFY_TOKEN}&code=CUSTOMER` : `http://localhost:4000/v1/user/customer/verify/email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
+    const VERIFY_LINK = (isProduction) ? `https://koogah.herokuapp.com/v1/user/customer/verify/email?key=${VERIFY_TOKEN}&code=CUSTOMER` : `http://localhost:4000/v1/user/customer/verify/email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
 
     const USR_OBJ = {
       first_name,
@@ -577,7 +577,7 @@ class UserController {
       return res.status(400).json({
         status: 400,
         error: 'The code you supplied do not match the code you received. Please try again or resend code',
-        resend_link: (isProduction) ? `https://koogah-staging.herokuapp.com/v1/user/verify/email?key=${key}&code=COURIER` : `http://localhost:4000/v1/user/verify/email?key=${key}&code=COURIER`,
+        resend_link: (isProduction) ? `https://koogah.herokuapp.com/v1/user/verify/email?key=${key}&code=COURIER` : `http://localhost:4000/v1/user/verify/email?key=${key}&code=COURIER`,
       });
     }
 

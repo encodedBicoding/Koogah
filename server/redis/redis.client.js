@@ -8,7 +8,11 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 if (isProduction) {
   client = redis.createClient(process.env.REDIS_URL);
-} else {
+}
+if (process.env.NODE_ENV === 'test') {
+  client = redis.createClient(process.env.REDIS_URL_TEST);
+}
+if (process.env.NODE_ENV === 'development') {
   client = redis.createClient(6379);
 }
 

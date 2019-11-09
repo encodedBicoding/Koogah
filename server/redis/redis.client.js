@@ -12,7 +12,7 @@ if (isProduction) {
 if (process.env.NODE_ENV === 'test') {
   client = redis.createClient(process.env.REDIS_URL_TEST);
 }
-if (!isProduction) {
+if (process.env.NODE_ENV === 'development') {
   client = redis.createClient(6379);
 }
 

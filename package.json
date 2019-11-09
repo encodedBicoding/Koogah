@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start:dev": "export NODE_ENV=development && nodemon --exec babel-node ./server/server.js",
     "build": "babel -d ./build ./server",
-    "start": "export NODE_ENV=production && node ./build/server/server.js",
+    "prestart": "npm run build",
+    "start": "export NODE_ENV=production && node ./build/server.js",
     "migrate": "npx sequelize-cli db:migrate",
     "migrate:undo": "npx sequelize-cli db:migrate:undo"
   },

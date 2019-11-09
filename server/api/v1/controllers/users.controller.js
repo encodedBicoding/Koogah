@@ -4,7 +4,7 @@
 import { config } from 'dotenv';
 import log from 'fancy-log';
 import Sequelize from 'sequelize';
-import { Couriers, Awaitings, Customers } from '../../../../database/models';
+import { Couriers, Awaitings, Customers } from '../../../database/models';
 import sendSMS from '../helpers/sms';
 import gen_verify_code from '../helpers/verify.code';
 import jwt from '../helpers/jwt';

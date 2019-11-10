@@ -97,7 +97,7 @@ export const createVerificationMail = function createVerificationMail(user_email
         </section>
         <section class='email_body'>
           <p style='font-size: 12px;'>Hi ${first_name} ${last_name},</p>
-          <p>Thank you for joining our community, we make our dispatchers go through lots of procedures, and also taken lots of precautions</p>
+          <p>Thank you for joining our community. We make our dispatchers go through lots of procedures, and also taken lots of precautions</p>
           <p>to ensure you get the most out of this platform</p>
 
           <h2 style='font-family: sans-serif; '>To verify your email, click this <a href='${verify_link}'>Link</a> </h2>

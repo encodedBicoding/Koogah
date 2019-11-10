@@ -95,6 +95,7 @@ class UserController {
         () => res.status(200).json({
           status: 200,
           message: 'A verificaton link has been sent to your email address',
+          verify_token: VERIFY_TOKEN,
         }),
       )
       .catch((err) => {

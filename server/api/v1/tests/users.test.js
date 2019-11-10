@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /* eslint-disable camelcase */
 import chai from 'chai';
 import chaiHttp from 'chai-http';

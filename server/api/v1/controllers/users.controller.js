@@ -274,10 +274,16 @@ class UserController {
         Awaitings.create(AWAITING_USER_OBJ),
       ],
     )
-      .then((result) => Promise.resolve([sendMail(MSG_OBJ), result]))
-      .then(() => res.status(200).json({
+      .then((result) => Promise.resolve(result))
+      .then(() => Promise.try(() => sendMail(MSG_OBJ)).then(() => res.status(200).json({
         status: 200,
-        message: 'Verification code confirmed successfully. \nWe would verify your registeration and get back to you \nthis usually takes a day, or two',
+        message: 'Registration complete, your account is now awaiting approval.',
+      })).catch((err) => {
+        log(err);
+        return res.status(400).json({
+          status: 400,
+          error: err,
+        });
       }))
       .catch((err) => {
         log(err);

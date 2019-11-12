@@ -9,6 +9,8 @@ import sendSMS from '../helpers/sms';
 import gen_verify_code from '../helpers/verify.code';
 import jwt from '../helpers/jwt';
 import sendMail, { createVerificationMail, createCourierApprovalMail } from '../helpers/mail';
+import client from '../../../redis/redis.client';
+
 
 const { Op } = Sequelize;
 
@@ -330,6 +332,10 @@ class UserController {
         error: 'Oops, seems you are already approved by our team',
       });
     }
+    const { iat, exp, ...data } = payload;
+    const SESSION_TOKEN = await jwt.sign({
+      ...data,
+    });
 
     return Promise.all(
       [
@@ -359,13 +365,16 @@ class UserController {
             email: payload.email,
           },
         });
-
-        req.session.user = approved_user.getSafeDataValues();
-
+        client.set(`${approved_user.email}`, SESSION_TOKEN);
+        const user = {
+          ...approved_user.getSafeDataValues(),
+          token: SESSION_TOKEN,
+        };
         res.status(200).json({
           status: 200,
           message: 'Account approved successfully',
-          user: req.session.user,
+          user,
+
         });
       })
       .catch((err) => {
@@ -584,9 +593,14 @@ class UserController {
       return res.status(400).json({
         status: 400,
         error: 'The code you supplied do not match the code you received. Please try again or resend code',
-        resend_link: (isProduction) ? `https://koogah.herokuapp.com/v1/user/verify/email?key=${key}&code=COURIER` : `http://localhost:4000/v1/user/verify/email?key=${key}&code=COURIER`,
+        resend_link: (isProduction) ? `https://koogah.herokuapp.com/v1/user/verify/email?key=${key}&code=CUSTOMER` : `http://localhost:4000/v1/user/verify/email?key=${key}&code=CUSTOMER`,
       });
     }
+
+    const { iat, exp, ...data } = payload;
+    const SESSION_TOKEN = await jwt.sign({
+      ...data,
+    });
 
     return Promise.resolve(Customers.update(
       {
@@ -606,13 +620,15 @@ class UserController {
             email: payload.email,
           },
         });
-
-        req.session.user = approved_user.getSafeDataValues();
-
+        client.set(`${approved_user.email}`, SESSION_TOKEN);
+        const user = {
+          ...approved_user.getSafeDataValues(),
+          token: SESSION_TOKEN,
+        };
         res.status(200).json({
           status: 200,
           message: 'Account created successfully',
-          user: req.session.user,
+          user,
         });
       })
       .catch((err) => {
@@ -622,6 +638,118 @@ class UserController {
           error: err,
         });
       });
+  }
+
+  /**
+   * @method signInCourier
+   * @memberof UserController
+   * @description This method signs in a courier into session
+   * @params req, res
+   * @return JSON object
+   */
+  static signInCourier(req, res) {
+    const { email, password } = req.body;
+    let SESSION_TOKEN = '';
+    return Promise.try(async () => {
+      const isFound = await Couriers.findOne({
+        where: {
+          email,
+        },
+      });
+      if (!isFound) {
+        return res.status(404).json({
+          status: 404,
+          error: 'Found no dispatcher with the given email address',
+        });
+      }
+      const do_password_match = await isFound.decryptPassword(password);
+      if (!do_password_match) {
+        return res.status(409).json({
+          status: 409,
+          error: 'Email and/or Password do not match',
+        });
+      }
+      const SESSION_USER = {
+        first_name: isFound.first_name,
+        last_name: isFound.last_name,
+        email: isFound.email,
+        bvn: isFound.bvn,
+        is_courier: isFound.is_courier,
+        is_admin: isFound.is_admin,
+      };
+
+      SESSION_TOKEN = await jwt.sign(SESSION_USER, '24h');
+      const user = isFound.getSafeDataValues();
+      user.token = SESSION_TOKEN;
+      client.set(`${user.email}`, SESSION_TOKEN);
+      return res.status(200).json({
+        status: 200,
+        message: 'Logged in successfully',
+        user,
+      });
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
+  }
+
+  /**
+   * @method signInCustomer
+   * @memberof UserController
+   * @description This method signs in a customer into session
+   * @params req, res
+   * @return JSON object
+   */
+  static signInCustomer(req, res) {
+    const { email, password } = req.body;
+    let SESSION_TOKEN = '';
+    return Promise.try(async () => {
+      const isFound = await Customers.findOne({
+        where: {
+          email,
+        },
+      });
+      if (!isFound) {
+        return res.status(404).json({
+          status: 404,
+          error: 'Found no user with the given email address',
+        });
+      }
+      const do_password_match = await isFound.decryptPassword(password);
+      if (!do_password_match) {
+        return res.status(409).json({
+          status: 409,
+          error: 'Email and/or Password do not match',
+        });
+      }
+      const SESSION_USER = {
+        first_name: isFound.first_name,
+        last_name: isFound.last_name,
+        email: isFound.email,
+        mobile_number_one: isFound.mobile_number_one,
+        is_courier: isFound.is_courier,
+        is_admin: isFound.is_admin,
+      };
+
+      SESSION_TOKEN = await jwt.sign(SESSION_USER, '24h');
+      const user = isFound.getSafeDataValues();
+      user.token = SESSION_TOKEN;
+      client.set(`${user.email}`, SESSION_TOKEN);
+      return res.status(200).json({
+        status: 200,
+        message: 'Logged in successfully',
+        user,
+      });
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
   }
 }
 

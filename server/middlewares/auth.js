@@ -1,8 +1,7 @@
 /* eslint-disable camelcase */
 import BearerStrategy from 'passport-http-bearer';
 import jwt from '../api/v1/helpers/jwt';
-import Couriers from '../database/models/courier';
-import Customers from '../database/models/customers';
+import { Couriers, Customers } from '../database/models';
 
 class Auth {
   static bearerStrategy() {

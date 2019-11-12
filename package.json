@@ -5,6 +5,7 @@
   "main": "./server/server.js",
   "scripts": {
     "test": "export NODE_ENV=test && nyc mocha --timeout 10000 --require @babel/register server/api/v1/tests --exit",
+    "test:request": "npm run pretest && export NODE_ENV=test && nyc mocha --timeout 10000 --require @babel/register server/api/v1/tests/requests.test.js",
     "pretest": "export NODE_ENV=test && npm run migrate:undo && npm run migrate",
     "start:dev": "export NODE_ENV=development && nodemon --exec babel-node ./server/server.js",
     "build": "babel -d ./build ./server",
@@ -44,7 +45,8 @@
     "redis": "^2.8.0",
     "sequelize": "^5.21.2",
     "sequelize-cli": "^5.5.1",
-    "sinon": "^7.5.0"
+    "sinon": "^7.5.0",
+    "uuid": "^3.3.3"
   },
   "devDependencies": {
     "@babel/cli": "^7.6.4",

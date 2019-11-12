@@ -1,6 +1,8 @@
 /* eslint-disable import/no-cycle */
 import express from 'express';
 import userRoute from './users.route';
+import packageRoute from './packages.route';
+import paymentRoutes from './payments.route';
 
 const route = express();
 
@@ -15,5 +17,7 @@ route.get('/', (req, res) => {
 });
 
 route.use('/user', userRoute);
+route.use('/package', packageRoute);
+route.use('/payment', paymentRoutes);
 
 export default route;

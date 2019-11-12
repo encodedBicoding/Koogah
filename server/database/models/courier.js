@@ -144,6 +144,10 @@ module.exports = (sequelize, DataTypes) => {
 
   Courier.associate = function (models) {
     // associations can be defined here
+    Courier.hasMany(models.Packages, {
+      as: 'Dispatcher',
+      foreignKey: 'dispatcher_id',
+    });
   };
   return Courier;
 };

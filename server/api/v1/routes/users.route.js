@@ -12,6 +12,8 @@ const {
   signupCustomer_StepOne,
   signUpCustomer_StepTwo,
   signupCustomer_StepThree,
+  signInCourier,
+  signInCustomer,
 } = UserController;
 
 const {
@@ -61,4 +63,13 @@ userRoute.get(
   signUpCourier_StepFour,
 );
 
+userRoute.post(
+  '/courier/signin',
+  signInCourier,
+);
+
+userRoute.post(
+  '/customer/signin',
+  signInCustomer,
+);
 export default userRoute;

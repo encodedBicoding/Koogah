@@ -5,16 +5,16 @@ module.exports = {
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
-      type: Sequelize.INTEGER,
+      type: Sequelize.BIGINT,
     },
     customer_id: {
-      type: Sequelize.INTEGER,
+      type: Sequelize.BIGINT,
     },
     dispatcher_id: {
-      type: Sequelize.INTEGER,
+      type: Sequelize.BIGINT,
     },
     pending_dispatcher_id: {
-      type: Sequelize.INTEGER,
+      type: Sequelize.BIGINT,
     },
     weight: {
       type: Sequelize.STRING,
@@ -59,10 +59,10 @@ module.exports = {
       type: Sequelize.ENUM('picked-up', 'not-picked', 'delivered'),
     },
     pickup_time: {
-      type: Sequelize.DATE,
+      type: Sequelize.TEXT,
     },
     dropoff_time: {
-      type: Sequelize.DATE,
+      type: Sequelize.TEXT,
     },
     delivery_price: {
       type: Sequelize.DECIMAL(10, 2),

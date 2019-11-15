@@ -3,16 +3,16 @@
 module.exports = (sequelize, DataTypes) => {
   const Packages = sequelize.define('Packages', {
     customer_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     dispatcher_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: true,
       defaultValue: null,
     },
     pending_dispatcher_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: true,
       defaultValue: null,
     },
@@ -74,11 +74,11 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 'not-picked',
     },
     pickup_time: {
-      type: DataTypes.DATE,
+      type: DataTypes.TEXT,
       allowNull: true,
     },
     dropoff_time: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.TEXT,
       allowNull: true,
     },
     delivery_price: {

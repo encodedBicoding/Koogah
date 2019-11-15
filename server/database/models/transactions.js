@@ -20,18 +20,22 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     fees: {
-      type: DataTypes.DECIMAL,
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       defaultValue: 0.00,
     },
     reference_id: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     payment_mode: {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'card',
+    },
+    package_id: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
   },
   {

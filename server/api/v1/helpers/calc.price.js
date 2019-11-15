@@ -13,6 +13,7 @@ function calc_delivery_price(type, weight, distance) {
     base_price = 15000;
   }
   const weight_value = weight_range[weight];
+  if (!weight_range) return false;
   const net_price = (weight_value * distance) + base_price;
   return net_price;
 }

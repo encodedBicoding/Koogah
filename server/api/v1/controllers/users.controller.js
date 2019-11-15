@@ -1,10 +1,13 @@
+/* eslint-disable no-underscore-dangle */
 /* eslint-disable max-len */
 /* eslint-disable import/no-cycle */
 /* eslint-disable camelcase */
 import { config } from 'dotenv';
 import log from 'fancy-log';
 import Sequelize from 'sequelize';
-import { Couriers, Awaitings, Customers } from '../../../database/models';
+import {
+  Couriers, Awaitings, Customers, Packages,
+} from '../../../database/models';
 import sendSMS from '../helpers/sms';
 import gen_verify_code from '../helpers/verify.code';
 import jwt from '../helpers/jwt';
@@ -50,7 +53,7 @@ class UserController {
       first_name,
       mobile_number,
     });
-
+    // link hint: https://api.koogah.com
     const VERIFY_LINK = (isProduction) ? `https://koogah.herokuapp.com/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER` : `http://localhost:4000/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER`;
 
     const USR_OBJ = {
@@ -87,7 +90,7 @@ class UserController {
     if (isFound) {
       return res.status(409).json({
         status: 409,
-        error: 'A user with the given email already exists',
+        error: 'A user with the given email and/or bvn already exists',
       });
     }
 
@@ -370,6 +373,8 @@ class UserController {
           ...approved_user.getSafeDataValues(),
           token: SESSION_TOKEN,
         };
+        // this should redirect the user to their dashboard on the mobile platform
+        // for their device
         res.status(200).json({
           status: 200,
           message: 'Account approved successfully',
@@ -742,6 +747,65 @@ class UserController {
         status: 200,
         message: 'Logged in successfully',
         user,
+      });
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
+  }
+
+  /**
+   * @method rate_a_courier
+   * @memberof UserController
+   * @description This method allows a customer to rate the service of a courier
+   * @params req, res
+   * @return JSON object
+   */
+
+  static rate_a_courier(req, res) {
+    const { user } = req.session;
+    const { dispatcher_id, package_id } = req.params;
+    const { rating } = req.body;
+    return Promise.try(async () => {
+      const _package = await Packages.findOne({
+        where: {
+          [Op.and]: [{ customer_id: user.id }, { dispatcher_id }, { package_id }],
+        },
+      });
+      if (!_package) {
+        return res.status(400).json({
+          status: 400,
+          error: 'You cannot rate a dispatcher unless they currently dispatch for you',
+        });
+      }
+      const dispatcher = await Couriers.findOne({
+        where: {
+          id: dispatcher_id,
+        },
+      });
+      if (!dispatcher) {
+        return res.status(404).json({
+          status: 404,
+          error: 'Oops, seems the dispatcher doesn\'t exists anymore',
+        });
+      }
+      const current_number_of_raters = dispatcher.no_of_raters + 1;
+      const new_rate_value = (parseInt(rating, 10) + parseInt(dispatcher.rating, 10)) / current_number_of_raters;
+      await Couriers.update({
+        rating: new_rate_value,
+        no_of_raters: current_number_of_raters,
+      },
+      {
+        where: {
+          id: dispatcher_id,
+        },
+      });
+      return res.status(200).json({
+        status: 200,
+        message: `You successfully rated ${dispatcher.first_name} ${dispatcher.last_name}:, ${rating}`,
       });
     }).catch((err) => {
       log(err);

@@ -9,11 +9,14 @@ const paymentRoutes = express();
 
 const {
   check_top_up_amount,
+  check_top_up_amount_two,
+  check_pay_dispatcher_query,
 } = Validate;
 
 const {
   topup_virtual_balance_StepOne,
   topup_virtual_balance_StepTwo,
+  pay_dispatcher,
 } = Payment;
 
 paymentRoutes.route('/customer/topup')
@@ -28,7 +31,16 @@ paymentRoutes.route('/customer/topup')
     passport.authenticate('bearer', { session: false }),
     checkSession,
     isCustomerLoggedIn,
+    check_top_up_amount_two,
     topup_virtual_balance_StepTwo,
   );
+paymentRoutes.put(
+  '/customer/pay/:dispatcher_id/:package_id/:delivery_price',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  check_pay_dispatcher_query,
+  pay_dispatcher,
+);
 
 export default paymentRoutes;

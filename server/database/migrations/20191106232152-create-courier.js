@@ -5,7 +5,7 @@ module.exports = {
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
-      type: Sequelize.INTEGER,
+      type: Sequelize.BIGINT,
     },
     first_name: {
       type: Sequelize.STRING,
@@ -47,13 +47,16 @@ module.exports = {
       type: Sequelize.DECIMAL(10, 2),
     },
     rating: {
-      type: Sequelize.INTEGER,
+      type: Sequelize.DECIMAL(10, 1),
+    },
+    no_of_raters: {
+      type: Sequelize.BIGINT,
     },
     pickups: {
-      type: Sequelize.INTEGER,
+      type: Sequelize.BIGINT,
     },
     deliveries: {
-      type: Sequelize.INTEGER,
+      type: Sequelize.BIGINT,
     },
     pending: {
       type: Sequelize.INTEGER,
@@ -75,6 +78,12 @@ module.exports = {
     },
     bank_name: {
       type: Sequelize.STRING,
+    },
+    last_payout: {
+      type: Sequelize.DECIMAL(10, 2),
+    },
+    total_payouts: {
+      type: Sequelize.DECIMAL(10, 2),
     },
     approval_code: {
       type: Sequelize.TEXT,

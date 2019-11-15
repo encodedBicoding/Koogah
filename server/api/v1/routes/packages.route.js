@@ -11,6 +11,7 @@ const {
   approve_or_decline,
   change_weight,
   approve_or_decline_weight_change,
+  mark_package_as_delivered,
 } = Package;
 
 const {
@@ -18,6 +19,7 @@ const {
   check_package_id,
   check_response,
   check_weight,
+  check_delivery_type,
 } = Validate;
 
 const packageRoute = express();
@@ -27,10 +29,11 @@ packageRoute.route('/:type')
     passport.authenticate('bearer', { session: false }),
     checkSession,
     isCustomerLoggedIn,
+    check_delivery_type,
     create_package,
     request_dispatch,
   );
-packageRoute.post(
+packageRoute.patch(
   '/courier/interest/:package_id',
   passport.authenticate('bearer', { session: false }),
   checkSession,
@@ -64,6 +67,15 @@ packageRoute.patch(
   check_package_id,
   check_response,
   approve_or_decline_weight_change,
+);
+
+packageRoute.patch(
+  '/courier/deliver/:package_id',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCourierLoggedIn,
+  check_package_id,
+  mark_package_as_delivered,
 );
 
 

@@ -62,11 +62,11 @@ export const isCourierLoggedIn = function isCourierLoggedIn(req, res, next) {
         email: payload.email,
       },
     });
-    if (!isFound) return res.status(404).json({
+    if (!isFound) return res.status(401).json({
       status: 401,
       error: 'Not Authorized. Please contact support to lay complains. contact support@koogah.com',
     });
-    if (!isFound.is_approved) return res.status(404).json({
+    if (!isFound.is_approved) return res.status(401).json({
       status: 401,
       error: 'Cannot perform this action until your account is approved by our team',
     });
@@ -91,7 +91,7 @@ export const isCustomerLoggedIn = function isCustomerLoggedIn(req, res, next) {
       status: 401,
       error: 'Not Authorized. Please contact support to lay complains. contact support@koogah.com',
     });
-    if (!isFound.is_verified) return res.status(404).json({
+    if (!isFound.is_verified) return res.status(401).json({
       status: 401,
       error: 'Cannot perform this action until you have verified your account. Please check your email for a verification link sent to you, or',
       resend_link: (isProduction) ? `https://koogah.herokuapp.com/v1/user/verify/email?key=${isFound.verify_token}&code=CUSTOMER` : `http://localhost:4000/v1/user/verify/email?key=${isFound.verify_token}&code=CUSTOMER`,

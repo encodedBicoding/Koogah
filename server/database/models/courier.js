@@ -61,15 +61,19 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 0.00,
     },
     rating: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.DECIMAL(10, 1),
+      defaultValue: 0.0,
+    },
+    no_of_raters: {
+      type: DataTypes.BIGINT,
       defaultValue: 0,
     },
     pickups: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       defaultValue: 0,
     },
     deliveries: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       defaultValue: 0,
     },
     pending: {
@@ -96,6 +100,16 @@ module.exports = (sequelize, DataTypes) => {
     },
     account_number: DataTypes.STRING,
     bank_name: DataTypes.STRING,
+    last_payout: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.00,
+    },
+    total_payouts: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.00,
+    },
     approval_code: {
       type: DataTypes.TEXT,
       allowNull: true,
@@ -145,8 +159,12 @@ module.exports = (sequelize, DataTypes) => {
   Courier.associate = function (models) {
     // associations can be defined here
     Courier.hasMany(models.Packages, {
-      as: 'Dispatcher',
+      as: 'Packages',
       foreignKey: 'dispatcher_id',
+    });
+    Courier.hasMany(models.Payouts, {
+      as: 'Payouts',
+      foreignKey: 'dispatcher_email',
     });
   };
   return Courier;

@@ -6,7 +6,7 @@ import fetch from 'node-fetch';
 import { config } from 'dotenv';
 import checkType from '../helpers/check.type';
 import calc_delivery_price from '../helpers/calc.price';
-import { Packages } from '../../../database/models';
+import { Packages, Couriers } from '../../../database/models';
 
 config();
 
@@ -41,6 +41,12 @@ class Package {
         const distance_in_km = result.rows[0].elements[0].distance.text;
         const distance = Math.ceil(parseInt(distance_in_km.split(' ')[0].replace(',', ''), 10));
         const delivery_price = calc_delivery_price(type, weight, distance);
+        if (!delivery_price) {
+          return res.status(400).json({
+            status: 400,
+            error: 'Weight must match one of ["0-5","6-10", "11-15", "16-25", "26-40", "50-100", "101-200", "201-300", "301-400", "401-500", "500>"],',
+          });
+        }
         const package_id = uuid();
         const package_detail = await Packages.create({
           type_of_dispatch: type,
@@ -62,7 +68,13 @@ class Package {
           status: 400,
           error: err,
         });
-      }));
+      })).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
   }
 
   /**
@@ -124,7 +136,7 @@ class Package {
         return res.status(200).json({
           status: 200,
           message: 'Your interest is acknowledged. The owner of the package will be notified shortly',
-          updated_package,
+          data: updated_package,
         });
       }).catch((err) => {
         log(err);
@@ -166,7 +178,7 @@ class Package {
         });
       }
       if (_package.customer_id !== user.id) {
-        return res.status(400).json({
+        return res.status(401).json({
           status: 401,
           error: 'You are not allowed to perform this action. Please contact support@koogah.com',
         });
@@ -178,14 +190,38 @@ class Package {
         });
       }
       if (response === 'approve') {
+        const date_time = new Date().toLocaleString();
         await Packages.update({
           dispatcher_id: _package.pending_dispatcher_id,
+          pickup_time: date_time,
           pending_dispatcher_id: null,
           status: 'picked-up',
         },
         {
           where: {
             package_id,
+          },
+        });
+        const dispatcher = await Couriers.findOne({
+          where: {
+            id: _package.pending_dispatcher_id,
+          },
+        });
+
+        if (!dispatcher) {
+          return res.status(404).json({
+            status: 404,
+            error: 'Oops, seems the dispatcher doesn\'t exists anymore...',
+          });
+        }
+        const number_of_pickups = dispatcher.pickups + 1;
+        const number_of_pending_deliveries = dispatcher.pending + 1;
+        await Couriers.update({
+          pickups: number_of_pickups,
+          pending: number_of_pending_deliveries,
+        }, {
+          where: {
+            email: dispatcher.email,
           },
         });
       }
@@ -294,7 +330,7 @@ class Package {
    * @method approve_or_decline_weight_change
    * @memberof Package
    * @params req, res
-   * @description Customer can approve or decline the request to chang weight
+   * @description Customer can approve or decline the request to change weight
    * @return JSON object
    */
 
@@ -359,6 +395,84 @@ class Package {
     }).catch((err) => {
       log(err);
       return res.status(400).json({
+        error: err,
+      });
+    });
+  }
+
+  /**
+   * @method mark_package_as_delivered
+   * @memberof Package
+   * @params req, res
+   * @description Couriers can mark a package as delivered, when they deliver it.
+   * @return JSON object
+   */
+
+  static mark_package_as_delivered(req, res) {
+    const { user } = req.session;
+    const { package_id } = req.params;
+    return Promise.try(async () => {
+      const _package = await Packages.findOne({
+        where: {
+          package_id,
+        },
+      });
+      if (!_package) {
+        return res.status(404).json({
+          status: 404,
+          error: 'Oops, seems the package doesn\'t exist anymore',
+        });
+      }
+      if (_package.dispatcher_id !== user.id) {
+        return res.status(400).json({
+          status: 401,
+          error: 'You are not authorized to perform this action',
+        });
+      }
+      const date_time = new Date().toLocaleString();
+      await Packages.update({
+        status: 'delivered',
+        dropoff_time: date_time,
+      },
+      {
+        where: {
+          package_id,
+        },
+      });
+      const user_new_delivery_count = user.deliveries + 1;
+      const user_new_pending_count = user.pending - 1;
+      await Couriers.update({
+        deliveries: user_new_delivery_count,
+        pending: user_new_pending_count,
+      },
+      {
+        where: {
+          email: user.email,
+        },
+      });
+      const updated_package = await Packages.findOne({
+        where: {
+          package_id,
+        },
+      });
+      const updated_user = await Couriers.findOne({
+        where: {
+          email: user.email,
+        },
+      });
+      const response_data = {
+        package: updated_package,
+        delivered_by: updated_user.getSafeDataValues(),
+      };
+      return res.status(200).json({
+        status: 200,
+        message: 'Package delivered successfully',
+        data: { ...response_data },
+      });
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
         error: err,
       });
     });

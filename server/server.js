@@ -61,14 +61,17 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false, limit: '50mb' }));
 app.use(session({
   secret: process.env.SESSION_SECRET,
-  cookie: { maxAge: 60000, secure: true },
+  cookie: { maxAge: 60000, secure: false },
+  name: '__KoogahSess__',
   resave: false,
   saveUninitialized: true,
-  store: new SessionStore({ client }),
+  store: new SessionStore({ client, ttl: 60 * 60 * 24 }),
 }));
 app.use(compression());
 app.use(passport.initialize());
 app.use(passport.session());
+passport.use('bearer', bearerStrategy());
+
 if (!isProduction) {
   app.use(errorHandler({
     dumpExceptions: true,
@@ -90,8 +93,6 @@ app.use((req, res, next) => {
   next(err);
 });
 
-
-passport.use('bearer', bearerStrategy());
 
 if (!isProduction) {
   // eslint-disable-next-line no-unused-vars

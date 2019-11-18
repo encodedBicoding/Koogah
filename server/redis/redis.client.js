@@ -1,5 +1,6 @@
 import redis from 'redis';
 import { config } from 'dotenv';
+import log from 'fancy-log';
 
 config();
 // eslint-disable-next-line import/no-mutable-exports
@@ -15,5 +16,9 @@ if (process.env.NODE_ENV === 'test') {
 if (process.env.NODE_ENV === 'development') {
   client = redis.createClient(6379);
 }
+
+client.on('error', (err) => {
+  log(err);
+});
 
 export default client;

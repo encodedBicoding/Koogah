@@ -1,5 +1,4 @@
 /* eslint-disable func-names */
-/* eslint-disable no-unused-vars */
 /* eslint-disable require-atomic-updates */
 /* eslint-disable no-param-reassign */
 import bcrypt from 'bcrypt';
@@ -116,6 +115,14 @@ module.exports = (sequelize, DataTypes) => {
 
   Customers.associate = function (models) {
     // associations can be defined here
+    Customers.hasMany(models.Packages, {
+      as: 'Owner',
+      foreignKey: 'customer_id',
+    });
+    Customers.hasMany(models.Transactions, {
+      as: 'Customer',
+      foreignKey: 'customer_id',
+    });
   };
   return Customers;
 };

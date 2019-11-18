@@ -1,28 +1,34 @@
 
 module.exports = {
-  up: (queryInterface, Sequelize) => queryInterface.createTable('Awaitings', {
+  up: (queryInterface, Sequelize) => queryInterface.createTable('Transactions', {
     id: {
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
       type: Sequelize.BIGINT,
     },
-    first_name: {
+    customer_id: {
+      type: Sequelize.INTEGER,
+    },
+    dispatcher_id: {
+      type: Sequelize.INTEGER,
+    },
+    amount_paid: {
+      type: Sequelize.DECIMAL(10, 2),
+    },
+    reason: {
       type: Sequelize.STRING,
     },
-    last_name: {
+    fees: {
+      type: Sequelize.DECIMAL(10, 2),
+    },
+    reference_id: {
       type: Sequelize.STRING,
     },
-    user_email: {
+    payment_mode: {
       type: Sequelize.STRING,
     },
-    mobile_number: {
-      type: Sequelize.STRING,
-    },
-    sex: {
-      type: Sequelize.STRING,
-    },
-    approval_link: {
+    package_id: {
       type: Sequelize.TEXT,
     },
     created_at: {
@@ -34,5 +40,5 @@ module.exports = {
       type: Sequelize.DATE,
     },
   }),
-  down: (queryInterface) => queryInterface.dropTable('Awaitings'),
+  down: (queryInterface) => queryInterface.dropTable('Transactions'),
 };

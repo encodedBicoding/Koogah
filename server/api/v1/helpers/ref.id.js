@@ -3,7 +3,7 @@
 
 function generate_ref() {
   let ref = '';
-  const path = 'ABCDEFGHIJKLMNOPQRSTVWXYZabcdefghijklmnopqrstuvwxyz0123456789=-#!&%@_+$^';
+  const path = 'ABCDEFGHIJKLMNOPQRSTVWXYZabcdefghijklmnopqrstuvwxyz0123456789!&%@$';
   for (let i = 0; i < 21; ++i) {
     const rand = Math.floor(Math.random() * path.length);
     ref += path[rand];

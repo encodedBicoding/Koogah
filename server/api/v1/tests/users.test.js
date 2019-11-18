@@ -15,7 +15,7 @@ let courier_verify_token;
 let mob_code;
 
 describe('Handle Courier controller', () => {
-  // before(() => Couriers.sync({ force: true }));
+  before(() => Couriers.sync({ force: true }));
   describe('Test courier signup step one', () => {
     it('Should fail if first_name field is empty', (done) => {
       chai.request(app)

@@ -89,6 +89,14 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: false,
     },
+    referal_id: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    refered_by: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     underscored: true,

@@ -31,6 +31,12 @@ class Payment {
     // get payment details first.
     const { user } = req.session;
     const { amount } = req.body;
+    if (parseInt(amount, 10) < 500.00) {
+      return res.status(400).json({
+        status: 400,
+        error: 'You cannot deposit amount below 500 Naira',
+      });
+    }
     const paystack_kobo_amount = parseInt(amount, 10) * 100;
 
     const data = {
@@ -94,6 +100,58 @@ class Payment {
     };
     const total_user_balance = parseInt(user.virtual_balance, 10) + parseInt(amount, 10);
     return Promise.try(async () => {
+      let refering_user;
+      if (user.refered_by !== null) {
+        refering_user = await Customers.findOne({
+          where: {
+            referal_id: user.refered_by,
+          },
+        });
+        if (!refering_user) {
+          refering_user = await Couriers.findOne({
+            where: {
+              referal_id: user.refered_by,
+            },
+          });
+          if (refering_user) {
+            const virtual_balance = parseInt(refering_user.virtual_balance, 10) + 200.00;
+            await Couriers.update({
+              virtual_balance,
+            },
+            {
+              where: {
+                referal_id: user.refered_by,
+              },
+            });
+            await Customers.update({
+              refered_by: null,
+            },
+            {
+              where: {
+                email: user.email,
+              },
+            });
+          }
+        } else {
+          const virtual_balance = parseInt(refering_user.virtual_balance, 10) + 200.00;
+          await Customers.update({
+            virtual_balance,
+          },
+          {
+            where: {
+              referal_id: user.refered_by,
+            },
+          });
+          await Customers.update({
+            refered_by: null,
+          },
+          {
+            where: {
+              email: user.email,
+            },
+          });
+        }
+      }
       await Customers.update({
         virtual_balance: total_user_balance,
       }, {

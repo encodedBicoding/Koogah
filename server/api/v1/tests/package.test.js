@@ -149,7 +149,6 @@ describe('Handle package tests', () => {
         .post('/v1/user/courier/signin')
         .send({ email: 'ruth@temenu.com', password: '1234567890' })
         .end((err, res) => {
-          console.log(res.body);
           unapproved_courier_token = res.body.user.token;
           done();
         });

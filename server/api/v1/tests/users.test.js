@@ -52,7 +52,6 @@ describe('Handle Courier controller', () => {
       chai.request(app)
         .get(`${KoogahURLV1}/verify/email?key=${courier_verify_token}&code=COURIER`)
         .end((err, res) => {
-          console.log(res.body);
           expect(res.status).to.equal(200);
           expect(res.body.message).to.equal('Please insert the verification code sent to the mobile number you provided on registeration');
           done();

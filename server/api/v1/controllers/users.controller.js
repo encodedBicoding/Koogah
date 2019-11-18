@@ -458,24 +458,20 @@ class UserController {
         message: 'A user with the given email already exists',
       });
     }
-
-    return Promise.all(
-      [
-        Customers.create(NEW_USER),
-        sendMail(MSG_OBJ),
-      ],
-    ).then((result) => Promise.resolve(result))
-      .then(() => res.status(200).json({
+    return Promise.try(async () => {
+      await sendMail(MSG_OBJ);
+      await Customers.create(NEW_USER);
+      return res.status(200).json({
         status: 200,
         message: 'A verification link has been sent to your email address',
-      }))
-      .catch((err) => {
-        log(err);
-        res.status(400).json({
-          status: 400,
-          error: err,
-        });
       });
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
   }
 
   /**

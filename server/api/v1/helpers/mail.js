@@ -18,7 +18,7 @@ export default function sendMail(msg_obj) {
 export function toSentenceCase(string) {
   let value = string[0].toUpperCase();
   for (let i = 1; i < string.length; ++i) {
-    value += string[i];
+    value += string[i].toLowerCase();
   }
 
   return value;

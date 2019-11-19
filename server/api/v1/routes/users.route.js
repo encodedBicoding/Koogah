@@ -50,6 +50,7 @@ userRoute.get(
 
 userRoute.get(
   '/customer/verify/email',
+  validateMobileCode,
   signUpCustomer_StepTwo,
 );
 

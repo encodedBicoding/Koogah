@@ -13,6 +13,7 @@ import gen_verify_code from '../helpers/verify.code';
 import jwt from '../helpers/jwt';
 import sendMail, { createVerificationMail, createCourierApprovalMail } from '../helpers/mail';
 import client from '../../../redis/redis.client';
+import generate_ref from '../helpers/ref.id';
 
 
 const { Op } = Sequelize;
@@ -46,6 +47,7 @@ class UserController {
       town,
       address,
     } = req.body;
+    const { ref } = req.query;
 
     const VERIFY_TOKEN = await jwt.sign({
       email,
@@ -61,6 +63,7 @@ class UserController {
       last_name,
       verify_link: VERIFY_LINK,
     };
+    const REFERAL_ID = generate_ref('referal');
 
     const NEW_USER = {
       first_name,
@@ -75,6 +78,8 @@ class UserController {
       state,
       town,
       address,
+      referal_id: REFERAL_ID,
+      refered_by: ref,
     };
 
     const MSG_OBJ = createVerificationMail(email, USR_OBJ, 'dispatcher');
@@ -94,7 +99,7 @@ class UserController {
       });
     }
 
-    return Promise.all([Couriers.create(NEW_USER), sendMail(MSG_OBJ)])
+    return Promise.all([sendMail(MSG_OBJ), Couriers.create(NEW_USER)])
       .then((result) => Promise.resolve(result))
       .then(
         () => res.status(200).json({
@@ -414,6 +419,8 @@ class UserController {
       password,
     } = req.body;
 
+    const { ref } = req.query;
+
     const VERIFY_TOKEN = await jwt.sign({
       email,
       first_name,
@@ -428,6 +435,7 @@ class UserController {
       last_name,
       verify_link: VERIFY_LINK,
     };
+    const REFERAL_ID = generate_ref('referal');
 
     const NEW_USER = {
       first_name,
@@ -442,6 +450,8 @@ class UserController {
       email,
       password,
       verify_token: VERIFY_TOKEN,
+      referal_id: REFERAL_ID,
+      refered_by: ref,
     };
 
     const MSG_OBJ = createVerificationMail(email, USR_OBJ, 'customer');
@@ -594,7 +604,7 @@ class UserController {
       return res.status(400).json({
         status: 400,
         error: 'The code you supplied do not match the code you received. Please try again or resend code',
-        resend_link: (isProduction) ? `https://koogah.herokuapp.com/v1/user/verify/email?key=${key}&code=CUSTOMER` : `http://localhost:4000/v1/user/verify/email?key=${key}&code=CUSTOMER`,
+        resend_link: (isProduction) ? `https://koogah.herokuapp.com/v1/user/customer/verify/email?key=${key}&code=CUSTOMER` : `http://localhost:4000/v1/user/customer/verify/email?key=${key}&code=CUSTOMER`,
       });
     }
 

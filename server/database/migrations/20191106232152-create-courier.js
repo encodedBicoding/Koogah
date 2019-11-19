@@ -97,6 +97,12 @@ module.exports = {
     is_admin: {
       type: Sequelize.BOOLEAN,
     },
+    referal_id: {
+      type: Sequelize.STRING,
+    },
+    refered_by: {
+      type: Sequelize.STRING,
+    },
     created_at: {
       allowNull: false,
       type: Sequelize.DATE,

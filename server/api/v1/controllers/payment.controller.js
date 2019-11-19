@@ -31,6 +31,12 @@ class Payment {
     // get payment details first.
     const { user } = req.session;
     const { amount } = req.body;
+    if (parseInt(amount, 10) < 500.00) {
+      return res.status(400).json({
+        status: 400,
+        error: 'You cannot deposit amount below 500 Naira',
+      });
+    }
     const paystack_kobo_amount = parseInt(amount, 10) * 100;
 
     const data = {
@@ -94,6 +100,63 @@ class Payment {
     };
     const total_user_balance = parseInt(user.virtual_balance, 10) + parseInt(amount, 10);
     return Promise.try(async () => {
+      let refering_user;
+      let virtual_balance;
+      // if the customer was referred by another user
+      // first check if the user is a customer
+      // if not, check if the user is a courier
+      if (user.refered_by !== null) {
+        refering_user = await Customers.findOne({
+          where: {
+            referal_id: user.refered_by,
+          },
+        });
+        if (!refering_user) {
+          refering_user = await Couriers.findOne({
+            where: {
+              referal_id: user.refered_by,
+            },
+          });
+          if (refering_user) {
+            virtual_balance = parseInt(refering_user.virtual_balance, 10) + 200.00;
+            await Couriers.update({
+              virtual_balance,
+            },
+            {
+              where: {
+                referal_id: user.refered_by,
+              },
+            });
+            await Customers.update({
+              refered_by: null,
+            },
+            {
+              where: {
+                email: user.email,
+              },
+            });
+          }
+        } else {
+          virtual_balance = parseInt(refering_user.virtual_balance, 10) + 200.00;
+          await Customers.update({
+            virtual_balance,
+          },
+          {
+            where: {
+              referal_id: user.refered_by,
+            },
+          });
+          await Customers.update({
+            refered_by: null,
+          },
+          {
+            where: {
+              email: user.email,
+            },
+          });
+        }
+      }
+      // update virtual balance of customer who paid in money
       await Customers.update({
         virtual_balance: total_user_balance,
       }, {

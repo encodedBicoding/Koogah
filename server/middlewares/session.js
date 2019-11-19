@@ -94,7 +94,7 @@ export const isCustomerLoggedIn = function isCustomerLoggedIn(req, res, next) {
     if (!isFound.is_verified) return res.status(401).json({
       status: 401,
       error: 'Cannot perform this action until you have verified your account. Please check your email for a verification link sent to you, or',
-      resend_link: (isProduction) ? `https://koogah.herokuapp.com/v1/user/verify/email?key=${isFound.verify_token}&code=CUSTOMER` : `http://localhost:4000/v1/user/verify/email?key=${isFound.verify_token}&code=CUSTOMER`,
+      resend_link: (isProduction) ? `https://koogah.herokuapp.com/v1/user/customer/verify/email?key=${isFound.verify_token}&code=CUSTOMER` : `http://localhost:4000/v1/user/customer/verify/email?key=${isFound.verify_token}&code=CUSTOMER`,
     });
     delete req.session.user.token;
     req.session.user = isFound.getSafeDataValues();

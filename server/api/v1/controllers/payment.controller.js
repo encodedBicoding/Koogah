@@ -101,6 +101,10 @@ class Payment {
     const total_user_balance = parseInt(user.virtual_balance, 10) + parseInt(amount, 10);
     return Promise.try(async () => {
       let refering_user;
+      let virtual_balance;
+      // if the customer was referred by another user
+      // first check if the user is a customer
+      // if not, check if the user is a courier
       if (user.refered_by !== null) {
         refering_user = await Customers.findOne({
           where: {
@@ -114,7 +118,7 @@ class Payment {
             },
           });
           if (refering_user) {
-            const virtual_balance = parseInt(refering_user.virtual_balance, 10) + 200.00;
+            virtual_balance = parseInt(refering_user.virtual_balance, 10) + 200.00;
             await Couriers.update({
               virtual_balance,
             },
@@ -133,7 +137,7 @@ class Payment {
             });
           }
         } else {
-          const virtual_balance = parseInt(refering_user.virtual_balance, 10) + 200.00;
+          virtual_balance = parseInt(refering_user.virtual_balance, 10) + 200.00;
           await Customers.update({
             virtual_balance,
           },
@@ -152,6 +156,7 @@ class Payment {
           });
         }
       }
+      // update virtual balance of customer who paid in money
       await Customers.update({
         virtual_balance: total_user_balance,
       }, {

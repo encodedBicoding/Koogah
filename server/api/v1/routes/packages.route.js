@@ -15,6 +15,7 @@ const {
   courier_preview_package,
   customer_view_package,
   customer_view_all_package,
+  courier_view_all_package,
 } = Package;
 
 const {
@@ -107,5 +108,13 @@ packageRoute.get(
   customer_view_all_package,
 );
 
+packageRoute.get(
+  '/courier/p/all',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCourierLoggedIn,
+  check_package_status,
+  courier_view_all_package,
+);
 
 export default packageRoute;

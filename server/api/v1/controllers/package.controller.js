@@ -234,8 +234,8 @@ class Package {
             package_id,
           },
         });
-        const number_of_pickups = dispatcher.pickups + 1;
-        const number_of_pending_deliveries = dispatcher.pending + 1;
+        const number_of_pickups = parseInt(dispatcher.pickups, 10) + 1;
+        const number_of_pending_deliveries = parseInt(dispatcher.pending, 10) + 1;
         await Couriers.update({
           pickups: number_of_pickups,
           pending: number_of_pending_deliveries,
@@ -509,8 +509,8 @@ class Package {
           package_id,
         },
       });
-      const user_new_delivery_count = user.deliveries + 1;
-      const user_new_pending_count = user.pending - 1;
+      const user_new_delivery_count = parseInt(user.deliveries, 10) + 1;
+      const user_new_pending_count = parseInt(user.pending, 10) - 1;
       await Couriers.update({
         deliveries: user_new_delivery_count,
         pending: user_new_pending_count,
@@ -669,6 +669,46 @@ class Package {
         all_packages = await Packages.findAll({
           where: {
             customer_id: user.id,
+            status,
+          },
+        });
+      }
+      return res.status(200).json({
+        status: 200,
+        message: 'All packages retreived successfully',
+        data: all_packages,
+      });
+    }).catch((error) => {
+      log(error);
+      return res.status(400).json({
+        status: 400,
+        error,
+      });
+    });
+  }
+  /**
+   * @method courier_view_all_package
+   * @memberof Package
+   * @params req, res
+   * @description Couriers can view all packages they dispatch
+   * @return JSON object
+   */
+
+  static courier_view_all_package(req, res) {
+    const { user } = req.session;
+    const { status } = req.query;
+    return Promise.try(async () => {
+      let all_packages;
+      if (!status) {
+        all_packages = await Packages.findAll({
+          where: {
+            dispatcher_id: user.id,
+          },
+        });
+      } else {
+        all_packages = await Packages.findAll({
+          where: {
+            dispatcher_id: user.id,
             status,
           },
         });

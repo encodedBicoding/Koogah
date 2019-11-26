@@ -4,6 +4,8 @@ import userRoute from './users.route';
 import packageRoute from './packages.route';
 import paymentRoutes from './payments.route';
 import payoutRoutes from './payouts.route';
+import notifyRoutes from './noify.route';
+import profileRoutes from './profile.route';
 
 const route = express();
 
@@ -19,5 +21,7 @@ route.use('/user', userRoute);
 route.use('/package', packageRoute);
 route.use('/payment', paymentRoutes);
 route.use('/payout', payoutRoutes);
+route.use('/notifications', notifyRoutes);
+route.use('/profile', profileRoutes);
 
 export default route;

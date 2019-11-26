@@ -5,10 +5,12 @@ import log from 'fancy-log';
 import Sequelize from 'sequelize';
 import { config } from 'dotenv';
 import {
-  Customers, Transactions, Couriers, Packages,
+  Customers, Transactions, Couriers, Packages, Notifications,
 } from '../../../database/models';
+import client from '../../../redis/redis.client';
 
 config();
+const isProduction = process.env.NODE_ENV === 'production';
 const { Op } = Sequelize;
 /**
  * @class Payment
@@ -53,15 +55,18 @@ class Payment {
         body: JSON.stringify(data),
       })
         .then((resp) => resp.json())
-        .then((result) => res.status(200).json({
-          status: 200,
-          message: 'Authorization URL created',
-          data: {
-            amount,
-            customer_email: user.email,
-            ...result.data,
-          },
-        }))
+        .then((result) => {
+          client.set(`${result.data.reference}`, amount);
+          return res.status(200).json({
+            status: 200,
+            message: 'Authorization URL created',
+            data: {
+              amount,
+              customer_email: user.email,
+              ...result.data,
+            },
+          });
+        })
         .catch((err) => {
           log(err);
           return res.status(400).json({
@@ -89,19 +94,39 @@ class Payment {
   static topup_virtual_balance_StepTwo(req, res) {
     // use access code sent in step one
     // pay with RN chargeCardWithAccessCode
+    // before calling this endpoint
     const { user } = req.session;
-    const { amount, reference } = req.query;
-    const top_up_data = {
-      customer_id: user.id,
-      amount_paid: amount,
-      reason: 'top-up',
-      fees: 0.00,
-      reference_id: reference,
-    };
-    const total_user_balance = parseInt(user.virtual_balance, 10) + parseInt(amount, 10);
-    return Promise.try(async () => {
+    const { reference } = req.query;
+    return Promise.try(async () => client.get(`${reference}`, async (err, result) => {
+      if (!result) {
+        return res.status(404).json({
+          status: 404,
+          error: 'No transaction started with that reference',
+        });
+      }
+      const amount = result;
+      const top_up_data = {
+        customer_id: user.id,
+        amount_paid: amount,
+        reason: 'top-up',
+        fees: 0.00,
+        reference_id: reference,
+      };
+        // check if the transaction already exists
+      const isFound = await Transactions.findOne({
+        where: {
+          reference_id: reference,
+        },
+      });
+      if (isFound) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Your account has already been credited',
+        });
+      }
       let refering_user;
       let virtual_balance;
+      const total_user_balance = parseInt(user.virtual_balance, 10) + parseInt(amount, 10);
       // if the customer was referred by another user
       // first check if the user is a customer
       // if not, check if the user is a courier
@@ -164,26 +189,22 @@ class Payment {
           email: user.email,
         },
       });
-      const isFound = await Transactions.findOne({
-        where: {
-          reference_id: reference,
-        },
-      });
-      if (isFound) {
-        return res.status(400).json({
-          status: 400,
-          error: 'This transaction already exists',
-        });
-      }
       const transaction_detail = await Transactions.create({ ...top_up_data });
       // send a notification to koogah business email address
       // informing them a customer just paid to their paystack account
+      const NEW_NOTIFICATION = {
+        type: 'customer',
+        email: user.email,
+        message: `Your top-up of N${amount} was successfull.`,
+        title: 'New successfull topup',
+      };
+      await Notifications.create({ ...NEW_NOTIFICATION });
       return res.status(200).json({
         status: 200,
         message: 'Balance top up successful',
         transaction_detail,
       });
-    }).catch((err) => {
+    })).catch((err) => {
       log(err);
       return res.status(400).json({
         status: 400,
@@ -203,20 +224,12 @@ class Payment {
   static pay_dispatcher(req, res) {
     const { user } = req.session;
     const {
-      dispatcher_id,
       package_id,
-      delivery_price,
     } = req.params;
     return Promise.try(async () => {
-      if (parseInt(user.virtual_balance, 10) < parseInt(delivery_price, 10)) {
-        return res.status(400).json({
-          status: 400,
-          error: 'Insufficient balance. Please top-up your account',
-        });
-      }
       const isFound = await Transactions.findOne({
         where: {
-          [Op.and]: [{ package_id }, { dispatcher_id }],
+          [Op.and]: [{ package_id }],
         },
       });
       if (isFound) {
@@ -236,11 +249,17 @@ class Payment {
           error: 'No package found with the specified id',
         });
       }
-      const customer_remaining_balance = parseInt(user.virtual_balance, 10) - parseInt(delivery_price, 10);
+      if (parseInt(user.virtual_balance, 10) < parseInt(is_package_valid.delivery_price, 10)) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Insufficient balance. Please top-up your account',
+        });
+      }
+      const customer_remaining_balance = parseInt(user.virtual_balance, 10) - parseInt(is_package_valid.delivery_price, 10);
       // get dispatcher to update their account + minus the 20 percent charge.
       const dispatcher = await Couriers.findOne({
         where: {
-          id: dispatcher_id,
+          id: is_package_valid.dispatcher_id,
         },
       });
       if (!dispatcher) {
@@ -249,14 +268,14 @@ class Payment {
           error: 'Oops, seems this dispatcher doesn\'t exists anymore...',
         });
       }
-      const fees = parseInt(delivery_price, 10) * 0.2;
-      const total_amount_payable = parseInt(delivery_price, 10) - fees;
+      const fees = parseInt(is_package_valid.delivery_price, 10) * 0.2;
+      const total_amount_payable = parseInt(is_package_valid.delivery_price, 10) - fees;
       const dispatcher_new_balance = parseInt(dispatcher.virtual_balance, 10) + total_amount_payable;
 
       const transaction_details = {
         customer_id: user.id,
-        dispatcher_id,
-        amount_paid: delivery_price,
+        dispatcher_id: is_package_valid.dispatcher_id,
+        amount_paid: is_package_valid.delivery_price,
         reason: 'dispatch-payment',
         fees,
         payment_mode: 'in-app',
@@ -280,6 +299,14 @@ class Payment {
           email: dispatcher.email,
         },
       });
+      const NEW_NOTIFICATION = {
+        email: dispatcher.email,
+        type: 'courier',
+        message: `A customer just paid you N${is_package_valid.delivery_price} to deliver a package with id: ${package_id}`,
+        title: 'New payment for delivery',
+        action_link: (isProduction) ? `https://api.koogah.com/v1/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`, // ensure courier is logged in
+      };
+      await Notifications.create({ ...NEW_NOTIFICATION });
       const new_transaction = await Transactions.create({ ...transaction_details });
       return res.status(200).json({
         status: 200,

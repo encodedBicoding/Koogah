@@ -86,7 +86,7 @@ class Schema {
    * @memberof Schema
    * @return Joi Object
    */
-  static intra_package_schema() {
+  static fintra_package_schema() {
     return Joi.object({
       weight: Joi.string().required(),
       description: Joi.string().required(),
@@ -191,7 +191,6 @@ class Schema {
    */
   static top_up_amount_schema_two() {
     return Joi.object({
-      amount: Joi.string().required(),
       reference: Joi.string().required(),
     });
   }
@@ -206,9 +205,7 @@ class Schema {
 
   static pay_dispatcher_schema() {
     return Joi.object({
-      dispatcher_id: Joi.number().integer().required(),
       package_id: Joi.string().required(),
-      delivery_price: Joi.string().required(),
     });
   }
 
@@ -250,6 +247,43 @@ class Schema {
   static rating_schema() {
     return Joi.object({
       rating: Joi.string().valid('1', '2', '3', '4', '5').required(),
+    });
+  }
+
+  /**
+   * @method notify_id_schema
+   * @description This method return Joi object which delivers a schema for notifying a user
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static notify_id_schema() {
+    return Joi.object({
+      id: Joi.number().required(),
+    });
+  }
+  /**
+   * @method profile_id_schema
+   * @description This method return Joi object which delivers a schema for user profile
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static profile_id_schema() {
+    return Joi.object({
+      id: Joi.number().required(),
+    });
+  }
+
+  /**
+   * @method package_status_schema
+   * @description This method return Joi object which delivers a schema for package status
+   * @memberof Schema
+   * @return Joi Object
+   */
+  static package_status_schema() {
+    return Joi.object({
+      status: Joi.string().valid('picked-up', 'not-picked', 'delivered'),
     });
   }
 }

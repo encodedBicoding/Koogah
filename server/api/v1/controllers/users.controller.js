@@ -6,7 +6,7 @@ import { config } from 'dotenv';
 import log from 'fancy-log';
 import Sequelize from 'sequelize';
 import {
-  Couriers, Awaitings, Customers, Packages,
+  Couriers, Awaitings, Customers, Packages, Notifications,
 } from '../../../database/models';
 import sendSMS from '../helpers/sms';
 import gen_verify_code from '../helpers/verify.code';
@@ -247,6 +247,7 @@ class UserController {
       bvn: verifying_user.bvn,
       first_name: verifying_user.first_name,
       mobile_number: verifying_user.mobile_number,
+      is_courier: verifying_user.is_courier,
     };
 
     const APPROVAL_TOKEN = await jwt.sign(payload, '1440h');
@@ -373,7 +374,7 @@ class UserController {
             email: payload.email,
           },
         });
-        client.set(`${approved_user.email}`, SESSION_TOKEN);
+        client.set(`${approved_user.email}:COURIER`, SESSION_TOKEN);
         const user = {
           ...approved_user.getSafeDataValues(),
           token: SESSION_TOKEN,
@@ -426,6 +427,7 @@ class UserController {
       first_name,
       mobile_number_one,
       last_name,
+      is_courier: false,
     });
 
     const VERIFY_LINK = (isProduction) ? `https://koogah.herokuapp.com/v1/user/customer/verify/email?key=${VERIFY_TOKEN}&code=CUSTOMER` : `http://localhost:4000/v1/user/customer/verify/email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
@@ -612,43 +614,48 @@ class UserController {
     const SESSION_TOKEN = await jwt.sign({
       ...data,
     });
-
-    return Promise.resolve(Customers.update(
-      {
-        verification_code: null,
-        verify_token: null,
-        is_verified: true,
-      },
-      {
-        where: {
-          email: payload.email,
+    const NEW_NOTIFICATION = {
+      email: verifying_user.email,
+      type: 'customer',
+      message: 'Hi, we at Koogah are glad to have you with us \n Remember to top-up your account and refer other users \n refering other users can earn you N200',
+      title: 'Welcome to Koogah',
+    };
+    return Promise.try(async () => {
+      await Customers.update(
+        {
+          verification_code: null,
+          verify_token: null,
+          is_verified: true,
         },
-      },
-    ))
-      .then(async () => {
-        const approved_user = await Customers.findOne({
+        {
           where: {
             email: payload.email,
           },
-        });
-        client.set(`${approved_user.email}`, SESSION_TOKEN);
-        const user = {
-          ...approved_user.getSafeDataValues(),
-          token: SESSION_TOKEN,
-        };
-        res.status(200).json({
-          status: 200,
-          message: 'Account created successfully',
-          user,
-        });
-      })
-      .catch((err) => {
-        log(err);
-        return res.status(400).json({
-          status: 400,
-          error: err,
-        });
+        },
+      );
+      await Notifications.create({ ...NEW_NOTIFICATION });
+      const approved_user = await Customers.findOne({
+        where: {
+          email: payload.email,
+        },
       });
+      client.set(`${approved_user.email}:CUSTOMER`, SESSION_TOKEN);
+      const user = {
+        ...approved_user.getSafeDataValues(),
+        token: SESSION_TOKEN,
+      };
+      res.status(200).json({
+        status: 200,
+        message: 'Account created successfully',
+        user,
+      });
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
   }
 
   /**
@@ -692,7 +699,7 @@ class UserController {
       SESSION_TOKEN = await jwt.sign(SESSION_USER, '24h');
       const user = isFound.getSafeDataValues();
       user.token = SESSION_TOKEN;
-      client.set(`${user.email}`, SESSION_TOKEN);
+      client.set(`${user.email}:COURIER`, SESSION_TOKEN);
       return res.status(200).json({
         status: 200,
         message: 'Logged in successfully',
@@ -748,7 +755,7 @@ class UserController {
       SESSION_TOKEN = await jwt.sign(SESSION_USER, '24h');
       const user = isFound.getSafeDataValues();
       user.token = SESSION_TOKEN;
-      client.set(`${user.email}`, SESSION_TOKEN);
+      client.set(`${user.email}:CUSTOMER`, SESSION_TOKEN);
       return res.status(200).json({
         status: 200,
         message: 'Logged in successfully',
@@ -784,7 +791,7 @@ class UserController {
       if (!_package) {
         return res.status(400).json({
           status: 400,
-          error: 'You cannot rate a dispatcher unless they currently dispatch for you',
+          error: 'You cannot rate a dispatcher unless they currently or have dispatched for you',
         });
       }
       const dispatcher = await Couriers.findOne({
@@ -818,6 +825,30 @@ class UserController {
       return res.status(400).json({
         status: 400,
         error: err,
+      });
+    });
+  }
+
+  /**
+   * @method sign_out
+   * @memberof UserController
+   * @description This method allows a user to signout
+   * @params req, res
+   * @return JSON object
+   */
+
+  static sign_out(req, res) {
+    const { user } = req.session;
+    const type = user.is_courier ? 'COURIER' : 'CUSTOMER';
+    client.del(`${user.email}:${type}`);
+    return Promise.try(() => res.status(200).json({
+      status: 200,
+      message: 'Logged out successfully',
+    })).catch((error) => {
+      log(error);
+      return res.status(400).json({
+        status: 400,
+        error,
       });
     });
   }

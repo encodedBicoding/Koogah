@@ -1,15 +1,19 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable camelcase */
+import Sequelize from 'sequelize';
 import log from 'fancy-log';
 import uuid from 'uuid/v4';
 import fetch from 'node-fetch';
 import { config } from 'dotenv';
 import checkType from '../helpers/check.type';
 import calc_delivery_price from '../helpers/calc.price';
-import { Packages, Couriers } from '../../../database/models';
+import {
+  Packages, Couriers, Notifications, Customers,
+} from '../../../database/models';
 
 config();
-
+const isProduction = process.env.NODE_ENV === 'production';
+const { Op } = Sequelize;
 /**
  * @class Package
  * @description Defines methods for packages. Packages are ggods that needs to be dispatched
@@ -133,6 +137,19 @@ class Package {
             package_id,
           },
         });
+        const customer = await Customers.findOne({
+          where: {
+            id: _package.customer_id,
+          },
+        });
+        const NEW_NOTIFICATION = {
+          email: customer.email,
+          type: 'customer',
+          title: `Interested dispatcher for package: ${package_id}`,
+          message: 'A dispatcher is interested in your package. Please ensure you checkout the dispatcher\'s profile first, before approving them',
+          action_link: (isProduction) ? `https://api.koogah.com/v1/profile/courier/pv/${user.id}` : `http://localhost:4000/v1/profile/courier/pv/${user.id}`, // ensure customer is logged in
+        };
+        await Notifications.create({ ...NEW_NOTIFICATION });
         return res.status(200).json({
           status: 200,
           message: 'Your interest is acknowledged. The owner of the package will be notified shortly',
@@ -165,6 +182,9 @@ class Package {
     const { package_id } = req.params;
     const { response } = req.query;
     const { user } = req.session;
+    const NEW_NOTIFICATION = {
+      type: 'courier',
+    };
     return Promise.try(async () => {
       const _package = await Packages.findOne({
         where: {
@@ -191,17 +211,6 @@ class Package {
       }
       if (response === 'approve') {
         const date_time = new Date().toLocaleString();
-        await Packages.update({
-          dispatcher_id: _package.pending_dispatcher_id,
-          pickup_time: date_time,
-          pending_dispatcher_id: null,
-          status: 'picked-up',
-        },
-        {
-          where: {
-            package_id,
-          },
-        });
         const dispatcher = await Couriers.findOne({
           where: {
             id: _package.pending_dispatcher_id,
@@ -214,6 +223,17 @@ class Package {
             error: 'Oops, seems the dispatcher doesn\'t exists anymore...',
           });
         }
+        await Packages.update({
+          dispatcher_id: _package.pending_dispatcher_id,
+          pickup_time: date_time,
+          pending_dispatcher_id: null,
+          status: 'picked-up',
+        },
+        {
+          where: {
+            package_id,
+          },
+        });
         const number_of_pickups = dispatcher.pickups + 1;
         const number_of_pending_deliveries = dispatcher.pending + 1;
         await Couriers.update({
@@ -224,8 +244,17 @@ class Package {
             email: dispatcher.email,
           },
         });
+        NEW_NOTIFICATION.email = dispatcher.email;
+        NEW_NOTIFICATION.message = 'A customer has approved you to dispatch their package. \n Please ensure you meet them at a rather safe zone or outside their doors and/or gate';
+        NEW_NOTIFICATION.title = 'New Dispatch Approval';
+        NEW_NOTIFICATION.action_link = (isProduction) ? `https://api.koogah.com/v1/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
       }
       if (response === 'decline') {
+        const dispatcher = await Couriers.findOne({
+          where: {
+            id: _package.pending_dispatcher_id,
+          },
+        });
         await Packages.update({
           pending_dispatcher_id: null,
         },
@@ -234,12 +263,17 @@ class Package {
             package_id,
           },
         });
+        NEW_NOTIFICATION.email = dispatcher.email;
+        NEW_NOTIFICATION.message = `A customer has declined your request to dispatch their package with id: ${package_id}.`;
+        NEW_NOTIFICATION.title = 'New Dispatch Decline';
+        NEW_NOTIFICATION.action_link = (isProduction) ? `https://api.koogah.com/v1/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
       }
       const updated_package = await Packages.findOne({
         where: {
           package_id,
         },
       });
+      await Notifications.create({ ...NEW_NOTIFICATION });
       const res_message = `Successfully ${response === 'approve' ? 'approved' : 'declined'} dispatcher request`;
       return res.status(200).json({
         status: 200,
@@ -305,6 +339,19 @@ class Package {
             package_id,
           },
         });
+        const package_owner = await Customers.findOne({
+          where: {
+            id: updated_package.customer_id,
+          },
+        });
+        const NEW_NOTIFICATION = {
+          email: package_owner.email,
+          type: 'customer',
+          message: `The approved dispatcher for package with id: ${package_id} has changed the weight of the package`,
+          title: 'New weight change',
+          action_link: (isProduction) ? `https://api.koogah.com/v1/package/owner/view/${package_id}` : `http://localhost:4000/v1/package/owner/view/${package_id}`, // ensure customer is logged in
+        };
+        await Notifications.create({ ...NEW_NOTIFICATION });
         return res.status(200).json({
           status: 200,
           message: 'package weight change awaits approval from package owner',
@@ -338,6 +385,9 @@ class Package {
     const { user } = req.session;
     const { response } = req.query;
     const { package_id } = req.params;
+    const NEW_NOTIFICATION = {
+      type: 'courier',
+    };
     return Promise.try(async () => {
       const _package = await Packages.findOne({
         where: {
@@ -359,9 +409,14 @@ class Package {
       if (!_package.pending_weight || !_package.pending_delivery_price) {
         return res.status(400).json({
           status: 400,
-          error: 'Oops, seems there is not pending weight change for this package',
+          error: 'Oops, seems there is no pending weight change for this package',
         });
       }
+      const dispatcher = await Couriers.findOne({
+        where: {
+          id: _package.dispatcher_id,
+        },
+      });
       if (response === 'approve') {
         await Packages.update({
           weight: _package.pending_weight,
@@ -374,18 +429,27 @@ class Package {
             package_id,
           },
         });
+        NEW_NOTIFICATION.email = dispatcher.email;
+        NEW_NOTIFICATION.message = `A customer just approved weight change for package with id: ${package_id}`;
+        NEW_NOTIFICATION.title = 'New weight change approval';
+        NEW_NOTIFICATION.action_link = (isProduction) ? `https://api.koogah.com/v1/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
       }
       if (response === 'decline') {
         await Packages.update({
           pending_weight: null,
           pending_delivery_price: null,
         });
+        NEW_NOTIFICATION.email = dispatcher.email;
+        NEW_NOTIFICATION.message = `A customer just declined weight change for package with id: ${package_id}`;
+        NEW_NOTIFICATION.title = 'New weight change declined';
+        NEW_NOTIFICATION.action_link = (isProduction) ? `https://api.koogah.com/v1/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
       }
       const updated_package = await Packages.findOne({
         where: {
           package_id,
         },
       });
+      await Notifications.create({ ...NEW_NOTIFICATION });
       const res_message = `Successfully ${response === 'approve' ? 'approved' : 'declined'} weight change request`;
       return res.status(200).json({
         status: 200,
@@ -424,9 +488,15 @@ class Package {
         });
       }
       if (_package.dispatcher_id !== user.id) {
-        return res.status(400).json({
+        return res.status(401).json({
           status: 401,
           error: 'You are not authorized to perform this action',
+        });
+      }
+      if (_package.dropoff_time || _package.status === 'delivered') {
+        return res.status(400).json({
+          status: 400,
+          error: 'Oops, seems you have already delivered this package',
         });
       }
       const date_time = new Date().toLocaleString();
@@ -454,26 +524,165 @@ class Package {
         where: {
           package_id,
         },
+        include: [
+          {
+            model: Couriers,
+            as: 'dispatcher',
+            attributes: ['first_name', 'last_name', 'profile_image'],
+          },
+        ],
       });
-      const updated_user = await Couriers.findOne({
+      const customer = await Customers.findOne({
         where: {
-          email: user.email,
+          id: updated_package.customer_id,
         },
       });
-      const response_data = {
-        package: updated_package,
-        delivered_by: updated_user.getSafeDataValues(),
+      const NEW_NOTIFICATION = {
+        email: customer.email,
+        type: 'customer',
+        message: `The dispatcher for the package with id: ${package_id}, just marked the package as delivered`,
+        title: 'New Package Delivered',
+        action_link: (isProduction) ? `https://api.koogah.com/v1/package/owner/view/${package_id}` : `http://localhost:4000/v1/package/owner/view/${package_id}`, // ensure customer is logged in
       };
+      await Notifications.create({ ...NEW_NOTIFICATION });
       return res.status(200).json({
         status: 200,
         message: 'Package delivered successfully',
-        data: { ...response_data },
+        data: updated_package,
       });
     }).catch((err) => {
       log(err);
       return res.status(400).json({
         status: 400,
         error: err,
+      });
+    });
+  }
+
+  /**
+   * @method courier_preview_package
+   * @memberof Package
+   * @params req, res
+   * @description Couriers can preview a package they are approved to dispatch.
+   * @return JSON object
+   */
+
+  static courier_preview_package(req, res) {
+    const { user } = req.session;
+    const { package_id } = req.params;
+    return Promise.try(async () => {
+      const _package = await Packages.findOne({
+        where: {
+          package_id,
+        },
+        include: [
+          {
+            model: Customers,
+            as: 'customer',
+            attributes: ['mobile_number_one', 'mobile_number_two'],
+          },
+        ],
+      });
+      if (!_package) {
+        return res.status(404).json({
+          status: 404,
+          error: 'Package doesn\'t exists',
+        });
+      }
+      if (_package.dispatcher_id !== user.id) {
+        return res.status(404).json({
+          status: 404,
+          error: 'You are not authorized to view this package details',
+        });
+      }
+      return res.status(200).json({
+        status: 200,
+        message: 'Package retreived successfully',
+        data: _package,
+      });
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
+  }
+
+  /**
+   * @method customer_view_package
+   * @memberof Package
+   * @params req, res
+   * @description Customers can view a package they own
+   * @return JSON object
+   */
+
+  static customer_view_package(req, res) {
+    const { user } = req.session;
+    const { package_id } = req.params;
+    return Promise.try(async () => {
+      const _package = await Packages.findOne({
+        where: {
+          [Op.and]: [{ customer_id: user.id }, { package_id }],
+        },
+      });
+      if (!_package) {
+        return res.status(401).json({
+          status: 401,
+          error: 'You cannot view this package',
+        });
+      }
+      return res.status(200).json({
+        status: 200,
+        message: 'Package retreived successfully',
+        data: _package,
+      });
+    }).catch((error) => {
+      log(error);
+      return res.status(400).json({
+        status: 400,
+        error,
+      });
+    });
+  }
+
+  /**
+   * @method customer_view_all_package
+   * @memberof Package
+   * @params req, res
+   * @description Customers can view all packages they own
+   * @return JSON object
+   */
+
+  static customer_view_all_package(req, res) {
+    const { user } = req.session;
+    const { status } = req.query;
+    return Promise.try(async () => {
+      let all_packages;
+      if (!status) {
+        all_packages = await Packages.findAll({
+          where: {
+            customer_id: user.id,
+          },
+        });
+      } else {
+        all_packages = await Packages.findAll({
+          where: {
+            customer_id: user.id,
+            status,
+          },
+        });
+      }
+      return res.status(200).json({
+        status: 200,
+        message: 'All packages retreived successfully',
+        data: all_packages,
+      });
+    }).catch((error) => {
+      log(error);
+      return res.status(400).json({
+        status: 400,
+        error,
       });
     });
   }

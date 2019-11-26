@@ -19,6 +19,9 @@ const {
   dispatcher_id_schema,
   rating_schema,
   delivery_type_schema,
+  notify_id_schema,
+  profile_id_schema,
+  package_status_schema,
 } = Schema;
 
 /**
@@ -320,6 +323,64 @@ class Validate {
 
   static check_payout_amount(req, res, next) {
     const isvalid = amount_schema().validate(req.query);
+    if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      });
+    }
+    return next();
+  }
+
+  /**
+   * @method check_notify_id
+   * @description This method validates notification id
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_notify_id(req, res, next) {
+    const isvalid = notify_id_schema().validate(req.query);
+    if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      });
+    }
+    return next();
+  }
+
+  /**
+   * @method check_profile_id
+   * @description This method validates profile id
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_profile_id(req, res, next) {
+    const isvalid = profile_id_schema().validate(req.params);
+    if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      });
+    }
+    return next();
+  }
+
+
+  /**
+   * @method check_package_status
+   * @description This method validates package status
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_package_status(req, res, next) {
+    const isvalid = package_status_schema().validate(req.query);
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,

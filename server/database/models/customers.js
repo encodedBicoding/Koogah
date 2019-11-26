@@ -92,6 +92,7 @@ module.exports = (sequelize, DataTypes) => {
     referal_id: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: true,
     },
     refered_by: {
       type: DataTypes.STRING,
@@ -126,6 +127,7 @@ module.exports = (sequelize, DataTypes) => {
     Customers.hasMany(models.Packages, {
       as: 'Owner',
       foreignKey: 'customer_id',
+      onDelete: 'CASCADE',
     });
     Customers.hasMany(models.Transactions, {
       as: 'Customer',

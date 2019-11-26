@@ -3,7 +3,7 @@
 import express from 'express';
 import passport from 'passport';
 import UserController from '../controllers/users.controller';
-import checkSession, { isCustomerLoggedIn } from '../../../middlewares/session';
+import checkSession, { isCustomerLoggedIn, isCourierLoggedIn } from '../../../middlewares/session';
 import Validate from '../../../middlewares/validate';
 
 const {
@@ -17,6 +17,7 @@ const {
   signInCourier,
   signInCustomer,
   rate_a_courier,
+  sign_out,
 } = UserController;
 
 const {
@@ -50,7 +51,6 @@ userRoute.get(
 
 userRoute.get(
   '/customer/verify/email',
-  validateMobileCode,
   signUpCustomer_StepTwo,
 );
 
@@ -92,5 +92,19 @@ userRoute.put(
   check_dispatcher_id,
   check_rating,
   rate_a_courier,
+);
+userRoute.get(
+  '/customer/signout',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  sign_out,
+);
+userRoute.get(
+  '/courier/signout',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCourierLoggedIn,
+  sign_out,
 );
 export default userRoute;

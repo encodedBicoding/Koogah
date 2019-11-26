@@ -12,6 +12,9 @@ const {
   change_weight,
   approve_or_decline_weight_change,
   mark_package_as_delivered,
+  courier_preview_package,
+  customer_view_package,
+  customer_view_all_package,
 } = Package;
 
 const {
@@ -20,6 +23,7 @@ const {
   check_response,
   check_weight,
   check_delivery_type,
+  check_package_status,
 } = Validate;
 
 const packageRoute = express();
@@ -76,6 +80,31 @@ packageRoute.patch(
   isCourierLoggedIn,
   check_package_id,
   mark_package_as_delivered,
+);
+
+packageRoute.get(
+  '/preview/:package_id',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCourierLoggedIn,
+  check_package_id,
+  courier_preview_package,
+);
+packageRoute.get(
+  '/owner/view/:package_id',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  check_package_id,
+  customer_view_package,
+);
+packageRoute.get(
+  '/owner/p/all',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  check_package_status,
+  customer_view_all_package,
 );
 
 

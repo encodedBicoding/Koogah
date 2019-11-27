@@ -86,7 +86,7 @@ class Schema {
    * @memberof Schema
    * @return Joi Object
    */
-  static fintra_package_schema() {
+  static intra_package_schema() {
     return Joi.object({
       weight: Joi.string().required(),
       description: Joi.string().required(),
@@ -95,6 +95,7 @@ class Schema {
       to_town: Joi.string().required(),
       pickup_address: Joi.string().required(),
       dropoff_address: Joi.string().required(),
+      image_urls: Joi.array().required(),
     });
   }
 
@@ -112,6 +113,7 @@ class Schema {
       to_state: Joi.string().required(),
       pickup_address: Joi.string().required(),
       dropoff_address: Joi.string().required(),
+      image_urls: Joi.array().required(),
     });
   }
 
@@ -129,6 +131,7 @@ class Schema {
       to_country: Joi.string().required(),
       pickup_address: Joi.string().required(),
       dropoff_address: Joi.string().required(),
+      image_urls: Joi.array().required(),
     });
   }
 
@@ -284,6 +287,41 @@ class Schema {
   static package_status_schema() {
     return Joi.object({
       status: Joi.string().valid('picked-up', 'not-picked', 'delivered'),
+    });
+  }
+  /**
+   * @method courier_profile_update_schema
+   * @description This method return Joi object which delivers a schema for courier profile update
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static courier_profile_update_schema() {
+    return Joi.object({
+      mobile_number: Joi.string().min(10).max(11),
+      state: Joi.string(),
+      town: Joi.string(),
+      address: Joi.string(),
+      profile_image: Joi.string(),
+      account_number: Joi.string(),
+      bank_name: Joi.string(),
+    });
+  }
+  /**
+   * @method customer_profile_update_schema
+   * @description This method return Joi object which delivers a schema for courier profile update
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static customer_profile_update_schema() {
+    return Joi.object({
+      mobile_number_one: Joi.string().min(10).max(11),
+      mobile_number_two: Joi.string().min(10).max(11),
+      state: Joi.string(),
+      town: Joi.string(),
+      address: Joi.string(),
+      profile_image: Joi.string(),
     });
   }
 }

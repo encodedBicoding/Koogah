@@ -4,6 +4,10 @@ import passport from 'passport';
 import Package from '../controllers/package.controller';
 import checkSession, { isCourierLoggedIn, isCustomerLoggedIn } from '../../../middlewares/session';
 import Validate from '../../../middlewares/validate';
+import {
+  multiple_upload,
+  multipleMulter,
+} from '../helpers/upload.image';
 
 const {
   request_dispatch,
@@ -115,6 +119,14 @@ packageRoute.get(
   isCourierLoggedIn,
   check_package_status,
   courier_view_all_package,
+);
+packageRoute.put(
+  '/customer/upload/multiple',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  multipleMulter,
+  multiple_upload,
 );
 
 export default packageRoute;

@@ -132,6 +132,83 @@ class Profile {
       });
     });
   }
+
+  /**
+   * @method update_profile
+   * @memberof Profile
+   * @params req, res
+   * @description this method allows a user update their profile
+   * @return JSON object
+   */
+
+  static update_profile(req, res) {
+    const { user } = req.session;
+    const { ...data } = req.body;
+    const user_type = user.is_courier ? 'courier' : 'customer';
+    return Promise.try(async () => {
+      let USER;
+      if (user_type === 'courier') {
+        USER = await Couriers.findOne({
+          where: {
+            id: user.id,
+          },
+        });
+        if (!USER) {
+          return res.status(404).json({
+            status: 404,
+            error: 'User not found',
+          });
+        }
+        await Couriers.update({
+          ...data,
+        }, {
+          where: {
+            id: user.id,
+          },
+        });
+        USER = await Couriers.findOne({
+          where: {
+            id: user.id,
+          },
+        });
+      } else {
+        USER = await Customers.findOne({
+          where: {
+            id: user.id,
+          },
+        });
+        if (!USER) {
+          return res.status(404).json({
+            status: 404,
+            error: 'User not found',
+          });
+        }
+        await Customers.update({
+          ...data,
+        }, {
+          where: {
+            id: user.id,
+          },
+        });
+        USER = await Customers.findOne({
+          where: {
+            id: user.id,
+          },
+        });
+      }
+      return res.status(200).json({
+        status: 200,
+        message: 'Profile updated successfully',
+        data: USER.getSafeDataValues(),
+      });
+    }).catch((error) => {
+      log(error);
+      return res.status(400).json({
+        status: 400,
+        error,
+      });
+    });
+  }
 }
 
 export default Profile;

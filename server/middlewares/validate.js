@@ -22,6 +22,8 @@ const {
   notify_id_schema,
   profile_id_schema,
   package_status_schema,
+  courier_profile_update_schema,
+  customer_profile_update_schema,
 } = Schema;
 
 /**
@@ -381,6 +383,42 @@ class Validate {
 
   static check_package_status(req, res, next) {
     const isvalid = package_status_schema().validate(req.query);
+    if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      });
+    }
+    return next();
+  }
+  /**
+   * @method check_courier_profile
+   * @description This method validates courier profile update
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_courier_profile(req, res, next) {
+    const isvalid = courier_profile_update_schema().validate(req.body);
+    if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      });
+    }
+    return next();
+  }
+  /**
+   * @method check_customer_profile
+   * @description This method validates courier profile update
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_customer_profile(req, res, next) {
+    const isvalid = customer_profile_update_schema().validate(req.body);
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,

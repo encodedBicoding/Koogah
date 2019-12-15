@@ -27,7 +27,7 @@ class Notify {
       if (!isFound) {
         return res.status(404).json({
           status: 404,
-          error: `Notification with id: ${id} not found`,
+          error: `Notification with id:${id} not found`,
         });
       }
       const notification_result = await Notifications.findByPk(id);

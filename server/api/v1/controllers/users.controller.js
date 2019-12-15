@@ -6,7 +6,7 @@ import { config } from 'dotenv';
 import log from 'fancy-log';
 import Sequelize from 'sequelize';
 import {
-  Couriers, Awaitings, Customers, Packages, Notifications,
+  Couriers, Awaitings, Customers, Packages, Notifications, Reports,
 } from '../../../database/models';
 import sendSMS from '../helpers/sms';
 import gen_verify_code from '../helpers/verify.code';
@@ -849,6 +849,68 @@ class UserController {
       return res.status(400).json({
         status: 400,
         error,
+      });
+    });
+  }
+  /**
+   * @method report_customer
+   * @memberof UserController
+   * @description This method allows a courier to report a customer
+   * @params req, res
+   * @return JSON object
+   */
+
+  static report_user(req, res) {
+    // reporting user in session
+    const { user } = req.session;
+    const { id } = req.params;
+    const { report } = req.body;
+    const type = user.is_courier ? 'courier' : 'customer';
+    return Promise.try(async () => {
+      let reported_user;
+      if (type === 'courier') {
+        reported_user = await Customers.findOne({
+          where: {
+            id,
+          },
+        });
+      }
+      if (type === 'customer') {
+        reported_user = await Couriers.findOne({
+          where: {
+            id,
+          },
+        });
+      }
+      if (!reported_user) {
+        return res.status(404).json({
+          status: 404,
+          error: `No ${type === 'courier' ? 'customer' : 'courier'} found with that ID`,
+        });
+      }
+      const NEW_REPORT = {
+        email: reported_user.email,
+        first_name: reported_user.first_name,
+        last_name: reported_user.last_name,
+        type: user.is_courier ? 'customer' : 'courier',
+        report,
+        reporter_email: user.email,
+        reported_by: `${user.first_name} ${user.last_name}`,
+        reporter_type: type,
+      };
+      const report_data = await Reports.create({ ...NEW_REPORT });
+      // send a notification to Koogah email.
+      // reports@koogah.com
+      return res.status(200).json({
+        status: 200,
+        message: 'Report submitted successfully!',
+        data: report_data,
+      });
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
       });
     });
   }

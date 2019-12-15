@@ -195,8 +195,8 @@ class Payment {
       const NEW_NOTIFICATION = {
         type: 'customer',
         email: user.email,
-        message: `Your top-up of N${amount} was successfull.`,
-        title: 'New successfull topup',
+        message: `Your top-up of N${amount} was successful.`,
+        title: 'New successful topup',
       };
       await Notifications.create({ ...NEW_NOTIFICATION });
       return res.status(200).json({
@@ -268,7 +268,7 @@ class Payment {
           error: 'Oops, seems this dispatcher doesn\'t exists anymore...',
         });
       }
-      const fees = parseInt(is_package_valid.delivery_price, 10) * 0.2;
+      const fees = parseInt(is_package_valid.delivery_price, 10) * 0.25;
       const total_amount_payable = parseInt(is_package_valid.delivery_price, 10) - fees;
       const dispatcher_new_balance = parseInt(dispatcher.virtual_balance, 10) + total_amount_payable;
 

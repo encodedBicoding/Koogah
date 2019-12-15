@@ -67,33 +67,40 @@ async function multiple_upload(req, res) {
 
 async function single_upload(req, res) {
   let { file } = req;
-  // check file format
-  if (file) {
-    file = dataUri(file).content;
-    const image = new Promise((resolve, reject) => uploader.upload(file, (error, result) => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve(result);
-      }
-    })).then((result) => result)
-      .catch((error) => {
-        log(error);
-        return res.status(400).json({
-          status: 400,
-          error,
+  return Promise.try(async () => {
+    if (file) {
+      file = dataUri(file).content;
+      const image = new Promise((resolve, reject) => uploader.upload(file, (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result);
+        }
+      })).then((result) => result)
+        .catch((error) => {
+          log(error);
+          return res.status(400).json({
+            status: 400,
+            error,
+          });
         });
+      const upload = await image;
+      return res.status(200).json({
+        status: 200,
+        message: 'Image uploaded successfully',
+        data: upload,
       });
-    const upload = await image;
-    return res.status(200).json({
-      status: 200,
-      message: 'Image uploaded successfully',
-      data: upload,
+    }
+    return res.status(400).json({
+      status: 400,
+      error: 'Please upload at least one file',
     });
-  }
-  return res.status(400).json({
-    status: 400,
-    error: 'Please upload at least one file',
+  }).catch((error) => {
+    log(error);
+    return res.status(400).json({
+      status: 400,
+      error,
+    });
   });
 }
 

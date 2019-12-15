@@ -324,6 +324,18 @@ class Schema {
       profile_image: Joi.string(),
     });
   }
+
+  /**
+   * @method report_user_schema
+   * @description This method return Joi object which delivers a schema to report a user
+   * @memberof Schema
+   * @return Joi Object
+   */
+  static report_user_schema() {
+    return Joi.object({
+      report: Joi.string().required(),
+    });
+  }
 }
 
 

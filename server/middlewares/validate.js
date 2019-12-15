@@ -24,6 +24,7 @@ const {
   package_status_schema,
   courier_profile_update_schema,
   customer_profile_update_schema,
+  report_user_schema,
 } = Schema;
 
 /**
@@ -419,6 +420,25 @@ class Validate {
 
   static check_customer_profile(req, res, next) {
     const isvalid = customer_profile_update_schema().validate(req.body);
+    if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      });
+    }
+    return next();
+  }
+
+  /**
+   * @method check_report
+   * @description This method validates reports
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_report(req, res, next) {
+    const isvalid = report_user_schema().validate(req.body);
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,

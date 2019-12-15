@@ -93,6 +93,12 @@ class Package {
     const { package_id } = req.params;
     const { user } = req.session;
     return Promise.try(async () => {
+      if (user.pending > 0) {
+        return res.status(400).json({
+          status: 400,
+          error: 'You cannot pickup more packages. Please deliver the one you have pending',
+        });
+      }
       const _package = await Packages.findOne({
         where: {
           package_id,
@@ -579,7 +585,6 @@ class Package {
           {
             model: Customers,
             as: 'customer',
-            attributes: ['mobile_number_one', 'mobile_number_two'],
           },
         ],
       });
@@ -625,6 +630,12 @@ class Package {
         where: {
           [Op.and]: [{ customer_id: user.id }, { package_id }],
         },
+        include: [
+          {
+            model: Couriers,
+            as: 'dispatcher',
+          },
+        ],
       });
       if (!_package) {
         return res.status(401).json({
@@ -664,6 +675,12 @@ class Package {
           where: {
             customer_id: user.id,
           },
+          include: [
+            {
+              model: Couriers,
+              as: 'dispatcher',
+            },
+          ],
         });
       } else {
         all_packages = await Packages.findAll({
@@ -704,6 +721,12 @@ class Package {
           where: {
             dispatcher_id: user.id,
           },
+          include: [
+            {
+              model: Customers,
+              as: 'customer',
+            },
+          ],
         });
       } else {
         all_packages = await Packages.findAll({

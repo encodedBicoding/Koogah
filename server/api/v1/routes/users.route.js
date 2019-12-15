@@ -18,6 +18,7 @@ const {
   signInCustomer,
   rate_a_courier,
   sign_out,
+  report_user,
 } = UserController;
 
 const {
@@ -28,6 +29,7 @@ const {
   check_package_id,
   check_dispatcher_id,
   check_rating,
+  check_report,
 } = Validate;
 
 const userRoute = express();
@@ -93,18 +95,36 @@ userRoute.put(
   check_rating,
   rate_a_courier,
 );
-userRoute.get(
+userRoute.post(
   '/customer/signout',
   passport.authenticate('bearer', { session: false }),
   checkSession,
   isCustomerLoggedIn,
   sign_out,
 );
-userRoute.get(
+userRoute.post(
   '/courier/signout',
   passport.authenticate('bearer', { session: false }),
   checkSession,
   isCourierLoggedIn,
   sign_out,
+);
+userRoute.post(
+  '/report/customer/:id',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCourierLoggedIn,
+  check_dispatcher_id,
+  check_report,
+  report_user,
+);
+userRoute.post(
+  '/report/courier/:id',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  check_dispatcher_id,
+  check_report,
+  report_user,
 );
 export default userRoute;

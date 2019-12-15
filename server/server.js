@@ -16,6 +16,7 @@ import RateLimit from 'express-rate-limit';
 import enforce from 'express-sslify';
 import RedisStore from 'rate-limit-redis';
 import morgan from 'morgan';
+import http from 'http';
 import client from './redis/redis.client';
 import RouteV1 from './api/v1/routes';
 import Auth from './middlewares/auth';
@@ -38,6 +39,7 @@ const corsOption = {
 config();
 
 const app = express();
+const server = http.createServer(app);
 const SessionStore = connectRedis(session);
 app.enable('trust proxy');
 
@@ -131,7 +133,7 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   if (!isProduction) log(`App running on port ${PORT}`);
 });
 

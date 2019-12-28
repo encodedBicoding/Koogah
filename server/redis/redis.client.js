@@ -12,6 +12,9 @@ if (isProduction) {
 }
 if (process.env.NODE_ENV === 'test') {
   console.log(process.env.REDIS_URL_TEST);
+  if (process.env.REDIS_URL_TEST) {
+    client = redis.createClient(process.env.REDIS_URL_TEST);
+  }
   client = redis.createClient(6379);
 }
 if (process.env.NODE_ENV === 'development') {

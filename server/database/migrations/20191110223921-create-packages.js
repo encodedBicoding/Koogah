@@ -22,6 +22,9 @@ module.exports = {
     pending_weight: {
       type: Sequelize.STRING,
     },
+    image_urls: {
+      type: Sequelize.ARRAY(Sequelize.TEXT),
+    },
     distance: {
       type: Sequelize.STRING,
     },

@@ -24,6 +24,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
     },
+    image_urls: {
+      type: DataTypes.ARRAY(DataTypes.TEXT),
+      allowNull: true,
+    },
     distance: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -105,11 +109,12 @@ module.exports = (sequelize, DataTypes) => {
     // associations can be defined here
     Packages.belongsTo(models.Customers, {
       foreignKey: 'customer_id',
+      as: 'customer',
     });
 
     Packages.belongsTo(models.Couriers, {
       foreignKey: 'dispatcher_id',
-      as: 'Delivery',
+      as: 'dispatcher',
     });
   };
   return Packages;

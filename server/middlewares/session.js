@@ -19,7 +19,8 @@ const checkSession = function checkSession(req, res, next) {
   }
   return Promise.try(async () => {
     const request_payload = await jwt.verify(token);
-    return client.get(`${request_payload.email}`, async (err, result) => {
+    const user_type = request_payload.is_courier ? 'COURIER' : 'CUSTOMER';
+    return client.get(`${request_payload.email}:${user_type}`, async (err, result) => {
       try {
         if (result) {
           const current_token = result;
@@ -70,6 +71,12 @@ export const isCourierLoggedIn = function isCourierLoggedIn(req, res, next) {
       status: 401,
       error: 'Cannot perform this action until your account is approved by our team',
     });
+    if (!payload.is_courier) {
+      return res.status(401).json({
+        status: 401,
+        error: 'You are not allowed to access this resource',
+      });
+    }
     delete req.session.user.token;
     req.session.user = isFound.getSafeDataValues();
     return next();
@@ -96,6 +103,12 @@ export const isCustomerLoggedIn = function isCustomerLoggedIn(req, res, next) {
       error: 'Cannot perform this action until you have verified your account. Please check your email for a verification link sent to you, or',
       resend_link: (isProduction) ? `https://koogah.herokuapp.com/v1/user/customer/verify/email?key=${isFound.verify_token}&code=CUSTOMER` : `http://localhost:4000/v1/user/customer/verify/email?key=${isFound.verify_token}&code=CUSTOMER`,
     });
+    if (payload.is_courier) {
+      return res.status(401).json({
+        status: 401,
+        error: 'You are not allowed to access this resource',
+      });
+    }
     delete req.session.user.token;
     req.session.user = isFound.getSafeDataValues();
     return next();

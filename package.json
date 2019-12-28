@@ -4,7 +4,7 @@
   "description": "",
   "main": "./server/server.js",
   "scripts": {
-    "test": "export NODE_ENV=test && nyc mocha --timeout 10000 --require @babel/register server/api/v1/tests/* --exit",
+    "test": "export NODE_ENV=test && npm run seed:undo && npm run seed && nyc mocha --timeout 10000 --require @babel/register server/api/v1/tests/* --exit",
     "test:package": "export NODE_ENV=test && nyc mocha --timeout 10000 --require @babel/register server/api/v1/tests/package.test.js --exit",
     "pretest": "export NODE_ENV=test && npm run migrate:undo && npm run migrate && npm run seed:undo && npm run seed",
     "start:dev": "export NODE_ENV=development && nodemon --exec babel-node ./server/server.js",
@@ -24,9 +24,11 @@
     "babel-polyfill": "^6.26.0",
     "bcrypt": "^3.0.6",
     "body-parser": "^1.19.0",
+    "cloudinary": "^1.17.0",
     "compression": "^1.7.4",
     "connect-redis": "^4.0.3",
     "cors": "^2.8.5",
+    "datauri": "^2.0.0",
     "dotenv": "^8.2.0",
     "errorhandler": "^1.5.1",
     "express": "^4.17.1",
@@ -38,6 +40,7 @@
     "helmet": "^3.21.2",
     "jsonwebtoken": "^8.5.1",
     "morgan": "^1.9.1",
+    "multer": "^1.4.2",
     "node-fetch": "^2.6.0",
     "passport": "^0.4.0",
     "passport-http-bearer": "^1.0.1",
@@ -49,7 +52,8 @@
     "sequelize": "^5.21.2",
     "sequelize-cli": "^5.5.1",
     "sinon": "^7.5.0",
-    "uuid": "^3.3.3"
+    "uuid": "^3.3.3",
+    "ws": "^7.2.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.6.4",

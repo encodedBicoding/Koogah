@@ -95,6 +95,7 @@ class Schema {
       to_town: Joi.string().required(),
       pickup_address: Joi.string().required(),
       dropoff_address: Joi.string().required(),
+      image_urls: Joi.array().required(),
     });
   }
 
@@ -112,6 +113,7 @@ class Schema {
       to_state: Joi.string().required(),
       pickup_address: Joi.string().required(),
       dropoff_address: Joi.string().required(),
+      image_urls: Joi.array().required(),
     });
   }
 
@@ -129,6 +131,7 @@ class Schema {
       to_country: Joi.string().required(),
       pickup_address: Joi.string().required(),
       dropoff_address: Joi.string().required(),
+      image_urls: Joi.array().required(),
     });
   }
 
@@ -191,7 +194,6 @@ class Schema {
    */
   static top_up_amount_schema_two() {
     return Joi.object({
-      amount: Joi.string().required(),
       reference: Joi.string().required(),
     });
   }
@@ -206,9 +208,7 @@ class Schema {
 
   static pay_dispatcher_schema() {
     return Joi.object({
-      dispatcher_id: Joi.number().integer().required(),
       package_id: Joi.string().required(),
-      delivery_price: Joi.string().required(),
     });
   }
 
@@ -250,6 +250,90 @@ class Schema {
   static rating_schema() {
     return Joi.object({
       rating: Joi.string().valid('1', '2', '3', '4', '5').required(),
+    });
+  }
+
+  /**
+   * @method notify_id_schema
+   * @description This method return Joi object which delivers a schema for notifying a user
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static notify_id_schema() {
+    return Joi.object({
+      id: Joi.number().required(),
+    });
+  }
+  /**
+   * @method profile_id_schema
+   * @description This method return Joi object which delivers a schema for user profile
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static profile_id_schema() {
+    return Joi.object({
+      id: Joi.number().required(),
+    });
+  }
+
+  /**
+   * @method package_status_schema
+   * @description This method return Joi object which delivers a schema for package status
+   * @memberof Schema
+   * @return Joi Object
+   */
+  static package_status_schema() {
+    return Joi.object({
+      status: Joi.string().valid('picked-up', 'not-picked', 'delivered'),
+    });
+  }
+  /**
+   * @method courier_profile_update_schema
+   * @description This method return Joi object which delivers a schema for courier profile update
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static courier_profile_update_schema() {
+    return Joi.object({
+      mobile_number: Joi.string().min(10).max(11),
+      state: Joi.string(),
+      town: Joi.string(),
+      address: Joi.string(),
+      profile_image: Joi.string(),
+      account_number: Joi.string(),
+      bank_name: Joi.string(),
+    });
+  }
+  /**
+   * @method customer_profile_update_schema
+   * @description This method return Joi object which delivers a schema for courier profile update
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static customer_profile_update_schema() {
+    return Joi.object({
+      mobile_number_one: Joi.string().min(10).max(11),
+      mobile_number_two: Joi.string().min(10).max(11),
+      state: Joi.string(),
+      town: Joi.string(),
+      address: Joi.string(),
+      profile_image: Joi.string(),
+    });
+  }
+
+  /**
+   * @method report_user_schema
+   * @description This method return Joi object which delivers a schema to report a user
+   * @memberof Schema
+   * @return Joi Object
+   */
+  static report_user_schema() {
+    return Joi.object({
+      report: Joi.string().required(),
     });
   }
 }

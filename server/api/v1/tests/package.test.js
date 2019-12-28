@@ -115,6 +115,7 @@ describe('Handle package tests', () => {
           to_town: 'ojota',
           pickup_address: '17 oyebola street ojota lagos',
           dropoff_address: '25 kujore street ojota lagos',
+          image_urls: ['image.jpg'],
         })
         .end((err, res) => {
           expect(res.statusCode).to.equal(200);
@@ -136,6 +137,7 @@ describe('Handle package tests', () => {
           to_town: 'ojota',
           pickup_address: '17 oyebola street ojota lagos',
           dropoff_address: '25 kujore street ojota lagos',
+          image_urls: ['image.jpg'],
         })
         .end((err, res) => {
           expect(res.statusCode).to.equal(401);
@@ -268,7 +270,7 @@ describe('Handle package tests', () => {
         });
     });
   });
-  describe('Hanlde pending dispatches', () => {
+  describe('Handle pending dispatches', () => {
     before('create a new package', (done) => {
       chai.request(app)
         .post(`${KoogahURLV1}/intra`)
@@ -283,6 +285,7 @@ describe('Handle package tests', () => {
           to_town: 'ojota',
           pickup_address: '17 oyebola street ojota lagos',
           dropoff_address: '25 kujore street ojota lagos',
+          image_urls: ['https://image1', 'https://image2'],
         })
         .end((err, res) => {
           package_id = res.body.package_detail.package_id;

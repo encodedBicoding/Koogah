@@ -16,6 +16,7 @@ import RateLimit from 'express-rate-limit';
 import enforce from 'express-sslify';
 import RedisStore from 'rate-limit-redis';
 import morgan from 'morgan';
+import WebSocket from 'ws';
 import http from 'http';
 import client from './redis/redis.client';
 import RouteV1 from './api/v1/routes';
@@ -131,6 +132,13 @@ process.on('uncaughtException', (error) => {
   // More work to be done here
   // you should send DevOps the stack error via mail and/or sms
   process.exit(1);
+});
+// wss (Websockets)
+
+const wss = new WebSocket.Server({ server });
+
+wss.on('open', () => {
+  log('Connection created');
 });
 
 server.listen(PORT, () => {

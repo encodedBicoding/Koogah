@@ -31,7 +31,7 @@ module.exports = {
         deliveries: 3,
         account_number: '2234849553',
         bank_name: 'uba',
-        pending: 1,
+        pending: 0,
         is_approved: true,
         last_payout: 3000.00,
         total_payouts: 7000.00,

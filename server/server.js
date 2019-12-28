@@ -16,7 +16,6 @@ import RateLimit from 'express-rate-limit';
 import enforce from 'express-sslify';
 import RedisStore from 'rate-limit-redis';
 import morgan from 'morgan';
-import WebSocket from 'ws';
 import client from './redis/redis.client';
 import RouteV1 from './api/v1/routes';
 import Auth from './middlewares/auth';

@@ -17,7 +17,6 @@ import enforce from 'express-sslify';
 import RedisStore from 'rate-limit-redis';
 import morgan from 'morgan';
 import WebSocket from 'ws';
-import http from 'http';
 import client from './redis/redis.client';
 import RouteV1 from './api/v1/routes';
 import Auth from './middlewares/auth';
@@ -40,7 +39,6 @@ const corsOption = {
 config();
 
 const app = express();
-const server = http.createServer(app);
 const SessionStore = connectRedis(session);
 app.enable('trust proxy');
 
@@ -133,15 +131,8 @@ process.on('uncaughtException', (error) => {
   // you should send DevOps the stack error via mail and/or sms
   process.exit(1);
 });
-// wss (Websockets)
 
-const wss = new WebSocket.Server({ server });
-
-wss.on('open', () => {
-  log('Connection created');
-});
-
-server.listen(PORT, () => {
+app.listen(PORT, () => {
   if (!isProduction) log(`App running on port ${PORT}`);
 });
 

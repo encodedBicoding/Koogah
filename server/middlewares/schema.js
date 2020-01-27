@@ -16,9 +16,11 @@ class Schema {
    */
   static courierSignupSchema() {
     return Joi.object({
-      first_name: Joi.string().min(3).max(30).required(),
-      last_name: Joi.string().min(3).max(30).required(),
-      email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
+      first_name: Joi.string().trim().min(3).max(30)
+        .required(),
+      last_name: Joi.string().trim().min(3).max(30)
+        .required(),
+      email: Joi.string().trim().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
       password: Joi.string().pattern(/^[a-zA-Z0-9]{3,30}$/).required(),
       repeat_password: Joi.ref('password'),
       mobile_number: Joi.string().min(10).max(11).required(),
@@ -321,7 +323,7 @@ class Schema {
       state: Joi.string(),
       town: Joi.string(),
       address: Joi.string(),
-      profile_image: Joi.string(),
+      profile_image: Joi.string().allow(null, ''),
     });
   }
 

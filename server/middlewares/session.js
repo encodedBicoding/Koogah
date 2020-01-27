@@ -37,7 +37,7 @@ const checkSession = function checkSession(req, res, next) {
           req.session.user.token = token;
           return next();
         }
-        return res.status(400).json({
+        return res.status(401).json({
           status: 401,
           error: 'Not Authorized. Please contact support on support@koogah.com',
         });

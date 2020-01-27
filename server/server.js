@@ -20,7 +20,11 @@ import client from './redis/redis.client';
 import RouteV1 from './api/v1/routes';
 import Auth from './middlewares/auth';
 
-const accepted_urls = ['https://koogah.com', 'https://website_2.com'];
+const accepted_urls = [
+  'https://koogah.com',
+  'http://localhost:8081',
+  'http://10.0.2.2:8081',
+];
 
 const { bearerStrategy } = Auth;
 

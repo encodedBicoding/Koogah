@@ -30,6 +30,7 @@ const {
   check_dispatcher_id,
   check_rating,
   check_report,
+  check_profile_id,
 } = Validate;
 
 const userRoute = express();
@@ -114,7 +115,7 @@ userRoute.post(
   passport.authenticate('bearer', { session: false }),
   checkSession,
   isCourierLoggedIn,
-  check_dispatcher_id,
+  check_profile_id,
   check_report,
   report_user,
 );
@@ -123,7 +124,7 @@ userRoute.post(
   passport.authenticate('bearer', { session: false }),
   checkSession,
   isCustomerLoggedIn,
-  check_dispatcher_id,
+  check_profile_id,
   check_report,
   report_user,
 );

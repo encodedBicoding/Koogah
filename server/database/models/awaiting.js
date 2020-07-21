@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes) => {
   const Awaiting = sequelize.define('Awaitings', {
     first_name: DataTypes.STRING,
     last_name: DataTypes.STRING,
+    bvn: DataTypes.STRING,
     user_email: DataTypes.STRING,
     mobile_number: DataTypes.STRING,
     sex: DataTypes.STRING,

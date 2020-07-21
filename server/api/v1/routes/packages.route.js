@@ -20,6 +20,7 @@ const {
   customer_view_package,
   customer_view_all_package,
   courier_view_all_package,
+  courier_view_packages_in_marketplace
 } = Package;
 
 const {
@@ -120,6 +121,13 @@ packageRoute.get(
   check_package_status,
   courier_view_all_package,
 );
+packageRoute.get(
+  '/courier/marketplace',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCourierLoggedIn,
+  courier_view_packages_in_marketplace,
+)
 packageRoute.put(
   '/customer/upload/multiple',
   passport.authenticate('bearer', { session: false }),

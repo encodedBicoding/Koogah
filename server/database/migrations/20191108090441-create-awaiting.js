@@ -10,6 +10,9 @@ module.exports = {
     first_name: {
       type: Sequelize.STRING,
     },
+    bvn: {
+      type: Sequelize.STRING,
+    },
     last_name: {
       type: Sequelize.STRING,
     },

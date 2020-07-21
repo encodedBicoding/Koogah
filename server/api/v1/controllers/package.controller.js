@@ -42,6 +42,7 @@ class Package {
     return Promise.try(async () => fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${checkType('from', data, type)}&destinations=${checkType('to', data, type)}&key=${process.env.GOOGLE_API_KEY}`)
       .then((resp) => resp.json())
       .then(async (result) => {
+        console.log(result)
         const distance_in_km = result.rows[0].elements[0].distance.text;
         const distance = Math.ceil(parseInt(distance_in_km.split(' ')[0].replace(',', ''), 10));
         const delivery_price = calc_delivery_price(type, weight, distance);
@@ -229,6 +230,13 @@ class Package {
             error: 'Oops, seems the dispatcher doesn\'t exists anymore...',
           });
         }
+        if (dispatcher.pickups > 0) {
+          return res.status(401).json({
+            status: 401,
+            error: `Oops cannot select dispatcher\n${dispatcher.first_name}${' '}${dispatcher.last_name} already dispatches for another customer`,
+          });
+        }
+
         await Packages.update({
           dispatcher_id: _package.pending_dispatcher_id,
           pickup_time: date_time,
@@ -749,6 +757,107 @@ class Package {
       });
     });
   }
+
+  /**
+   * @method courier_view_marketplace
+   * @memberof Package
+   * @params req, res
+   * @description Couriers can view all packages in the market place
+   * @return JSON object
+   */
+
+   static courier_view_packages_in_marketplace(req, res) {
+     return Promise.try( async () => {
+       const { user } = req.session;
+       let { from, state, to, dispatch_type } = req.query;
+       if (!state) {
+        state = user.state
+       }
+       if (!from) {
+         from = user.town
+       }
+       let all_package_in_marketplace;
+
+       if (!dispatch_type) {
+         dispatch_type = 'intra-state'
+       }
+
+       if (dispatch_type === 'intra-state') {
+        if (!to) { 
+          all_package_in_marketplace = await Packages.findAll({
+            where: {
+              from_state: state,
+              to_state: state,
+              from_town: from,
+              type_of_dispatch: dispatch_type
+            }
+          })
+         }
+        else {
+          all_package_in_marketplace = await Packages.findAll({
+            where: {
+              from_state: state,
+              to_state: state,
+              from_town: from,
+              to_town: to,
+              type_of_dispatch: dispatch_type
+            }
+          })
+        }
+       }
+
+       if (dispatch_type === 'inter-state') {
+         if (!to) {
+            all_package_in_marketplace = await Packages.findAll({
+              where: {
+                type_of_dispatch: dispatch_type,
+                from_state: from,
+              }
+            })
+         } else {
+          all_package_in_marketplace = await Packages.findAll({
+            where: {
+              type_of_dispatch: dispatch_type,
+              from_state: from,
+              to_state: to
+            }
+          })
+         }
+       }
+
+       if (dispatch_type === 'international') {
+         if(!to) {
+           all_package_in_marketplace = await Packages.findAll({
+             where: {
+               type_of_dispatch: dispatch_type,
+               from_country:  from
+             }
+           })
+         } else {
+          all_package_in_marketplace = await Packages.findAll({
+            where: {
+              type_of_dispatch: dispatch_type,
+              from_country:  from,
+              to_country: to
+            }
+          })
+         }
+       }
+
+       return res.status(200).json({
+         status: 200,
+         message: 'package retrieved successfully',
+         data: all_package_in_marketplace
+       })
+     }).catch((error) => {
+      log(error);
+      return res.status(400).json({
+        status: 400,
+        error,
+      });
+     })
+   }
 }
+
 
 export default Package;

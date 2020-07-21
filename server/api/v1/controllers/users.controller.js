@@ -128,71 +128,69 @@ class UserController {
    */
 
   static async signUpCourier_StepTwo(req, res) {
-    const { key } = req.query;
-    const payload = await jwt.verify(key);
-    if (!payload) {
-      return res.status(400).json({
-        status: 400,
-        error: 'Invalid Token, Please contact our support team to lay any complains. mailto::support@koogah.com',
+    return Promise.try( async () => {
+      const { key } = req.query;
+      const payload = await jwt.verify(key);
+      if (!payload) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Invalid Token, Please contact our support team to lay any complains. mailto::support@koogah.com',
+        });
+      }
+  
+      const verifying_user = await Couriers.findOne({
+        where: {
+          [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
+        },
       });
-    }
+  
+      if (!verifying_user) {
+        return res.status(404).json({
+          status: 404,
+          error: 'You currently cannot perform this action. Please contact our help support and report the scenerio to them. mailto:support@koogah.com',
+        });
+      }
+      const MOBILE_VERIFY_CODE = gen_verify_code();
 
-    const verifying_user = await Couriers.findOne({
-      where: {
-        [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
-      },
-    });
+      const SMS_MESSAGE = `Your verification code is: \n${MOBILE_VERIFY_CODE}`;
+  
+      const MOBILE_REDIRECT_LINK = `https://mobile_redirect_link?key=${key}&live=${!!key}`;
+  
+      // this function should redirect the user to the Mobile App page for Couriers
+      // That contains the form so they can insert the code sent to their mobile phones
+      if (!verifying_user.verify_token) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Oops, seems you have already verified your email and mobile number.',
+        });
+      }
 
-    if (!verifying_user) {
-      return res.status(404).json({
-        status: 404,
-        error: 'You currently cannot perform this action. Please contact our help support and report the scenerio to them. mailto:support@koogah.com',
-      });
-    }
-
-    if (!verifying_user.verify_token) {
-      return res.status(400).json({
-        status: 400,
-        error: 'Oops, seems you have already verified your email and mobile number.',
-      });
-    }
-
-    const MOBILE_VERIFY_CODE = gen_verify_code();
-
-    const SMS_MESSAGE = `Your verification code is: \n${MOBILE_VERIFY_CODE}`;
-
-    const MOBILE_REDIRECT_LINK = `https://mobile_redirect_link?key=${key}&live=${!!key}`;
-
-    // this function should redirect the user to the Mobile App page
-    // That contains the form so they can insert the code sent to their mobile phones
-
-    return Promise.all(
-      [
-        sendSMS(payload.mobile_number, SMS_MESSAGE),
-        Couriers.update(
-          {
-            verification_code: MOBILE_VERIFY_CODE,
+      await sendSMS(payload.mobile_number, SMS_MESSAGE);
+      await Couriers.update(
+        {
+          verification_code: MOBILE_VERIFY_CODE,
+        },
+        {
+          where: {
+            [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
           },
-          {
-            where: {
-              [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
-            },
-          },
-        ),
-      ],
-    ).then((result) => Promise.resolve(result))
-      .then(() => res.status(200).json({
+        },
+      );
+
+        
+      return res.status(200).json({
         status: 200,
         message: 'Please insert the verification code sent to the mobile number you provided on registeration',
         mobile: MOBILE_REDIRECT_LINK,
-      }))
-      .catch((err) => {
-        log(err);
+      })
+
+    }).catch((err) => {
+      log(err);
         return res.status(400).json({
           status: 400,
           error: err,
         });
-      });
+    })
   }
 
   /**

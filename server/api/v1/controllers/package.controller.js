@@ -786,21 +786,25 @@ class Package {
         if (!to) { 
           all_package_in_marketplace = await Packages.findAll({
             where: {
-              from_state: state,
-              to_state: state,
-              from_town: from,
-              type_of_dispatch: dispatch_type
+              [Op.and]: [
+                  { from_state: state }, 
+                  { to_state: state },
+                  { from_town: from },
+                  { type_of_dispatch: dispatch_type }
+                ]
             }
           })
          }
         else {
           all_package_in_marketplace = await Packages.findAll({
             where: {
-              from_state: state,
-              to_state: state,
-              from_town: from,
-              to_town: to,
-              type_of_dispatch: dispatch_type
+              [Op.and]: [
+                  { from_state: state }, 
+                  { to_state: state },
+                  { from_town: from },
+                  { to_town: to},
+                  { type_of_dispatch: dispatch_type }
+                ]
             }
           })
         }
@@ -810,16 +814,20 @@ class Package {
          if (!to) {
             all_package_in_marketplace = await Packages.findAll({
               where: {
-                type_of_dispatch: dispatch_type,
-                from_state: from,
+                [Op.and]: [
+                    { from_state: from }, 
+                    { type_of_dispatch: dispatch_type }
+                  ]
               }
             })
          } else {
           all_package_in_marketplace = await Packages.findAll({
             where: {
-              type_of_dispatch: dispatch_type,
-              from_state: from,
-              to_state: to
+              [Op.and]: [
+                  { from_state: from }, 
+                  { to_state: to },
+                  { type_of_dispatch: dispatch_type }
+                ]
             }
           })
          }
@@ -829,16 +837,20 @@ class Package {
          if(!to) {
            all_package_in_marketplace = await Packages.findAll({
              where: {
-               type_of_dispatch: dispatch_type,
-               from_country:  from
-             }
+              [Op.and]: [
+                  { from_country: from }, 
+                  { type_of_dispatch: dispatch_type }
+                ]
+            }
            })
          } else {
           all_package_in_marketplace = await Packages.findAll({
             where: {
-              type_of_dispatch: dispatch_type,
-              from_country:  from,
-              to_country: to
+              [Op.and]: [
+                  { from_country: from }, 
+                  { type_of_dispatch: dispatch_type },
+                  { to_country: to}
+                ]
             }
           })
          }

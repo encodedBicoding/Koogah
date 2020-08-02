@@ -100,7 +100,7 @@ userRoute.put(
   '/courier/rate/:customer_id/:package_id',
   passport.authenticate('bearer', { session: false }),
   checkSession,
-  isCustomerLoggedIn,
+  isCourierLoggedIn,
   check_customer_rating_params,
   check_rating,
   rate_a_customer,

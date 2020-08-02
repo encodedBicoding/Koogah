@@ -251,7 +251,7 @@ class Schema {
   static courier_rating_schema_params() {
     return Joi.object({
       dispatcher_id: Joi.number().required(),
-      package_id: Joi.number().required(),
+      package_id: Joi.string().required(),
     });
   }
      /**
@@ -264,7 +264,7 @@ class Schema {
   static customer_rating_schema_params() {
     return Joi.object({
       customer_id: Joi.number().required(),
-      package_id: Joi.number().required(),
+      package_id: Joi.string().required(),
     });
   }
 

@@ -98,6 +98,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    pickup_decline_cause: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    }
   },
   {
     underscored: true,

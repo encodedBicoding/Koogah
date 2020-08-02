@@ -8,3 +8,6 @@ io.on('connect', (socket) => {
   console.log(socket)
   socket.emit('connection', 'Connected to Koogah servers')
 })
+
+
+export default io;

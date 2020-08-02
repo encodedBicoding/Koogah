@@ -20,7 +20,8 @@ const {
   customer_view_package,
   customer_view_all_package,
   courier_view_all_package,
-  courier_view_packages_in_marketplace
+  courier_view_packages_in_marketplace,
+  declinePickup
 } = Package;
 
 const {
@@ -30,6 +31,8 @@ const {
   check_weight,
   check_delivery_type,
   check_package_status,
+  check_decline_pickup_body,
+  check_decline_pickup_query
 } = Validate;
 
 const packageRoute = express();
@@ -127,6 +130,16 @@ packageRoute.get(
   checkSession,
   isCourierLoggedIn,
   courier_view_packages_in_marketplace,
+)
+
+packageRoute.post(
+  '/courier/pickup/decline',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCourierLoggedIn,
+  check_decline_pickup_query,
+  check_decline_pickup_body,
+  declinePickup
 )
 packageRoute.put(
   '/customer/upload/multiple',

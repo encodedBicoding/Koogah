@@ -11,7 +11,11 @@ import {
 import sendSMS from '../helpers/sms';
 import gen_verify_code from '../helpers/verify.code';
 import jwt from '../helpers/jwt';
-import sendMail, { createVerificationMail, createCourierApprovalMail } from '../helpers/mail';
+import sendMail, { 
+    createVerificationMail, 
+    createCourierApprovalMail,
+    createApprovalMailToCourier
+  } from '../helpers/mail';
 import client from '../../../redis/redis.client';
 import generate_ref from '../helpers/ref.id';
 
@@ -250,7 +254,7 @@ class UserController {
       is_courier: verifying_user.is_courier,
     };
 
-    const APPROVAL_TOKEN = await jwt.sign(payload, '1440h');
+    const APPROVAL_TOKEN = await jwt.sign(payload, '9000h');
     const APPROVAL_LINK = (isProduction) ? `https://koogah.herokuapp.com/v1/user/approved/welcome?key=${APPROVAL_TOKEN}&code=APPROVED` : `http://localhost:4000/v1/user/approved/welcome?key=${APPROVAL_TOKEN}&code=APPROVED`;
 
     const AWAITING_USER_OBJ = {
@@ -305,7 +309,7 @@ class UserController {
 
   /**
    * @method signUpCourier_StepFour
-   * @description This method approves a courier and sets them up to use the app.
+   * @description This method approves a courier and sets them up to use the app. Admin Endpoint
    * @memberof UserController
    * @params req, res
    * @return JSON object
@@ -319,7 +323,7 @@ class UserController {
     if (!payload) {
       return res.status(400).json({
         status: 400,
-        error: 'Invalid Token, Please contact our support team to lay any complains. mailto::support@koogah.com',
+        error: 'Oops, seems this token has expired',
       });
     }
 
@@ -332,20 +336,16 @@ class UserController {
     if (!isFound) {
       return res.status(404).json({
         status: 404,
-        error: 'You currently cannot perform this action. Please contact our help support and report the scenerio to them. mailto:support@koogah.com',
+        error: 'This user doesn\t exists anymore',
       });
     }
 
     if (!isFound.approval_code) {
       return res.status(400).json({
         status: 400,
-        error: 'Oops, seems you are already approved by our team',
+        error: 'Oops, seems this user has already been approved.',
       });
     }
-    const { iat, exp, ...data } = payload;
-    const SESSION_TOKEN = await jwt.sign({
-      ...data,
-    });
 
     return Promise.all(
       [
@@ -370,24 +370,40 @@ class UserController {
       ],
     )
       .then(async () => {
-        const approved_user = await Couriers.findOne({
-          where: {
-            email: payload.email,
-          },
-        });
-        client.set(`${approved_user.email}:COURIER`, SESSION_TOKEN);
-        const user = {
-          ...approved_user.getSafeDataValues(),
-          token: SESSION_TOKEN,
-        };
-        // this should redirect the user to their dashboard on the mobile platform
-        // for their device
+        try{
+          const approved_user = await Couriers.findOne({
+            where: {
+              email: payload.email,
+            },
+          });
+          const user = {
+            ...approved_user.getSafeDataValues(),
+            token: SESSION_TOKEN,
+          };
+          // send original courier a mail, telling them they have been approved.
+        let APPROVED_USER_OBJ = {
+          first_name: user.first_name,
+          user_email: user.email,
+          last_name: user.last_name
+        }
+        const msg_obj = createApprovalMailToCourier(APPROVED_USER_OBJ);
+        await sendMail(msg_obj);
+
         res.status(200).json({
           status: 200,
           message: 'Account approved successfully',
           user,
 
         });
+
+        }catch(err){
+          log(err);
+          return res.status(400).json({
+            status: 400,
+            error: err,
+          });
+        }
+
       })
       .catch((err) => {
         log(err);
@@ -624,6 +640,7 @@ class UserController {
           verification_code: null,
           verify_token: null,
           is_verified: true,
+          is_active: true,
         },
         {
           where: {

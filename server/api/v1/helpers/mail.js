@@ -181,3 +181,44 @@ export const createCourierApprovalMail = function createCourierApprovalMail(user
 
   return msg_obj;
 };
+
+export const createApprovalMailToCourier = function sendApprovalMailToCourier(userObj) {
+  let { first_name, user_email, last_name } = userObj;
+  first_name = toSentenceCase.call(null, first_name);
+  last_name = toSentenceCase.call(null, last_name);
+  let html;
+
+  html = `
+      <table width='100%' cellspacing='0' cellpadding='0'>
+        <tr>
+          <td>
+            <table>
+              <tr>
+                <td>
+                  <div>
+                      <h2>Congratulations ${first_name} ${last_name}</h2>
+                      <p>You have been approved as a dispatcher on the Koogah platform. You may now login to your account to begin dispatching goods and/or services for customers within the application.</p>
+                      <p>Always remember, the better ratings you get, the higher your chances of getting approval by customers to dispatch for them. We honestly hope you get the most from this platform. Welcome once more.</p>
+                  </div>
+                  <section style='margin-top: 10%'>
+                    <p style='font-size: 50%; text-align: center;'>
+                    This message was sent to ${first_name} ${last_name} (${user_email}) regarding your request to join ${app.get('title')} as a Dispatcher<br />
+
+                    </p>
+                   </section>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+  `
+
+  let msgObj = {
+    to: email,
+    from: 'noreply@koogah.com',
+    subject: 'Approval notice - Welcome to Koogah'
+  }
+
+  return msgObj
+}

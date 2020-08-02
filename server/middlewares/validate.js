@@ -25,6 +25,8 @@ const {
   courier_profile_update_schema,
   customer_profile_update_schema,
   report_user_schema,
+  rating_schema_params,
+  decline_pickup_body_schema
 } = Schema;
 
 /**
@@ -277,7 +279,23 @@ class Validate {
     }
     return next();
   }
-
+ /**
+   * @method check_rating_params
+   * @description This method validates rating
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+  static check_rating_params(req, res, next) {
+    const isvalid = rating_schema_params().validate(req.params);
+    if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      });
+    }
+    return next();
+  }
   /**
    * @method check_rating
    * @description This method validates rating
@@ -287,7 +305,7 @@ class Validate {
    */
 
   static check_rating(req, res, next) {
-    const isvalid = rating_schema().validate(req.params);
+    const isvalid = rating_schema().validate(req.body);
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
@@ -447,6 +465,44 @@ class Validate {
     }
     return next();
   }
+
+  /**
+   * @method check_decline_pickup_query
+   * @description This method validates decline pickup body
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_decline_pickup_query(req, res, next) {
+    const isvalid = package_id_schema().validate(req.query);
+    if (isvalid.hasOwnProperty('error')) {
+     return res.status(400).json({
+       status: 400,
+       error: isvalid.error.details,
+     });
+   }
+   return next();
+  }
+
+   /**
+   * @method check_decline_pickup_body
+   * @description This method validates decline pickup body
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+   static check_decline_pickup_body(req, res, next) {
+     const isvalid = decline_pickup_body_schema().validate(req.body);
+     if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      });
+    }
+    return next();
+   }
 }
 
 export default Validate;

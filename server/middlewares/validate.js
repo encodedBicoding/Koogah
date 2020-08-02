@@ -25,7 +25,8 @@ const {
   courier_profile_update_schema,
   customer_profile_update_schema,
   report_user_schema,
-  rating_schema_params,
+  courier_rating_schema_params,
+  customer_rating_schema_params,
   decline_pickup_body_schema
 } = Schema;
 
@@ -280,14 +281,32 @@ class Validate {
     return next();
   }
  /**
-   * @method check_rating_params
+   * @method check_courier_rating_params
    * @description This method validates rating
    * @memberof Validate
    * @param {req, res, next}
    * @return next
    */
-  static check_rating_params(req, res, next) {
-    const isvalid = rating_schema_params().validate(req.params);
+  static check_courier_rating_params(req, res, next) {
+    const isvalid = courier_rating_schema_params().validate(req.params);
+    if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      });
+    }
+    return next();
+  }
+
+  /**
+   * @method check_customer_rating_params
+   * @description This method validates rating
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+  static check_customer_rating_params(req, res, next) {
+    const isvalid = customer_rating_schema_params().validate(req.params);
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,

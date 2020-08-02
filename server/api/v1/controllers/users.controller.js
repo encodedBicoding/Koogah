@@ -784,6 +784,70 @@ class UserController {
       });
     });
   }
+  
+  /**
+   * @method rate_a_customer
+   * @memberof UserController
+   * @description This method allows a courier to rate a customer
+   * @params req, res
+   * @return JSON object
+   */
+  static rate_a_customer(req, res) {
+    const { user } = req.session;
+    const { customer_id, package_id } = req.params;
+    const { rating } = req.body;
+    return Promise.try(async () => {
+      const _package = await Packages.findOne({
+        where: {
+          [Op.and]: [{ dispatcher_id: user.id }, { customer_id }, { package_id }],
+        },
+      });
+
+      if (!_package) {
+        return res.status(400).json({
+          status: 400,
+          error: 'You cannot rate a customer you didn\t dispatch goods and/or services for',
+        });
+      }
+
+      const customer = await Customers.findOne({
+        where: {
+          id: customer_id
+        }
+      })
+      if (!customer) {
+        return res.status(404).json({
+          status: 404,
+          error: 'Oops, seems the customer doesn\'t exists anymore',
+        });
+      }
+
+      const current_number_of_raters = (parseInt(customer.no_of_raters, 10) + 1);
+      const new_rate_value = ((Number(customer.rating) * parseInt(customer.no_of_raters, 10) + parseInt(rating, 10)) / current_number_of_raters).toPrecision(2)
+      await Customers.update({
+        rating: new_rate_value,
+        no_of_raters: current_number_of_raters
+      },
+      {
+        where: {
+          id: customer_id
+        }
+      }
+      )
+
+      return res.status(200).json({
+        status: 200,
+        message: `You successfully rated ${customer.first_name} ${customer.last_name}:, ${rating}`,
+      });
+
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    })
+  }
 
   /**
    * @method rate_a_courier
@@ -820,8 +884,8 @@ class UserController {
           error: 'Oops, seems the dispatcher doesn\'t exists anymore',
         });
       }
-      const current_number_of_raters = dispatcher.no_of_raters + 1;
-      const new_rate_value = (parseInt(rating, 10) + parseInt(dispatcher.rating, 10)) / current_number_of_raters;
+      const current_number_of_raters = (parseInt(dispatcher.no_of_raters, 10) + 1);
+      const new_rate_value = ((Number(dispatcher.rating) * parseInt(dispatcher.no_of_raters, 10) + parseInt(rating, 10)) / current_number_of_raters).toPrecision(2)
       await Couriers.update({
         rating: new_rate_value,
         no_of_raters: current_number_of_raters,

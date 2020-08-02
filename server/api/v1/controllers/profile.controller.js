@@ -30,10 +30,28 @@ class Profile {
         });
       }
       const dispatcher_profile = dispatcher.getSafeDataValues();
+
+      const data = {
+        id: dispatcher_profile.id,
+        first_name: dispatcher_profile.first_name,
+        last_name: dispatcher_profile.last_name,
+        email: dispatcher_profile.email,
+        mobile_number: dispatcher_profile.mobile_number,
+        state: dispatcher_profile.state,
+        town: dispatcher_profile.town,
+        address: dispatcher_profile.address,
+        nationality: dispatcher_profile.nationality,
+        sex: dispatcher_profile.sex,
+        profile_image: dispatcher_profile.profile_image,
+        rating: dispatcher_profile.rating,
+        pickups: dispatcher_profile.pickups,
+        deliveries: dispatcher_profile.deliveries,
+        pending: dispatcher_profile.pending
+      }
       return res.status(200).json({
         status: 200,
         message: 'Profile retreived successfully',
-        data: dispatcher_profile,
+        data
       });
     }).catch((err) => {
       log(err);
@@ -119,10 +137,23 @@ class Profile {
         });
       }
       const customer_profile = customer.getSafeDataValues();
+      const data = {
+        id: customer_profile.id,
+        first_name: customer_profile.first_name,
+        last_name: customer_profile.last_name,
+        profile_image: customer_profile.profile_image,
+        mobile_number_one: customer_profile.mobile_number_one,
+        mobile_number_two: customer_profile.mobile_number_two,
+        address: customer_profile.address,
+        state: customer_profile.state,
+        town: customer_profile.town,
+        email: customer_profile.email,
+        rating: customer_profile.rating
+      }
       return res.status(200).json({
         status: 200,
         message: 'Profile retreived successfully',
-        data: customer_profile,
+        data,
       });
     }).catch((err) => {
       log(err);

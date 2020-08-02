@@ -235,7 +235,7 @@ class Package {
             error: 'Oops, seems the dispatcher doesn\'t exists anymore...',
           });
         }
-        if (dispatcher.pickups > 0) {
+        if (dispatcher.pending > 0) {
           return res.status(401).json({
             status: 401,
             error: `Oops cannot select dispatcher\n${dispatcher.first_name}${' '}${dispatcher.last_name} already dispatches for another customer`,
@@ -464,6 +464,11 @@ class Package {
         await Packages.update({
           pending_weight: null,
           pending_delivery_price: null,
+        },
+        {
+          where: {
+            package_id,
+          },
         });
         NEW_NOTIFICATION.email = dispatcher.email;
         NEW_NOTIFICATION.message = `A customer just declined weight change for package with id: ${package_id}`;
@@ -893,6 +898,9 @@ class Package {
       const { decline_cause } = req.body;
       const { package_id } = req.query;
       const { user } = req.session;
+      const NEW_NOTIFICATION = {
+        type: 'customer',
+      };
 
       const isFound = await Packages.findOne({ 
         where: {
@@ -905,6 +913,21 @@ class Package {
           error: 'Sorry, cannot decline a package you didn\'t pickup'
         })
       }
+      // update the dispatcher's pending;
+      const current_pending_deliveries = parseInt(user.pending, 10) - 1;
+      await Couriers.update({
+        pending: current_pending_deliveries
+      }, {
+        where: {
+          id: user.id
+        }
+      })
+      // find the customer to create a notification;
+      const customer = await Customers.findOne({
+        where: {
+          id: isFound.customer_id
+        }
+      })
 
       await Packages.update({
         dispatcher_id: null,
@@ -916,6 +939,12 @@ class Package {
         package_id
       }})
 
+      NEW_NOTIFICATION.email = customer.email;
+      NEW_NOTIFICATION.message = `A dispatcher just declined pickup for package with id: ${package_id}`,
+      NEW_NOTIFICATION.title = 'New piackup decline';
+      NEW_NOTIFICATION.action_link = null;
+
+      await Notifications.create({ ...NEW_NOTIFICATION })
 
       return res.status(200).json({
         status: 200,

@@ -12,6 +12,12 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 const checkSession = function checkSession(req, res, next) {
   let token;
+  if (!req.headers.authorization) {
+    return res.status(401).json({
+      status: 401,
+      erro: 'Authentication error',
+    });
+  }
   if (req.headers.authorization.startsWith('Bearer ')) {
     token = req.headers.authorization.split(' ')[1];
   } else {
@@ -37,7 +43,7 @@ const checkSession = function checkSession(req, res, next) {
           req.session.user.token = token;
           return next();
         }
-        return res.status(400).json({
+        return res.status(401).json({
           status: 401,
           error: 'Not Authorized. Please contact support on support@koogah.com',
         });

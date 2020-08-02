@@ -11,7 +11,11 @@ import {
 import sendSMS from '../helpers/sms';
 import gen_verify_code from '../helpers/verify.code';
 import jwt from '../helpers/jwt';
-import sendMail, { createVerificationMail, createCourierApprovalMail } from '../helpers/mail';
+import sendMail, { 
+    createVerificationMail, 
+    createCourierApprovalMail,
+    createApprovalMailToCourier
+  } from '../helpers/mail';
 import client from '../../../redis/redis.client';
 import generate_ref from '../helpers/ref.id';
 
@@ -34,87 +38,89 @@ class UserController {
    * @return JSON object
    */
   static async signUpCourier_StepOne(req, res) {
-    const {
-      first_name,
-      last_name,
-      email,
-      password,
-      mobile_number,
-      sex,
-      bvn,
-      nationality,
-      state,
-      town,
-      address,
-    } = req.body;
-    const { ref } = req.query;
+    return Promise.try(async () => {
+      const {
+        first_name,
+        last_name,
+        email,
+        password,
+        mobile_number,
+        sex,
+        bvn,
+        nationality,
+        state,
+        town,
+        address,
+      } = req.body;
+      const { ref } = req.query;
 
-    const VERIFY_TOKEN = await jwt.sign({
-      email,
-      bvn,
-      first_name,
-      mobile_number,
-    });
-    // link hint: https://api.koogah.com
-    const VERIFY_LINK = (isProduction) ? `https://koogah.herokuapp.com/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER` : `http://localhost:4000/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER`;
-
-    const USR_OBJ = {
-      first_name,
-      last_name,
-      verify_link: VERIFY_LINK,
-    };
-    const REFERAL_ID = generate_ref('referal');
-
-    const NEW_USER = {
-      first_name,
-      last_name,
-      email,
-      password,
-      mobile_number,
-      sex,
-      bvn,
-      nationality,
-      verify_token: VERIFY_TOKEN,
-      state,
-      town,
-      address,
-      referal_id: REFERAL_ID,
-      refered_by: ref,
-    };
-
-    const MSG_OBJ = createVerificationMail(email, USR_OBJ, 'dispatcher');
-
-    const isFound = await Couriers.findOne({
-      where: {
-        [Op.or]: [
-          { email }, { bvn },
-        ],
-      },
-    });
-
-    if (isFound) {
-      return res.status(409).json({
-        status: 409,
-        error: 'A user with the given email and/or bvn already exists',
+      const VERIFY_TOKEN = await jwt.sign({
+        email,
+        bvn,
+        first_name,
+        mobile_number,
       });
-    }
+      // link hint: https://api.koogah.com
+      const VERIFY_LINK = (isProduction) ? `https://koogah.herokuapp.com/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER` : `http://localhost:4000/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER`;
+  
+      const USR_OBJ = {
+        first_name,
+        last_name,
+        verify_link: VERIFY_LINK,
+      };
+      const REFERAL_ID = generate_ref('referal');
 
-    return Promise.all([sendMail(MSG_OBJ), Couriers.create(NEW_USER)])
-      .then((result) => Promise.resolve(result))
-      .then(
-        () => res.status(200).json({
-          status: 200,
-          message: 'A verificaton link has been sent to your email address',
-          verify_token: VERIFY_TOKEN,
-        }),
-      )
-      .catch((err) => {
-        log(err);
-        res.status(400).json({
-          status: 400,
-          error: err,
+      const NEW_USER = {
+        first_name,
+        last_name,
+        email,
+        password,
+        mobile_number,
+        sex,
+        bvn,
+        nationality,
+        verify_token: VERIFY_TOKEN,
+        state,
+        town,
+        address,
+        referal_id: REFERAL_ID,
+        refered_by: ref,
+      };
+  
+      const MSG_OBJ = createVerificationMail(email, USR_OBJ, 'dispatcher');
+  
+      const isFound = await Couriers.findOne({
+        where: {
+          [Op.or]: [
+            { email }, { bvn },
+          ],
+        },
+      });
+
+      if (isFound) {
+        return res.status(409).json({
+          status: 409,
+          error: 'A user with the given email and/or bvn already exists',
         });
+      }
+      await sendMail(MSG_OBJ);
+      await  Couriers.create(NEW_USER);
+
+      return res.status(200).json({
+        status: 200,
+        message: 'A verificaton link has been sent to your email address',
+        verify_token: VERIFY_TOKEN,
+      })
+  
+
+    }).catch((error) => {
+      log(error);
+      res.status(400).json({
+        status: 400,
+        error,
       });
+    })
+
   }
 
   /**
@@ -126,71 +132,69 @@ class UserController {
    */
 
   static async signUpCourier_StepTwo(req, res) {
-    const { key } = req.query;
-    const payload = await jwt.verify(key);
-    if (!payload) {
-      return res.status(400).json({
-        status: 400,
-        error: 'Invalid Token, Please contact our support team to lay any complains. mailto::support@koogah.com',
+    return Promise.try( async () => {
+      const { key } = req.query;
+      const payload = await jwt.verify(key);
+      if (!payload) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Invalid Token, Please contact our support team to lay any complains. mailto::support@koogah.com',
+        });
+      }
+  
+      const verifying_user = await Couriers.findOne({
+        where: {
+          [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
+        },
       });
-    }
+  
+      if (!verifying_user) {
+        return res.status(404).json({
+          status: 404,
+          error: 'You currently cannot perform this action. Please contact our help support and report the scenerio to them. mailto:support@koogah.com',
+        });
+      }
+      const MOBILE_VERIFY_CODE = gen_verify_code();
 
-    const verifying_user = await Couriers.findOne({
-      where: {
-        [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
-      },
-    });
+      const SMS_MESSAGE = `Your verification code is: \n${MOBILE_VERIFY_CODE}`;
+  
+      const MOBILE_REDIRECT_LINK = `https://mobile_redirect_link?key=${key}&live=${!!key}`;
+  
+      // this function should redirect the user to the Mobile App page for Couriers
+      // That contains the form so they can insert the code sent to their mobile phones
+      if (!verifying_user.verify_token) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Oops, seems you have already verified your email and mobile number.',
+        });
+      }
 
-    if (!verifying_user) {
-      return res.status(404).json({
-        status: 404,
-        error: 'You currently cannot perform this action. Please contact our help support and report the scenerio to them. mailto:support@koogah.com',
-      });
-    }
-
-    if (!verifying_user.verify_token) {
-      return res.status(400).json({
-        status: 400,
-        error: 'Oops, seems you have already verified your email and mobile number.',
-      });
-    }
-
-    const MOBILE_VERIFY_CODE = gen_verify_code();
-
-    const SMS_MESSAGE = `Your verification code is: \n${MOBILE_VERIFY_CODE}`;
-
-    const MOBILE_REDIRECT_LINK = `https://mobile_redirect_link?key=${key}&live=${!!key}`;
-
-    // this function should redirect the user to the Mobile App page
-    // That contains the form so they can insert the code sent to their mobile phones
-
-    return Promise.all(
-      [
-        sendSMS(payload.mobile_number, SMS_MESSAGE),
-        Couriers.update(
-          {
-            verification_code: MOBILE_VERIFY_CODE,
+      await sendSMS(payload.mobile_number, SMS_MESSAGE);
+      await Couriers.update(
+        {
+          verification_code: MOBILE_VERIFY_CODE,
+        },
+        {
+          where: {
+            [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
           },
-          {
-            where: {
-              [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
-            },
-          },
-        ),
-      ],
-    ).then((result) => Promise.resolve(result))
-      .then(() => res.status(200).json({
+        },
+      );
+
+        
+      return res.status(200).json({
         status: 200,
         message: 'Please insert the verification code sent to the mobile number you provided on registeration',
         mobile: MOBILE_REDIRECT_LINK,
-      }))
-      .catch((err) => {
-        log(err);
+      })
+
+    }).catch((err) => {
+      log(err);
         return res.status(400).json({
           status: 400,
           error: err,
         });
-      });
+    })
   }
 
   /**
@@ -250,11 +254,12 @@ class UserController {
       is_courier: verifying_user.is_courier,
     };
 
-    const APPROVAL_TOKEN = await jwt.sign(payload, '1440h');
+    const APPROVAL_TOKEN = await jwt.sign(payload, '9000h');
     const APPROVAL_LINK = (isProduction) ? `https://koogah.herokuapp.com/v1/user/approved/welcome?key=${APPROVAL_TOKEN}&code=APPROVED` : `http://localhost:4000/v1/user/approved/welcome?key=${APPROVAL_TOKEN}&code=APPROVED`;
 
     const AWAITING_USER_OBJ = {
       first_name: payload.first_name,
+      bvn: payload.bvn,
       last_name: verifying_user.last_name,
       user_email: payload.email,
       mobile_number: payload.mobile_number,
@@ -262,7 +267,7 @@ class UserController {
       approval_link: APPROVAL_LINK,
     };
 
-    // Drop the user in the awaiting user's db.
+    // Insert the user in the awaiting user's db.
     // send the user details as mail to the company.
 
     const MSG_OBJ = createCourierApprovalMail(AWAITING_USER_OBJ);
@@ -304,7 +309,7 @@ class UserController {
 
   /**
    * @method signUpCourier_StepFour
-   * @description This method approves a courier and sets them up to use the app.
+   * @description This method approves a courier and sets them up to use the app. Admin Endpoint
    * @memberof UserController
    * @params req, res
    * @return JSON object
@@ -318,7 +323,7 @@ class UserController {
     if (!payload) {
       return res.status(400).json({
         status: 400,
-        error: 'Invalid Token, Please contact our support team to lay any complains. mailto::support@koogah.com',
+        error: 'Oops, seems this token has expired',
       });
     }
 
@@ -331,20 +336,16 @@ class UserController {
     if (!isFound) {
       return res.status(404).json({
         status: 404,
-        error: 'You currently cannot perform this action. Please contact our help support and report the scenerio to them. mailto:support@koogah.com',
+        error: 'This user doesn\t exists anymore',
       });
     }
 
     if (!isFound.approval_code) {
       return res.status(400).json({
         status: 400,
-        error: 'Oops, seems you are already approved by our team',
+        error: 'Oops, seems this user has already been approved.',
       });
     }
-    const { iat, exp, ...data } = payload;
-    const SESSION_TOKEN = await jwt.sign({
-      ...data,
-    });
 
     return Promise.all(
       [
@@ -369,24 +370,40 @@ class UserController {
       ],
     )
       .then(async () => {
-        const approved_user = await Couriers.findOne({
-          where: {
-            email: payload.email,
-          },
-        });
-        client.set(`${approved_user.email}:COURIER`, SESSION_TOKEN);
-        const user = {
-          ...approved_user.getSafeDataValues(),
-          token: SESSION_TOKEN,
-        };
-        // this should redirect the user to their dashboard on the mobile platform
-        // for their device
+        try{
+          const approved_user = await Couriers.findOne({
+            where: {
+              email: payload.email,
+            },
+          });
+          const user = {
+            ...approved_user.getSafeDataValues(),
+            token: SESSION_TOKEN,
+          };
+          // send original courier a mail, telling them they have been approved.
+        let APPROVED_USER_OBJ = {
+          first_name: user.first_name,
+          user_email: user.email,
+          last_name: user.last_name
+        }
+        const msg_obj = createApprovalMailToCourier(APPROVED_USER_OBJ);
+        await sendMail(msg_obj);
+
         res.status(200).json({
           status: 200,
           message: 'Account approved successfully',
           user,
 
         });
+
+        }catch(err){
+          log(err);
+          return res.status(400).json({
+            status: 400,
+            error: err,
+          });
+        }
+
       })
       .catch((err) => {
         log(err);
@@ -494,14 +511,15 @@ class UserController {
    * @return JSON object
    */
   static async signUpCustomer_StepTwo(req, res) {
-    const { key } = req.query;
-    const payload = await jwt.verify(key);
-    if (!payload) {
-      return res.status(400).json({
-        status: 400,
-        error: 'Invalid Token, Please contact our support team to lay any complains. mailto::support@koogah.com',
-      });
-    }
+    return Promise.try(async () => {
+      const { key } = req.query;
+      const payload = await jwt.verify(key);
+      if (!payload) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Invalid Token, Please contact our support team to lay any complains. mailto::support@koogah.com',
+        });
+      }
 
     const verifying_user = await Customers.findOne({
       where: {
@@ -512,7 +530,7 @@ class UserController {
     if (!verifying_user) {
       return res.status(404).json({
         status: 404,
-        error: 'You currently cannot perform this action. Please contact our help support and report the scenerio to them. mailto:support@koogah.com',
+        error: 'You currently cannot perform this action. Please contact our help support and report the scenario to them. mailto:support@koogah.com',
       });
     }
 
@@ -522,7 +540,6 @@ class UserController {
         error: 'Oops, seems you have already verified your email and mobile number.',
       });
     }
-
     const MOBILE_VERIFY_CODE = gen_verify_code();
 
     const SMS_MESSAGE = `Your verification code is: \n${MOBILE_VERIFY_CODE}`;
@@ -531,34 +548,31 @@ class UserController {
 
     // this function should redirect the user to the Mobile App page
     // That contains the form so they can insert the code sent to their mobile phones
+    await sendSMS(payload.mobile_number, SMS_MESSAGE);
+    await Customers.update(
+      {
+        verification_code: MOBILE_VERIFY_CODE,
+      },
+      {
+        where: {
+          email: payload.email,
+        },
+      },
+    );
 
-    return Promise.all(
-      [
-        sendSMS(payload.mobile_number, SMS_MESSAGE),
-        Customers.update(
-          {
-            verification_code: MOBILE_VERIFY_CODE,
-          },
-          {
-            where: {
-              email: payload.email,
-            },
-          },
-        ),
-      ],
-    ).then((result) => Promise.resolve(result))
-      .then(() => res.status(200).json({
-        status: 200,
-        message: 'Please insert the verification code sent to the mobile number you provided on registeration',
-        mobile: MOBILE_REDIRECT_LINK,
-      }))
-      .catch((err) => {
-        log(err);
-        return res.status(400).json({
-          status: 400,
-          error: err,
-        });
+    return res.status(200).json({
+      status: 200,
+      message: 'Please insert the verification code sent to the mobile number you provided on registeration',
+      mobile: MOBILE_REDIRECT_LINK,
+    })
+
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
       });
+    })
   }
 
   /**
@@ -626,6 +640,7 @@ class UserController {
           verification_code: null,
           verify_token: null,
           is_verified: true,
+          is_active: true,
         },
         {
           where: {

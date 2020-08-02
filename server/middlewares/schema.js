@@ -16,10 +16,12 @@ class Schema {
    */
   static courierSignupSchema() {
     return Joi.object({
-      first_name: Joi.string().min(3).max(30).required(),
-      last_name: Joi.string().min(3).max(30).required(),
-      email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-      password: Joi.string().pattern(/^[a-zA-Z0-9]{3,30}$/).required(),
+      first_name: Joi.string().trim().min(3).max(30)
+        .required(),
+      last_name: Joi.string().trim().min(3).max(30)
+        .required(),
+      email: Joi.string().trim().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
+      password: Joi.string().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/).required(),
       repeat_password: Joi.ref('password'),
       mobile_number: Joi.string().min(10).max(11).required(),
       sex: Joi.string().valid('M', 'F').required(),
@@ -58,7 +60,7 @@ class Schema {
       business_name: Joi.string().min(3).max(100),
       has_business: Joi.bool().required(),
       email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-      password: Joi.string().pattern(/^[a-zA-Z0-9]{3,30}$/).required(),
+      password: Joi.string().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/).required(),
       repeat_password: Joi.ref('password'),
       mobile_number_one: Joi.string().min(10).max(11).required(),
       mobile_number_two: Joi.string().min(10).max(11),
@@ -223,7 +225,7 @@ class Schema {
   static sign_in_schema() {
     return Joi.object({
       email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-      password: Joi.string().pattern(/^[a-zA-Z0-9]{3,30}$/).required(),
+      password: Joi.string().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/).required(),
     });
   }
 
@@ -239,6 +241,19 @@ class Schema {
       dispatcher_id: Joi.number().required(),
     });
   }
+   /**
+   * @method rating_schema_params
+   * @description This method return Joi object which delivers a schema to rate a courier
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static rating_schema_params() {
+    return Joi.object({
+      dispatcher_id: Joi.number().required(),
+      package_id: Joi.number().required(),
+    });
+  }
 
   /**
    * @method rating_schema
@@ -250,6 +265,18 @@ class Schema {
   static rating_schema() {
     return Joi.object({
       rating: Joi.string().valid('1', '2', '3', '4', '5').required(),
+    });
+  }
+
+  /**
+   * @method decline_pickup_body_schema
+   * @description This method return Joi object which delivers a schema to rate a courier
+   * @memberof Schema
+   * @return Joi Object
+   */
+  static decline_pickup_body_schema() {
+    return Joi.object({
+      decline_cause: Joi.string().required()
     });
   }
 
@@ -321,7 +348,7 @@ class Schema {
       state: Joi.string(),
       town: Joi.string(),
       address: Joi.string(),
-      profile_image: Joi.string(),
+      profile_image: Joi.string().allow(null, ''),
     });
   }
 

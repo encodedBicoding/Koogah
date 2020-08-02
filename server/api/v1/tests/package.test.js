@@ -20,7 +20,7 @@ describe('Handle package tests', () => {
   before('Sign in a user', (done) => {
     chai.request(app)
       .post('/v1/user/customer/signin')
-      .send({ email: 'dominic@olije.com', password: '1234567890' })
+      .send({ email: 'dominic@olije.com', password: 'Blood&ice3000' })
       .end((err, res) => {
         verified_customer_token = res.body.user.token;
         done();
@@ -29,7 +29,7 @@ describe('Handle package tests', () => {
   before('Sign in a user', (done) => {
     chai.request(app)
       .post('/v1/user/customer/signin')
-      .send({ email: 'ruth@temenu.com', password: '1234567890' })
+      .send({ email: 'ruth@temenu.com', password: 'Blood&ice3000' })
       .end((err, res) => {
         unverified_customer_token = res.body.user.token;
         done();
@@ -149,7 +149,7 @@ describe('Handle package tests', () => {
     before('Signin a courier', (done) => {
       chai.request(app)
         .post('/v1/user/courier/signin')
-        .send({ email: 'ruth@temenu.com', password: '1234567890' })
+        .send({ email: 'ruth@temenu.com', password: 'Blood&ice3000' })
         .end((err, res) => {
           unapproved_courier_token = res.body.user.token;
           done();
@@ -158,7 +158,7 @@ describe('Handle package tests', () => {
     before('Sign in a user', (done) => {
       chai.request(app)
         .post('/v1/user/courier/signin')
-        .send({ email: 'dominic@olije.com', password: '1234567890' })
+        .send({ email: 'dominic@olije.com', password: 'Blood&ice3000' })
         .end((err, res) => {
           approved_courier_token = res.body.user.token;
           done();
@@ -210,7 +210,7 @@ describe('Handle package tests', () => {
     before('Sign in a user', (done) => {
       chai.request(app)
         .post('/v1/user/customer/signin')
-        .send({ email: 'dominic@olije.com', password: '1234567890' })
+        .send({ email: 'dominic@olije.com', password: 'Blood&ice3000' })
         .end((err, res) => {
           verified_customer_token = res.body.user.token;
           done();
@@ -219,7 +219,7 @@ describe('Handle package tests', () => {
     before('Sign in another user', (done) => {
       chai.request(app)
         .post('/v1/user/customer/signin')
-        .send({ email: 'faker@email.com', password: '1234567890' })
+        .send({ email: 'faker@email.com', password: 'Blood&ice3000' })
         .end((err, res) => {
           another_customer_token = res.body.user.token;
           done();
@@ -255,17 +255,6 @@ describe('Handle package tests', () => {
         })
         .end((err, res) => {
           expect(res.statusCode).to.equal(401);
-          done();
-        });
-    });
-    it('should pass if all is well', (done) => {
-      chai.request(app)
-        .patch(`${KoogahURLV1}/customer/interest/${package_id}?response=approve`)
-        .set({
-          Authorization: `Bearer ${verified_customer_token}`,
-        })
-        .end((err, res) => {
-          expect(res.statusCode).to.equal(200);
           done();
         });
     });

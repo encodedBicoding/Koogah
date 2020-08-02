@@ -26,10 +26,10 @@ const {
   validateMobileCode,
   customerSignup,
   check_sign_in,
-  check_package_id,
-  check_dispatcher_id,
+  check_rating_params,
   check_rating,
   check_report,
+  check_profile_id,
 } = Validate;
 
 const userRoute = express();
@@ -90,8 +90,7 @@ userRoute.put(
   passport.authenticate('bearer', { session: false }),
   checkSession,
   isCustomerLoggedIn,
-  check_package_id,
-  check_dispatcher_id,
+  check_rating_params,
   check_rating,
   rate_a_courier,
 );
@@ -114,7 +113,7 @@ userRoute.post(
   passport.authenticate('bearer', { session: false }),
   checkSession,
   isCourierLoggedIn,
-  check_dispatcher_id,
+  check_profile_id,
   check_report,
   report_user,
 );
@@ -123,7 +122,7 @@ userRoute.post(
   passport.authenticate('bearer', { session: false }),
   checkSession,
   isCustomerLoggedIn,
-  check_dispatcher_id,
+  check_profile_id,
   check_report,
   report_user,
 );

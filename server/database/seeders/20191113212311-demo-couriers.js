@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 const faker = require('faker');
 
-const password = bcrypt.hashSync('1234567890', 8);
+const password = bcrypt.hashSync('Blood&ice3000', 8);
 
 module.exports = {
   up: (queryInterface) => queryInterface.bulkInsert('Couriers',

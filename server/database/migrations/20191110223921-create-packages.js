@@ -76,6 +76,9 @@ module.exports = {
     package_id: {
       type: Sequelize.TEXT,
     },
+    pickup_decline_cause: {
+      type: Sequelize.TEXT
+    },
     created_at: {
       allowNull: false,
       type: Sequelize.DATE,

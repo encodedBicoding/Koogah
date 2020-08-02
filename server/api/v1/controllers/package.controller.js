@@ -51,6 +51,12 @@ class Package {
             error: 'Weight must match one of ["0-5","6-10", "11-15", "16-25", "26-40", "50-100", "101-200", "201-300", "301-400", "401-500", "500>"],',
           });
         }
+        if (parseInt(delivery_price, 10) > parseInt(user.virtual_balance, 10)) {
+          return res.status(400).json({
+            status: 400,
+            error: `You must top-up your account with at least ${parseInt(delivery_price, 10) - parseInt(user.virtual_balance, 10)} before brequesting this dispatch`
+          })
+        }
         const package_id = uuid();
         const package_detail = await Packages.create({
           type_of_dispatch: type,
@@ -229,6 +235,13 @@ class Package {
             error: 'Oops, seems the dispatcher doesn\'t exists anymore...',
           });
         }
+        if (dispatcher.pickups > 0) {
+          return res.status(401).json({
+            status: 401,
+            error: `Oops cannot select dispatcher\n${dispatcher.first_name}${' '}${dispatcher.last_name} already dispatches for another customer`,
+          });
+        }
+
         await Packages.update({
           dispatcher_id: _package.pending_dispatcher_id,
           pickup_time: date_time,
@@ -424,6 +437,13 @@ class Package {
         },
       });
       if (response === 'approve') {
+        // check if customer's virtual balance is enough for dispatch the goods
+        if (parseInt(_package.delivery_price, 10) > parseInt(user.virtual_balance, 10)) {
+          return res.status(400).json({
+            status: 400,
+            error: 'You must top-up to approve this new weight change'
+          })
+        }
         await Packages.update({
           weight: _package.pending_weight,
           delivery_price: _package.pending_delivery_price,
@@ -749,6 +769,169 @@ class Package {
       });
     });
   }
+
+  /**
+   * @method courier_view_marketplace
+   * @memberof Package
+   * @params req, res
+   * @description Couriers can view all packages in the market place
+   * @return JSON object
+   */
+
+   static courier_view_packages_in_marketplace(req, res) {
+     return Promise.try( async () => {
+       const { user } = req.session;
+       let { from, state, to, dispatch_type } = req.query;
+       if (!state) {
+        state = user.state
+       }
+       if (!from) {
+         from = user.town
+       }
+       let all_package_in_marketplace;
+
+       if (!dispatch_type) {
+         dispatch_type = 'intra-state'
+       }
+
+       if (dispatch_type === 'intra-state') {
+        if (!to) { 
+          all_package_in_marketplace = await Packages.findAll({
+            where: {
+              [Op.and]: [
+                  { from_state: state }, 
+                  { to_state: state },
+                  { from_town: from },
+                  { type_of_dispatch: dispatch_type },
+                  { dispatcher_id: null}
+                ]
+            }
+          })
+         }
+        else {
+          all_package_in_marketplace = await Packages.findAll({
+            where: {
+              [Op.and]: [
+                  { from_state: state }, 
+                  { to_state: state },
+                  { from_town: from },
+                  { to_town: to},
+                  { type_of_dispatch: dispatch_type },
+                  { dispatcher_id: null}
+                ]
+            }
+          })
+        }
+       }
+
+       if (dispatch_type === 'inter-state') {
+         if (!to) {
+            all_package_in_marketplace = await Packages.findAll({
+              where: {
+                [Op.and]: [
+                    { from_state: from }, 
+                    { type_of_dispatch: dispatch_type },
+                    { dispatcher_id: null}
+                  ]
+              }
+            })
+         } else {
+          all_package_in_marketplace = await Packages.findAll({
+            where: {
+              [Op.and]: [
+                  { from_state: from }, 
+                  { to_state: to },
+                  { type_of_dispatch: dispatch_type },
+                  { dispatcher_id: null}
+                ]
+            }
+          })
+         }
+       }
+
+       if (dispatch_type === 'international') {
+         if(!to) {
+           all_package_in_marketplace = await Packages.findAll({
+             where: {
+              [Op.and]: [
+                  { from_country: from }, 
+                  { type_of_dispatch: dispatch_type },
+                  { dispatcher_id: null}
+                ]
+            }
+           })
+         } else {
+          all_package_in_marketplace = await Packages.findAll({
+            where: {
+              [Op.and]: [
+                  { from_country: from }, 
+                  { type_of_dispatch: dispatch_type },
+                  { to_country: to},
+                  { dispatcher_id: null}
+                ]
+            }
+          })
+         }
+       }
+
+       return res.status(200).json({
+         status: 200,
+         message: 'package retrieved successfully',
+         data: all_package_in_marketplace
+       })
+     }).catch((error) => {
+      log(error);
+      return res.status(400).json({
+        status: 400,
+        error,
+      });
+     })
+   }
+
+  static declinePickup(req, res) {
+    return Promise.try( async() => {
+      const { decline_cause } = req.body;
+      const { package_id } = req.query;
+      const { user } = req.session;
+
+      const isFound = await Packages.findOne({ 
+        where: {
+          [Op.and]: [{ package_id}, {dispatcher_id: user.id}]
+        }
+      });
+      if (!isFound) {
+        return res.status(404).json({
+          status: 404,
+          error: 'Sorry, cannot decline a package you didn\'t pickup'
+        })
+      }
+
+      await Packages.update({
+        dispatcher_id: null,
+        status: 'not-picked',
+        pickup_time: null,
+        pickup_decline_cause: decline_cause
+      }, {
+        where: {
+        package_id
+      }})
+
+
+      return res.status(200).json({
+        status: 200,
+        message: 'You have successfully declined this pick-up'
+      })
+
+    })
+    .catch((error) => {
+      log(error);
+      return res.status(400).json({
+        status: 400,
+        error
+      })
+    })
+  }
 }
+
 
 export default Package;

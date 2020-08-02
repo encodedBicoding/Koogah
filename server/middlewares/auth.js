@@ -8,7 +8,7 @@ class Auth {
     return new BearerStrategy(async (token, done) => {
       const payload = await jwt.verify(token);
 
-      if (!payload) return done(null, false);
+      if (!payload) return done({ status: 401, error: 'Unauthorized' }, false);
 
       let is_found_user = await Couriers.findOne({
         where: {
@@ -24,7 +24,7 @@ class Auth {
           },
         });
         if (!is_found_user) {
-          return done(null, false);
+          return done({ status: 401, error: 'Unauthorized' }, false);
         }
 
         return done(null, is_found_user);

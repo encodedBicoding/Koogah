@@ -28,6 +28,12 @@ module.exports = {
     virtual_balance: {
       type: Sequelize.DECIMAL(10, 2),
     },
+    rating: {
+      type: Sequelize.DECIMAL(10, 1),
+    },
+    no_of_raters: {
+      type: Sequelize.BIGINT,
+    },
     verify_token: {
       type: Sequelize.TEXT,
     },

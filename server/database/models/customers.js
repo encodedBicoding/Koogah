@@ -37,6 +37,14 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 0.00,
     },
+    rating: {
+      type: DataTypes.DECIMAL(10, 1),
+      defaultValue: 0.0,
+    },
+    no_of_raters: {
+      type: DataTypes.BIGINT,
+      defaultValue: 0,
+    },
     verify_token: {
       type: DataTypes.TEXT,
       allowNull: true,

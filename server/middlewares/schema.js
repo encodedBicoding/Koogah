@@ -242,15 +242,28 @@ class Schema {
     });
   }
    /**
-   * @method rating_schema_params
+   * @method  courier_rating_schema_params
    * @description This method return Joi object which delivers a schema to rate a courier
    * @memberof Schema
    * @return Joi Object
    */
 
-  static rating_schema_params() {
+  static courier_rating_schema_params() {
     return Joi.object({
       dispatcher_id: Joi.number().required(),
+      package_id: Joi.number().required(),
+    });
+  }
+     /**
+   * @method  customer_rating_schema_params
+   * @description This method return Joi object which delivers a schema to rate a courier
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static customer_rating_schema_params() {
+    return Joi.object({
+      customer_id: Joi.number().required(),
       package_id: Joi.number().required(),
     });
   }

@@ -30,7 +30,6 @@ class Notify {
           error: `Notification with id:${id} not found`,
         });
       }
-      const notification_result = await Notifications.findByPk(id);
       await Notifications.destroy(
         {
           where: {
@@ -41,7 +40,6 @@ class Notify {
       return res.status(200).json({
         status: 200,
         message: 'Notification read successfully',
-        data: notification_result,
       });
     }).catch((err) => {
       log(err);

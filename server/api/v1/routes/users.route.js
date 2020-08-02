@@ -17,6 +17,7 @@ const {
   signInCourier,
   signInCustomer,
   rate_a_courier,
+  rate_a_customer,
   sign_out,
   report_user,
 } = UserController;
@@ -26,7 +27,8 @@ const {
   validateMobileCode,
   customerSignup,
   check_sign_in,
-  check_rating_params,
+  check_courier_rating_params,
+  check_customer_rating_params,
   check_rating,
   check_report,
   check_profile_id,
@@ -90,9 +92,18 @@ userRoute.put(
   passport.authenticate('bearer', { session: false }),
   checkSession,
   isCustomerLoggedIn,
-  check_rating_params,
+  check_courier_rating_params,
   check_rating,
   rate_a_courier,
+);
+userRoute.put(
+  '/courier/rate/:customer_id/:package_id',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  check_customer_rating_params,
+  check_rating,
+  rate_a_customer,
 );
 userRoute.post(
   '/customer/signout',

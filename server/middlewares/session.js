@@ -15,7 +15,7 @@ const checkSession = function checkSession(req, res, next) {
   if (!req.headers.authorization) {
     return res.status(401).json({
       status: 401,
-      erro: 'Authentication error',
+      error: 'Authentication error',
     });
   }
   if (req.headers.authorization.startsWith('Bearer ')) {

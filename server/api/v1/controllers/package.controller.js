@@ -438,6 +438,12 @@ class Package {
       });
       if (response === 'approve') {
         // check if customer's virtual balance is enough for dispatch the goods
+        if (parseInt(_package.delivery_price, 10) > parseInt(user.virtual_balance, 10)) {
+          return res.status(400).json({
+            status: 400,
+            error: 'You must top-up to approve this new weight change'
+          })
+        }
         await Packages.update({
           weight: _package.pending_weight,
           delivery_price: _package.pending_delivery_price,

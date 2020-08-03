@@ -26,19 +26,19 @@ class Payout {
     const { amount } = req.query;
     return Promise.try(async () => {
       const user_current_balance = user.virtual_balance;
-      if (parseInt(amount, 10) < 5000.00) {
+      if (Number(amount) < 5000.00) {
         return res.status(400).json({
           status: 400,
           error: 'Cannot request payout for amount less than N5000.00',
         });
       }
-      if (parseInt(amount, 10) > parseInt(user_current_balance, 10)) {
+      if (Number(amount) > Number(user_current_balance)) {
         return res.status(400).json({
           status: 400,
           error: 'Amount requested is more than what you have. Please reduce the requested amount',
         });
       }
-      const dispatcher_new_balance = parseInt(user_current_balance, 10) - parseInt(amount, 10);
+      const dispatcher_new_balance = Number(user_current_balance) - Number(amount);
 
       const payout_details = {
         dispatcher_first_name: user.first_name,
@@ -51,23 +51,11 @@ class Payout {
         reference_id: generate_ref(),
       };
       const new_payout = await Payouts.create({ ...payout_details });
+      const new_total_payouts = Number(amount) + Number(user.total_payouts);
+      
       await Couriers.update({
         virtual_balance: dispatcher_new_balance,
-        last_payout: parseInt(amount, 10),
-      },
-      {
-        where: {
-          email: user.email,
-        },
-      });
-      const dispatcher = await Couriers.findOne({
-        where: {
-          email: user.email,
-        },
-      });
-      // eslint-disable-next-line max-len
-      const new_total_payouts = parseInt(dispatcher.last_payout, 10) + parseInt(dispatcher.total_payouts, 10);
-      await Couriers.update({
+        last_payout: Number(amount),
         total_payouts: new_total_payouts,
       },
       {
@@ -75,7 +63,7 @@ class Payout {
           email: user.email,
         },
       });
-      const payout_link = (isProduction) ? `https://koogah.herokuapp.com/v1/payout/pay/${new_payout.reference_id}` : `http://localhost:4000/v1/payout/pay/${new_payout.reference_id}`;
+      const payout_link = (isProduction) ? `${process.env.SERVER_APP_URL}/payout/pay/${new_payout.reference_id}` : `http://localhost:4000/v1/payout/pay/${new_payout.reference_id}`;
       // send a mail to the company informing them
       // of such payout.
       // the mail should contain the payout details and payout link

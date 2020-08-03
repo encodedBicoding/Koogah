@@ -4,7 +4,7 @@ import weight_range from './weight.data';
 function calc_delivery_price(type, weight, distance) {
   let base_price;
   if (type === 'intra-state') {
-    base_price = 300;
+    base_price = 400;
   }
   if (type === 'inter-state') {
     base_price = 1500;

@@ -30,16 +30,22 @@ class Notify {
           error: `Notification with id:${id} not found`,
         });
       }
-      await Notifications.destroy(
-        {
-          where: {
-            [Op.and]: [{ email: user.email }, { type }, { id }],
-          },
-        },
-      );
+      await Notifications.update({
+        is_read: true
+      }, {
+        where: {
+          [Op.and]: [{ email: user.email }, { type }, { id }]
+        }
+      })
+      const all_unread_notifications = await Notifications.findAll({
+        where: {
+          [Op.and]: [{ email: user.email }, { type }, { is_read: false }]
+        }
+      })
       return res.status(200).json({
         status: 200,
         message: 'Notification read successfully',
+        data: all_unread_notifications
       });
     }).catch((err) => {
       log(err);

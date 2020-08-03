@@ -86,7 +86,7 @@ class UserController {
         town,
         address,
         referal_id: REFERAL_ID,
-        refered_by: ref,
+        refered_by: ref ? ref : null,
       };
   
       const MSG_OBJ = createVerificationMail(email, USR_OBJ, 'dispatcher');
@@ -471,7 +471,7 @@ class UserController {
       password,
       verify_token: VERIFY_TOKEN,
       referal_id: REFERAL_ID,
-      refered_by: ref,
+      refered_by: ref ? ref : null,
     };
 
     const MSG_OBJ = createVerificationMail(email, USR_OBJ, 'customer');

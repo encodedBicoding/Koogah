@@ -65,7 +65,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false, limit: '50mb' }));
 app.use(session({
   secret: process.env.SESSION_SECRET,
-  cookie: { maxAge: 60000, secure: false },
+  cookie: { maxAge: 60000, secure: isProduction ? true : false, path: "/" },
   name: '__KoogahSess__',
   resave: false,
   saveUninitialized: true,
@@ -90,6 +90,9 @@ app.use('*', apiLimiter);
 app.use('/v1', RouteV1);
 
 app.set('title', 'Koogah');
+if (isProduction) {
+  app.set('trust proxy', 1)
+}
 
 app.use((req, res, next) => {
   const err = new Error('Resource does not exist');

@@ -61,7 +61,9 @@ class UserController {
         mobile_number,
       });
       // link hint: https://api.koogah.com
-      const VERIFY_LINK = (isProduction) ? `https://koogah.herokuapp.com/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER` : `http://localhost:4000/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER`;
+      // this should be the frontend link based on the registering user
+      // not the SERVER_APP_URL
+      const VERIFY_LINK = (isProduction) ? `${process.env.SERVER_APP_URL}/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER` : `http://localhost:4000/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER`;
   
       const USR_OBJ = {
         first_name,
@@ -242,7 +244,7 @@ class UserController {
       return res.status(400).json({
         status: 400,
         error: 'The code you supplied do not match the code you received. Please try again or resend code',
-        resend_link: (isProduction) ? `https://koogah.herokuapp.com/v1/user/verify/email?key=${key}&code=COURIER` : `http://localhost:4000/v1/user/verify/email?key=${key}&code=COURIER`,
+        resend_link: (isProduction) ? `${process.env.SERVER_APP_URL}/user/verify/email?key=${key}&code=COURIER` : `http://localhost:4000/v1/user/verify/email?key=${key}&code=COURIER`,
       });
     }
 
@@ -255,7 +257,7 @@ class UserController {
     };
 
     const APPROVAL_TOKEN = await jwt.sign(payload, '9000h');
-    const APPROVAL_LINK = (isProduction) ? `https://koogah.herokuapp.com/v1/user/approved/welcome?key=${APPROVAL_TOKEN}&code=APPROVED` : `http://localhost:4000/v1/user/approved/welcome?key=${APPROVAL_TOKEN}&code=APPROVED`;
+    const APPROVAL_LINK = (isProduction) ? `${proces.env.SERVER_APP_URL}/user/approved/welcome?key=${APPROVAL_TOKEN}&code=APPROVED` : `http://localhost:4000/v1/user/approved/welcome?key=${APPROVAL_TOKEN}&code=APPROVED`;
 
     const AWAITING_USER_OBJ = {
       first_name: payload.first_name,
@@ -378,7 +380,6 @@ class UserController {
           });
           const user = {
             ...approved_user.getSafeDataValues(),
-            token: SESSION_TOKEN,
           };
           // send original courier a mail, telling them they have been approved.
         let APPROVED_USER_OBJ = {
@@ -447,7 +448,7 @@ class UserController {
       is_courier: false,
     });
 
-    const VERIFY_LINK = (isProduction) ? `https://koogah.herokuapp.com/v1/user/customer/verify/email?key=${VERIFY_TOKEN}&code=CUSTOMER` : `http://localhost:4000/v1/user/customer/verify/email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
+    const VERIFY_LINK = (isProduction) ? `${process.env.SERVER_APP_URL}/user/customer/verify/email?key=${VERIFY_TOKEN}&code=CUSTOMER` : `http://localhost:4000/v1/user/customer/verify/email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
 
     const USR_OBJ = {
       first_name,
@@ -620,18 +621,19 @@ class UserController {
       return res.status(400).json({
         status: 400,
         error: 'The code you supplied do not match the code you received. Please try again or resend code',
-        resend_link: (isProduction) ? `https://koogah.herokuapp.com/v1/user/customer/verify/email?key=${key}&code=CUSTOMER` : `http://localhost:4000/v1/user/customer/verify/email?key=${key}&code=CUSTOMER`,
+        resend_link: (isProduction) ? `${process.env.SERVER_APP_URL}/user/customer/verify/email?key=${key}&code=CUSTOMER` : `http://localhost:4000/v1/user/customer/verify/email?key=${key}&code=CUSTOMER`,
       });
     }
 
     const { iat, exp, ...data } = payload;
     const SESSION_TOKEN = await jwt.sign({
       ...data,
-    });
+    })
     const NEW_NOTIFICATION = {
       email: verifying_user.email,
       type: 'customer',
-      message: 'Hi, we at Koogah are glad to have you with us \n Remember to top-up your account and refer other users \n refering other users can earn you N200',
+      desc: 'CD001',
+      message: 'Hi, we at Koogah are glad to have you with us \n Remember to top-up your account and refer other users \n refering other users can earn you upto N200',
       title: 'Welcome to Koogah',
     };
     return Promise.try(async () => {
@@ -920,6 +922,7 @@ class UserController {
     const { user } = req.session;
     const type = user.is_courier ? 'COURIER' : 'CUSTOMER';
     client.del(`${user.email}:${type}`);
+    delete req.session.user;
     return Promise.try(() => res.status(200).json({
       status: 200,
       message: 'Logged out successfully',

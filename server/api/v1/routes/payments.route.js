@@ -35,7 +35,7 @@ paymentRoutes.route('/customer/topup')
     topup_virtual_balance_StepTwo,
   );
 paymentRoutes.post(
-  '/customer/pay/:package_id',
+  '/customer/pay/:package_id/:dispatcher_id',
   passport.authenticate('bearer', { session: false }),
   checkSession,
   isCustomerLoggedIn,

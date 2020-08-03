@@ -43,7 +43,7 @@ class Package {
       .then((resp) => resp.json())
       .then(async (result) => {
         const distance_in_km = result.rows[0].elements[0].distance.text;
-        const distance = Math.ceil(parseInt(distance_in_km.split(' ')[0].replace(',', ''), 10));
+        const distance = Math.ceil(Number(distance_in_km.split(' ')[0].replace(',', '')));
         const delivery_price = calc_delivery_price(type, weight, distance);
         if (!delivery_price) {
           return res.status(400).json({
@@ -51,10 +51,10 @@ class Package {
             error: 'Weight must match one of ["0-5","6-10", "11-15", "16-25", "26-40", "50-100", "101-200", "201-300", "301-400", "401-500", "500>"],',
           });
         }
-        if (parseInt(delivery_price, 10) > parseInt(user.virtual_balance, 10)) {
+        if (Number(delivery_price) > Number(user.virtual_balance)) {
           return res.status(400).json({
             status: 400,
-            error: `You must top-up your account with at least ${parseInt(delivery_price, 10) - parseInt(user.virtual_balance, 10)} before brequesting this dispatch`
+            error: `You must top-up your account with at least ₦${Number(delivery_price) - Number(user.virtual_balance)} before requesting this dispatch`
           })
         }
         const package_id = uuid();
@@ -67,6 +67,8 @@ class Package {
           package_id,
           ...data,
         });
+        // this should create a new package creation notification
+        // and/or send a websocket notification to all couriers registered in the package location area
         return res.status(200).json({
           status: 200,
           message: 'Package created successfully. Please wait, a dispatcher will reach out to you soon',
@@ -157,9 +159,10 @@ class Package {
         const NEW_NOTIFICATION = {
           email: customer.email,
           type: 'customer',
+          desc: 'CD004',
           title: `Interested dispatcher for package: ${package_id}`,
           message: 'A dispatcher is interested in your package. Please ensure you checkout the dispatcher\'s profile first, before approving them',
-          action_link: (isProduction) ? `https://api.koogah.com/v1/profile/courier/pv/${user.id}` : `http://localhost:4000/v1/profile/courier/pv/${user.id}`, // ensure customer is logged in
+          action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/profile/courier/pv/${user.id}` : `http://localhost:4000/v1/profile/courier/pv/${user.id}`, // ensure customer is logged in
         };
         await Notifications.create({ ...NEW_NOTIFICATION });
         return res.status(200).json({
@@ -264,9 +267,10 @@ class Package {
           },
         });
         NEW_NOTIFICATION.email = dispatcher.email;
+        NEW_NOTIFICATION.desc='CD005';
         NEW_NOTIFICATION.message = 'A customer has approved you to dispatch their package. \n Please ensure you meet them at a rather safe zone or outside their doors and/or gate';
         NEW_NOTIFICATION.title = 'New Dispatch Approval';
-        NEW_NOTIFICATION.action_link = (isProduction) ? `https://api.koogah.com/v1/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
+        NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
       }
       if (response === 'decline') {
         const dispatcher = await Couriers.findOne({
@@ -283,9 +287,10 @@ class Package {
           },
         });
         NEW_NOTIFICATION.email = dispatcher.email;
+        NEW_NOTIFICATION.desc='CD005';
         NEW_NOTIFICATION.message = `A customer has declined your request to dispatch their package with id: ${package_id}.`;
         NEW_NOTIFICATION.title = 'New Dispatch Decline';
-        NEW_NOTIFICATION.action_link = (isProduction) ? `https://api.koogah.com/v1/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
+        NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
       }
       const updated_package = await Packages.findOne({
         where: {
@@ -366,9 +371,10 @@ class Package {
         const NEW_NOTIFICATION = {
           email: package_owner.email,
           type: 'customer',
+          desc: 'CD006',
           message: `The approved dispatcher for package with id: ${package_id} has changed the weight of the package`,
           title: 'New weight change',
-          action_link: (isProduction) ? `https://api.koogah.com/v1/package/owner/view/${package_id}` : `http://localhost:4000/v1/package/owner/view/${package_id}`, // ensure customer is logged in
+          action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/package/owner/view/${package_id}` : `http://localhost:4000/v1/package/owner/view/${package_id}`, // ensure customer is logged in
         };
         await Notifications.create({ ...NEW_NOTIFICATION });
         return res.status(200).json({
@@ -456,9 +462,10 @@ class Package {
           },
         });
         NEW_NOTIFICATION.email = dispatcher.email;
+        NEW_NOTIFICATION.desc="CD007";
         NEW_NOTIFICATION.message = `A customer just approved weight change for package with id: ${package_id}`;
         NEW_NOTIFICATION.title = 'New weight change approval';
-        NEW_NOTIFICATION.action_link = (isProduction) ? `https://api.koogah.com/v1/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
+        NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
       }
       if (response === 'decline') {
         await Packages.update({
@@ -471,9 +478,10 @@ class Package {
           },
         });
         NEW_NOTIFICATION.email = dispatcher.email;
+        NEW_NOTIFICATION.desc="CD007";
         NEW_NOTIFICATION.message = `A customer just declined weight change for package with id: ${package_id}`;
         NEW_NOTIFICATION.title = 'New weight change declined';
-        NEW_NOTIFICATION.action_link = (isProduction) ? `https://api.koogah.com/v1/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
+        NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
       }
       const updated_package = await Packages.findOne({
         where: {
@@ -530,7 +538,7 @@ class Package {
           error: 'Oops, seems you have already delivered this package',
         });
       }
-      const date_time = new Date().toLocaleString();
+      const date_time = new Date();
       await Packages.update({
         status: 'delivered',
         dropoff_time: date_time,
@@ -571,9 +579,10 @@ class Package {
       const NEW_NOTIFICATION = {
         email: customer.email,
         type: 'customer',
+        desc: 'CD008',
         message: `The dispatcher for the package with id: ${package_id}, just marked the package as delivered`,
         title: 'New Package Delivered',
-        action_link: (isProduction) ? `https://api.koogah.com/v1/package/owner/view/${package_id}` : `http://localhost:4000/v1/package/owner/view/${package_id}`, // ensure customer is logged in
+        action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/package/owner/view/${package_id}` : `http://localhost:4000/v1/package/owner/view/${package_id}`, // ensure customer is logged in
       };
       await Notifications.create({ ...NEW_NOTIFICATION });
       return res.status(200).json({
@@ -940,9 +949,10 @@ class Package {
       }})
 
       NEW_NOTIFICATION.email = customer.email;
+      NEW_NOTIFICATION.desc = 'CD009';
       NEW_NOTIFICATION.message = `A dispatcher just declined pickup for package with id: ${package_id}`,
-      NEW_NOTIFICATION.title = 'New piackup decline';
-      NEW_NOTIFICATION.action_link = null;
+      NEW_NOTIFICATION.title = 'New pickup decline';
+      NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
 
       await Notifications.create({ ...NEW_NOTIFICATION })
 

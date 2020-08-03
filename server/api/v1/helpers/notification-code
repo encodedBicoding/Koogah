@@ -1,0 +1,9 @@
+welcome-message = CD001
+balance-topup = CD002
+customer-dispatcher-payment = CD003
+dispatcher-interest-in-package = CD004
+approval-decline-pickup = CD005
+new-weight-change = CD006
+approval-decline-weight-change = CD007
+new-package-delivered = CD008
+dispatcher-pickup-decline = CD009

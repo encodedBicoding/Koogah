@@ -30,7 +30,7 @@ notifyRoutes.get(
   isCourierLoggedIn,
   get_all_unreads,
 );
-notifyRoutes.get(
+notifyRoutes.post(
   '/customer/read',
   passport.authenticate('bearer', { session: false }),
   checkSession,
@@ -38,7 +38,7 @@ notifyRoutes.get(
   check_notify_id,
   read_notification,
 );
-notifyRoutes.get(
+notifyRoutes.post(
   '/courier/read',
   passport.authenticate('bearer', { session: false }),
   checkSession,

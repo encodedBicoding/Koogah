@@ -33,13 +33,13 @@ class Payment {
     // get payment details first.
     const { user } = req.session;
     const { amount } = req.body;
-    if (parseInt(amount, 10) < 500.00) {
+    if (Number(amount) < 500.00) {
       return res.status(400).json({
         status: 400,
         error: 'You cannot deposit amount below 500 Naira',
       });
     }
-    const paystack_kobo_amount = parseInt(amount, 10) * 100;
+    const paystack_kobo_amount = Number(amount) * 100;
 
     const data = {
       amount: JSON.stringify(paystack_kobo_amount),
@@ -126,7 +126,7 @@ class Payment {
       }
       let refering_user;
       let virtual_balance;
-      const total_user_balance = parseInt(user.virtual_balance, 10) + parseInt(amount, 10);
+      const total_user_balance = Number(user.virtual_balance) + Number(amount);
       // if the customer was referred by another user
       // first check if the user is a customer
       // if not, check if the user is a courier
@@ -143,7 +143,7 @@ class Payment {
             },
           });
           if (refering_user) {
-            virtual_balance = parseInt(refering_user.virtual_balance, 10) + 200.00;
+            virtual_balance = Number(refering_user.virtual_balance) + 200.00;
             await Couriers.update({
               virtual_balance,
             },
@@ -162,7 +162,7 @@ class Payment {
             });
           }
         } else {
-          virtual_balance = parseInt(refering_user.virtual_balance, 10) + 200.00;
+          virtual_balance = Number(refering_user.virtual_balance) + 200.00;
           await Customers.update({
             virtual_balance,
           },
@@ -195,7 +195,8 @@ class Payment {
       const NEW_NOTIFICATION = {
         type: 'customer',
         email: user.email,
-        message: `Your top-up of N${amount} was successful.`,
+        desc: 'CD002',
+        message: `Your top-up of ${amount} was successful.`,
         title: 'New successful topup',
       };
       await Notifications.create({ ...NEW_NOTIFICATION });
@@ -225,11 +226,12 @@ class Payment {
     const { user } = req.session;
     const {
       package_id,
+      dispatcher_id
     } = req.params;
     return Promise.try(async () => {
       const isFound = await Transactions.findOne({
         where: {
-          [Op.and]: [{ package_id }],
+          [Op.and]: [{ package_id }, { dispatcher_id }],
         },
       });
       if (isFound) {
@@ -249,14 +251,14 @@ class Payment {
           error: 'No package found with the specified id',
         });
       }
-      if (parseInt(user.virtual_balance, 10) < parseInt(is_package_valid.delivery_price, 10)) {
+      if (Number(user.virtual_balance) < Number(is_package_valid.delivery_price)) {
         return res.status(400).json({
           status: 400,
           error: 'Insufficient balance. Please top-up your account',
         });
       }
-      const customer_remaining_balance = parseInt(user.virtual_balance, 10) - parseInt(is_package_valid.delivery_price, 10);
-      // get dispatcher to update their account + minus the 20 percent charge.
+      const customer_remaining_balance = Number(user.virtual_balance) - Number(is_package_valid.delivery_price);
+      // get dispatcher to update their account + minus the 25 percent charge.
       const dispatcher = await Couriers.findOne({
         where: {
           id: is_package_valid.dispatcher_id,
@@ -268,9 +270,9 @@ class Payment {
           error: 'Oops, seems this dispatcher doesn\'t exists anymore...',
         });
       }
-      const fees = parseInt(is_package_valid.delivery_price, 10) * 0.25;
-      const total_amount_payable = parseInt(is_package_valid.delivery_price, 10) - fees;
-      const dispatcher_new_balance = parseInt(dispatcher.virtual_balance, 10) + total_amount_payable;
+      const fees = Number(is_package_valid.delivery_price) * 0.25;
+      const total_amount_payable = Number(is_package_valid.delivery_price) - fees;
+      const dispatcher_new_balance = Number(dispatcher.virtual_balance) + total_amount_payable;
 
       const transaction_details = {
         customer_id: user.id,
@@ -302,9 +304,10 @@ class Payment {
       const NEW_NOTIFICATION = {
         email: dispatcher.email,
         type: 'courier',
-        message: `A customer just paid you N${is_package_valid.delivery_price} to deliver a package with id: ${package_id}`,
+        desc: 'CD003',
+        message: `A customer just paid you ${is_package_valid.delivery_price} to deliver a package with id: ${package_id}. \nService charge of ${fees} was deducted, \nYour total payable fee for this delivery is ${total_amount_payable}`,
         title: 'New payment for delivery',
-        action_link: (isProduction) ? `https://api.koogah.com/v1/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`, // ensure courier is logged in
+        action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`, // ensure courier is logged in
       };
       await Notifications.create({ ...NEW_NOTIFICATION });
       const new_transaction = await Transactions.create({ ...transaction_details });

@@ -427,13 +427,8 @@ class UserController {
     const {
       first_name,
       last_name,
-      business_name,
-      has_business,
       mobile_number_one,
-      mobile_number_two,
-      address,
-      state,
-      town,
+      country_code,
       email,
       password,
     } = req.body;
@@ -457,18 +452,21 @@ class UserController {
     };
     const REFERAL_ID = generate_ref('referal');
 
+    const codes = [
+      {
+        code: '+234',
+        value: 'nigerian'
+      }
+    ]
+    const user_nationality = codes.find((c) => c.code === country_code).value;
+
     const NEW_USER = {
       first_name,
       last_name,
-      business_name,
-      has_business,
       mobile_number_one,
-      mobile_number_two,
-      address,
-      state,
-      town,
       email,
       password,
+      nationality: user_nationality,
       verify_token: VERIFY_TOKEN,
       referal_id: REFERAL_ID,
       refered_by: ref ? ref : null,

@@ -101,7 +101,12 @@ module.exports = (sequelize, DataTypes) => {
     pickup_decline_cause: {
       type: DataTypes.TEXT,
       allowNull: true,
-    }
+    },
+    is_paid_for: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
   },
   {
     underscored: true,

@@ -79,6 +79,10 @@ module.exports = {
     pickup_decline_cause: {
       type: Sequelize.TEXT
     },
+    is_paid_for: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+    },
     created_at: {
       allowNull: false,
       type: Sequelize.DATE,

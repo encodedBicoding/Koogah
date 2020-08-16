@@ -57,16 +57,10 @@ class Schema {
     return Joi.object({
       first_name: Joi.string().min(3).max(30).required(),
       last_name: Joi.string().min(3).max(30).required(),
-      business_name: Joi.string().min(3).max(100),
-      has_business: Joi.bool().required(),
+      country_code: Joi.string().required(),
       email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
       password: Joi.string().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/).required(),
-      repeat_password: Joi.ref('password'),
       mobile_number_one: Joi.string().min(10).max(11).required(),
-      mobile_number_two: Joi.string().min(10).max(11),
-      state: Joi.string().required(),
-      town: Joi.string().required(),
-      address: Joi.string().required(),
     });
   }
 

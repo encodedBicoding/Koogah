@@ -61,6 +61,9 @@ module.exports = {
     town: {
       type: Sequelize.STRING,
     },
+    nationality: {
+      type: Sequelize.STRING,
+    },
     email: {
       type: Sequelize.STRING,
     },

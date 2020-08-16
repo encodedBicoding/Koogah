@@ -310,7 +310,17 @@ class Payment {
         action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`, // ensure courier is logged in
       };
       await Notifications.create({ ...NEW_NOTIFICATION });
+
       const new_transaction = await Transactions.create({ ...transaction_details });
+
+      await Packages.update({
+        is_paid_for: true,
+      }, {
+        where: {
+          package_id
+        }
+      });
+
       return res.status(200).json({
         status: 200,
         message: 'Dispatcher paid sucessfully',

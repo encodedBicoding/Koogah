@@ -50,7 +50,7 @@ describe('Handle Courier controller', () => {
   describe('Handle signup courier step two', () => {
     it('Should send a verification message to the user and update it accordingly in the database', (done) => {
       chai.request(app)
-        .get(`${KoogahURLV1}/verify/email?key=${courier_verify_token}&code=COURIER`)
+        .post(`${KoogahURLV1}/verify/email?key=${courier_verify_token}&code=COURIER`)
         .end((err, res) => {
           expect(res.status).to.equal(200);
           expect(res.body.message).to.equal('Please insert the verification code sent to the mobile number you provided on registeration');
@@ -59,7 +59,7 @@ describe('Handle Courier controller', () => {
     });
     it('Should fail and return status 400 if token is invalid', (done) => {
       chai.request(app)
-        .get(`${KoogahURLV1}/verify/email?key=invalid_token.ksjokeojinad9edkmdfs&code=COURIER`)
+        .post(`${KoogahURLV1}/verify/email?key=invalid_token.ksjokeojinad9edkmdfs&code=COURIER`)
         .end((err, res) => {
           expect(res.status).to.equal(400);
           expect(res.body.error).to.equal('Invalid Token, Please contact our support team to lay any complains. mailto::support@koogah.com');
@@ -102,7 +102,7 @@ describe('Handle Courier controller', () => {
     });
     it('Should fail and return status 400 if user had previously verified their account', (done) => {
       chai.request(app)
-        .get(`${KoogahURLV1}/verify/email?key=${courier_verify_token}&code=COURIER`)
+        .post(`${KoogahURLV1}/verify/email?key=${courier_verify_token}&code=COURIER`)
         .end((err, res) => {
           expect(res.status).to.equal(400);
           expect(res.body.error).to.equal('Oops, seems you have already verified your email and mobile number.');
@@ -113,7 +113,7 @@ describe('Handle Courier controller', () => {
   describe('Test courier mobile verification code', () => {
     it('Should fail if mobile verification code is of invalid type', (done) => {
       chai.request(app)
-        .get(`${KoogahURLV1}/verify/mobile?key=${courier_verify_token}&code=COURIER`)
+        .post(`${KoogahURLV1}/verify/mobile?key=${courier_verify_token}&code=COURIER`)
         .send({ code: 'invalid_type' })
         .end((err, res) => {
           expect(res.status).to.equal(400);
@@ -122,7 +122,7 @@ describe('Handle Courier controller', () => {
     });
     it('Should fail if mobile verification code doesn\'t match the one sent to the user', (done) => {
       chai.request(app)
-        .get(`${KoogahURLV1}/verify/mobile?key=${courier_verify_token}&code=COURIER`)
+        .post(`${KoogahURLV1}/verify/mobile?key=${courier_verify_token}&code=COURIER`)
         .send({ code: '92890' })
         .end((err, res) => {
           expect(res.status).to.equal(400);
@@ -131,7 +131,7 @@ describe('Handle Courier controller', () => {
     });
     it('Should fail if user verification token is invalid', (done) => {
       chai.request(app)
-        .get(`${KoogahURLV1}/verify/mobile?key=invalid_token&code=COURIER`)
+        .post(`${KoogahURLV1}/verify/mobile?key=invalid_token&code=COURIER`)
         .send({ code: '92890' })
         .end((err, res) => {
           expect(res.status).to.equal(400);
@@ -140,7 +140,7 @@ describe('Handle Courier controller', () => {
     });
     it('Should pass if code matches the one sent to the user mobile', (done) => {
       chai.request(app)
-        .get(`${KoogahURLV1}/verify/mobile?key=${courier_verify_token}&code=COURIER`)
+        .post(`${KoogahURLV1}/verify/mobile?key=${courier_verify_token}&code=COURIER`)
         .send({ code: mob_code })
         .end((err, res) => {
           expect(res.status).to.equal(200);
@@ -177,7 +177,7 @@ describe('Handle Courier controller', () => {
     });
     it('Should fail and return status 400 if user had previously verified their account', (done) => {
       chai.request(app)
-        .get(`${KoogahURLV1}/verify/mobile?key=${courier_verify_token}&code=COURIER`)
+        .post(`${KoogahURLV1}/verify/mobile?key=${courier_verify_token}&code=COURIER`)
         .send({ code: mob_code })
         .end((err, res) => {
           expect(res.status).to.equal(400);
@@ -198,7 +198,7 @@ describe('Handle Courier controller', () => {
     });
     it('Should fail and return status 404', (done) => {
       chai.request(app)
-        .get(`${KoogahURLV1}/verify/email?key=${courier_verify_token}&code=COURIER`)
+        .post(`${KoogahURLV1}/verify/email?key=${courier_verify_token}&code=COURIER`)
         .end((err, res) => {
           expect(res.status).to.equal(404);
           done();
@@ -206,7 +206,7 @@ describe('Handle Courier controller', () => {
     });
     it('Should fail and return status 404', (done) => {
       chai.request(app)
-        .get(`${KoogahURLV1}/verify/mobile?key=${courier_verify_token}&code=COURIER`)
+        .post(`${KoogahURLV1}/verify/mobile?key=${courier_verify_token}&code=COURIER`)
         .send({ code: mob_code })
         .end((err, res) => {
           expect(res.status).to.equal(404);

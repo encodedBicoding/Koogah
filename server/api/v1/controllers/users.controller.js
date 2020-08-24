@@ -63,7 +63,7 @@ class UserController {
       // link hint: https://api.koogah.com
       // this should be the frontend link based on the registering user
       // not the SERVER_APP_URL
-      const VERIFY_LINK = (isProduction) ? `${process.env.SERVER_APP_URL}/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER` : `http://localhost:4000/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER`;
+      const VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${req.headers.host}/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER`;
   
       const USR_OBJ = {
         first_name,
@@ -220,7 +220,7 @@ class UserController {
       });
     }
 
-    const verifying_user = await Couriers.findOne({
+    let verifying_user = await Couriers.findOne({
       where: {
         [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
       },
@@ -244,9 +244,11 @@ class UserController {
       return res.status(400).json({
         status: 400,
         error: 'The code you supplied do not match the code you received. Please try again or resend code',
-        resend_link: (isProduction) ? `${process.env.SERVER_APP_URL}/user/verify/email?key=${key}&code=COURIER` : `http://localhost:4000/v1/user/verify/email?key=${key}&code=COURIER`,
+        resend_link:`${isProduction ? 'https' : 'http'}://${req.headers.host}/v1/user/verify/email?key=${key}&code=COURIER`,
       });
     }
+
+    verifying_user = verifying_user.getSafeDataValues();
 
     payload = {
       email: verifying_user.email,
@@ -273,40 +275,34 @@ class UserController {
     // send the user details as mail to the company.
 
     const MSG_OBJ = createCourierApprovalMail(AWAITING_USER_OBJ);
-
-    return Promise.all(
-      [
-        Couriers.update(
-          {
-            verification_code: null,
-            verify_token: null,
-            is_verified: true,
-            approval_code: APPROVAL_TOKEN,
+    return Promise.try(async () => {
+      await Couriers.update(
+        {
+          verification_code: null,
+          verify_token: null,
+          is_verified: true,
+          approval_code: APPROVAL_TOKEN,
+        },
+        {
+          where: {
+            [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
           },
-          {
-            where: {
-              [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
-            },
-          },
-        ),
-        Awaitings.create(AWAITING_USER_OBJ),
-      ],
-    )
-      .then((result) => Promise.resolve(result))
-      .then(() => Promise.try(() => sendMail(MSG_OBJ)).then(() => res.status(200).json({
-        status: 200,
+        },
+      );
+      await Awaitings.create(AWAITING_USER_OBJ);
+      await sendMail(MSG_OBJ);
+      return res.status(200).json({
+        status:200,
         message: 'Registration complete, your account is now awaiting approval.',
-      })).catch((err) => {
-        log(err);
+      })
+
+    }).catch((err) => {
+      log(err);
         return res.status(400).json({
           status: 400,
           error: err,
         });
-      }))
-      .catch((err) => {
-        log(err);
-        return res.send({ error: err });
-      });
+    })
   }
 
   /**
@@ -349,70 +345,54 @@ class UserController {
       });
     }
 
-    return Promise.all(
-      [
-        Couriers.update(
-          {
-            is_approved: true,
-            approval_code: null,
-            is_active: true,
+    return Promise.try(async () => {
+      await Couriers.update(
+        {
+          is_approved: true,
+          approval_code: null,
+          is_active: true,
 
-          },
-          {
-            where: {
-              email: payload.email,
-            },
-          },
-        ),
-        Awaitings.destroy({
+        },
+        {
           where: {
-            user_email: payload.email,
+            email: payload.email,
           },
-        }),
-      ],
-    )
-      .then(async () => {
-        try{
-          const approved_user = await Couriers.findOne({
-            where: {
-              email: payload.email,
-            },
-          });
-          const user = {
-            ...approved_user.getSafeDataValues(),
-          };
-          // send original courier a mail, telling them they have been approved.
-        let APPROVED_USER_OBJ = {
-          first_name: user.first_name,
-          user_email: user.email,
-          last_name: user.last_name
-        }
-        const msg_obj = createApprovalMailToCourier(APPROVED_USER_OBJ);
-        await sendMail(msg_obj);
-
-        res.status(200).json({
-          status: 200,
-          message: 'Account approved successfully',
-          user,
-
-        });
-
-        }catch(err){
-          log(err);
-          return res.status(400).json({
-            status: 400,
-            error: err,
-          });
-        }
-
-      })
-      .catch((err) => {
-        log(err);
-        return res.status(400).json({
-          status: 400,
-          error: err,
-        });
+        },
+      );
+      await Awaitings.destroy({
+        where: {
+          user_email: payload.email,
+        },
       });
+      const approved_user = await Couriers.findOne({
+        where: {
+          email: payload.email,
+        },
+      });
+      const user = {
+        ...approved_user.getSafeDataValues(),
+      };
+      // send original courier a mail, telling them they have been approved.
+      let APPROVED_USER_OBJ = {
+        first_name: user.first_name,
+        user_email: user.email,
+        last_name: user.last_name
+      }
+      const msg_obj = createApprovalMailToCourier(APPROVED_USER_OBJ);
+      await sendMail(msg_obj);
+
+      return res.status(200).json({
+        status: 200,
+        message: 'Account approved successfully',
+        user,
+      });
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    })
   }
 
   /**
@@ -443,7 +423,7 @@ class UserController {
       is_courier: false,
     });
 
-    const VERIFY_LINK = (isProduction) ? `${process.env.SERVER_APP_URL}/user/customer/verify/email?key=${VERIFY_TOKEN}&code=CUSTOMER` : `http://localhost:4000/v1/user/customer/verify/email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
+    const VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${req.headers.host}/v1/user/customer/verify/email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
 
     const USR_OBJ = {
       first_name,
@@ -476,7 +456,7 @@ class UserController {
 
     const isFound = await Customers.findOne({
       where: {
-        email,
+        email
       },
     });
 
@@ -684,7 +664,7 @@ class UserController {
     const { email, password } = req.body;
     let SESSION_TOKEN = '';
     return Promise.try(async () => {
-      const isFound = await Couriers.findOne({
+      let isFound = await Couriers.findOne({
         where: {
           email,
         },
@@ -702,6 +682,7 @@ class UserController {
           error: 'Email and/or Password do not match',
         });
       }
+      isFound = isFound.getSafeDataValues();
       const SESSION_USER = {
         first_name: isFound.first_name,
         last_name: isFound.last_name,
@@ -712,7 +693,7 @@ class UserController {
       };
 
       SESSION_TOKEN = await jwt.sign(SESSION_USER, '24h');
-      const user = isFound.getSafeDataValues();
+      const user = isFound;
       user.token = SESSION_TOKEN;
       client.set(`${user.email}:COURIER`, SESSION_TOKEN);
       return res.status(200).json({
@@ -740,7 +721,7 @@ class UserController {
     const { email, password } = req.body;
     let SESSION_TOKEN = '';
     return Promise.try(async () => {
-      const isFound = await Customers.findOne({
+      let isFound = await Customers.findOne({
         where: {
           email,
         },
@@ -758,6 +739,9 @@ class UserController {
           error: 'Email and/or Password do not match',
         });
       }
+
+      isFound = isFound.getSafeDataValues();
+
       const SESSION_USER = {
         first_name: isFound.first_name,
         last_name: isFound.last_name,
@@ -768,7 +752,7 @@ class UserController {
       };
 
       SESSION_TOKEN = await jwt.sign(SESSION_USER, '24h');
-      const user = isFound.getSafeDataValues();
+      const user = isFound;
       user.token = SESSION_TOKEN;
       client.set(`${user.email}:CUSTOMER`, SESSION_TOKEN);
       return res.status(200).json({
@@ -810,7 +794,7 @@ class UserController {
         });
       }
 
-      const customer = await Customers.findOne({
+      let customer = await Customers.findOne({
         where: {
           id: customer_id
         }
@@ -821,6 +805,8 @@ class UserController {
           error: 'Oops, seems the customer doesn\'t exists anymore',
         });
       }
+
+      customer = customer.getSafeDataValues();
 
       const current_number_of_raters = (parseInt(customer.no_of_raters, 10) + 1);
       const new_rate_value = ((Number(customer.rating) * parseInt(customer.no_of_raters, 10) + parseInt(rating, 10)) / current_number_of_raters).toPrecision(2)
@@ -873,7 +859,7 @@ class UserController {
           error: 'You cannot rate a dispatcher unless they currently or have dispatched for you',
         });
       }
-      const dispatcher = await Couriers.findOne({
+      let dispatcher = await Couriers.findOne({
         where: {
           id: dispatcher_id,
         },
@@ -895,6 +881,8 @@ class UserController {
           id: dispatcher_id,
         },
       });
+      dispatcher = dispatcher.getSafeDataValues();
+      
       return res.status(200).json({
         status: 200,
         message: `You successfully rated ${dispatcher.first_name} ${dispatcher.last_name}:, ${rating}`,
@@ -968,6 +956,8 @@ class UserController {
           error: `No ${type === 'courier' ? 'customer' : 'courier'} found with that ID`,
         });
       }
+      reported_user = reported_user.getSafeDataValues();
+
       const NEW_REPORT = {
         email: reported_user.email,
         first_name: reported_user.first_name,

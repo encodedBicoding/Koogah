@@ -48,7 +48,7 @@ class Package {
         if (!delivery_price) {
           return res.status(400).json({
             status: 400,
-            error: 'Weight must match one of ["0-5","6-10", "11-15", "16-25", "26-40", "50-100", "101-200", "201-300", "301-400", "401-500", "500>"],',
+            error: 'Weight must match one of ["0-5","6-10", "11-15", "16-25", "26-40", "50-100", "101-200", "201-300", "301-400", "401-500", "501>"],',
           });
         }
         if (Number(delivery_price) > Number(user.virtual_balance)) {

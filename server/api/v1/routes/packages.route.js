@@ -32,7 +32,8 @@ const {
   check_delivery_type,
   check_package_status,
   check_decline_pickup_body,
-  check_decline_pickup_query
+  check_decline_pickup_query,
+  check_approve_decline_package
 } = Validate;
 
 const packageRoute = express();
@@ -55,11 +56,11 @@ packageRoute.patch(
   show_interest,
 );
 packageRoute.patch(
-  '/customer/interest/:package_id',
+  '/customer/interest/:package_id/:dispatcher_id',
   passport.authenticate('bearer', { session: false }),
   checkSession,
   isCustomerLoggedIn,
-  check_package_id,
+  check_approve_decline_package,
   check_response,
   approve_or_decline,
 );

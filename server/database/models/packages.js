@@ -11,10 +11,14 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: null,
     },
-    pending_dispatcher_id: {
-      type: DataTypes.BIGINT,
+    pending_dispatchers: {
+      type: DataTypes.ARRAY(DataTypes.BIGINT),
       allowNull: true,
-      defaultValue: null,
+    },
+    is_currently_tracking: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
     weight: {
       type: DataTypes.STRING,

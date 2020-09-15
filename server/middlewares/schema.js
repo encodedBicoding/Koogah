@@ -371,6 +371,19 @@ class Schema {
       report: Joi.string().required(),
     });
   }
+
+  /**
+   * @method approve_decline_package_schema
+   * @description This method return Joi object which delivers a schema to report a user
+   * @memberof Schema
+   * @return Joi Object
+   */
+  static approve_decline_package_schema() {
+    return Joi.object({
+      package_id: Joi.string().required(),
+      dispatcher_id: Joi.string().required(),
+    });
+  }
 }
 
 

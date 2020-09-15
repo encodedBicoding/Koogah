@@ -13,8 +13,11 @@ module.exports = {
     dispatcher_id: {
       type: Sequelize.BIGINT,
     },
-    pending_dispatcher_id: {
-      type: Sequelize.BIGINT,
+    pending_dispatchers: {
+      type: Sequelize.ARRAY(Sequelize.BIGINT),
+    },
+    is_currently_tracking: {
+      type: Sequelize.BOOLEAN
     },
     weight: {
       type: Sequelize.STRING,

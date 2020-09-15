@@ -67,7 +67,7 @@ class Package {
           package_id,
           ...data,
         });
-        // this should create a new package creation notification
+        // TODO: this should create a new package creation notification
         // and/or send a websocket notification to all couriers registered in the package location area
         return res.status(200).json({
           status: 200,
@@ -124,22 +124,16 @@ class Package {
           error: 'This package has already been picked up by another dispatcher',
         });
       }
-      if (_package.pending_dispatcher_id === user.id) {
+      if (_package.pending_dispatchers.includes(user.id)) {
         return res.status(400).json({
           status: 400,
           error: 'You have already indicated interest for the package. Please wait for the owner to approve you.',
         });
       }
-      if (_package.pending_dispatcher_id) {
-        return res.status(400).json({
-          status: 400,
-          error: 'A dispatcher has already indicated interest for this package. You can only indicate an interest if they were disapproved by the owner of the package',
-        });
-      }
       // update Package and send a notification to the owner of the package.
       return Promise.try(async () => {
         await Packages.update({
-          pending_dispatcher_id: user.id,
+          pending_dispatchers: _package.pending_dispatchers.concat(user.id),
         },
         {
           where: {
@@ -161,7 +155,7 @@ class Package {
           type: 'customer',
           desc: 'CD004',
           title: `Interested dispatcher for package: ${package_id}`,
-          message: 'A dispatcher is interested in your package. Please ensure you checkout the dispatcher\'s profile first, before approving them',
+          message: _package.pending_dispatchers.length <= 1 ? 'A dispatcher is interested in your package. Please ensure you checkout the dispatcher\'s profile first, before approving them' : 'Another dispatcher is interested in your package. Please ensure you checkout the dispatcher\'s profile first, before approving them',
           action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/profile/courier/pv/${user.id}` : `http://localhost:4000/v1/profile/courier/pv/${user.id}`, // ensure customer is logged in
         };
         await Notifications.create({ ...NEW_NOTIFICATION });
@@ -194,7 +188,7 @@ class Package {
    */
 
   static approve_or_decline(req, res) {
-    const { package_id } = req.params;
+    const { package_id, dispatcher_id } = req.params;
     const { response } = req.query;
     const { user } = req.session;
     const NEW_NOTIFICATION = {
@@ -228,7 +222,7 @@ class Package {
         const date_time = new Date().toLocaleString();
         const dispatcher = await Couriers.findOne({
           where: {
-            id: _package.pending_dispatcher_id,
+            id: dispatcher_id,
           },
         });
 
@@ -246,9 +240,9 @@ class Package {
         }
 
         await Packages.update({
-          dispatcher_id: _package.pending_dispatcher_id,
+          dispatcher_id,
           pickup_time: date_time,
-          pending_dispatcher_id: null,
+          pending_dispatchers: [],
           status: 'picked-up',
         },
         {
@@ -275,7 +269,7 @@ class Package {
       if (response === 'decline') {
         const dispatcher = await Couriers.findOne({
           where: {
-            id: _package.pending_dispatcher_id,
+            id: dispatcher_id,
           },
         });
         await Packages.update({
@@ -541,6 +535,7 @@ class Package {
       const date_time = new Date();
       await Packages.update({
         status: 'delivered',
+        is_currently_tracking: false,
         dropoff_time: date_time,
       },
       {
@@ -582,7 +577,7 @@ class Package {
         desc: 'CD008',
         message: `The dispatcher for the package with id: ${package_id}, just marked the package as delivered`,
         title: 'New Package Delivered',
-        action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/package/owner/view/${package_id}` : `http://localhost:4000/v1/package/owner/view/${package_id}`, // ensure customer is logged in
+        action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/package/owner/view/${package_id}` : `http://localhost:4000/v1/package/owner/view/${package_id}`, // ensure customer is logged in TODO: fix action link
       };
       await Notifications.create({ ...NEW_NOTIFICATION });
       return res.status(200).json({

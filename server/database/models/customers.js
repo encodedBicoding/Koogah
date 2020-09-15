@@ -134,7 +134,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Customers.prototype.encryptPassword = async function encryptPassword() {
     const saltRounds = 8;
-    return bcrypt.hash(this.password, saltRounds);
+    return await bcrypt.hash(this.password, saltRounds);
   };
 
   Customers.prototype.encryptMainData = function encryptData(data) {
@@ -143,7 +143,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Customers.prototype.decryptPassword = async function decryptPassword(password) {
-    return bcrypt.compare(password, this.password);
+    return await bcrypt.compare(password, this.password);
   };
   Customers.prototype.getSafeDataValues = function getSafeDataValues() {
     let secret_key = process.env.SECRET_KEY;

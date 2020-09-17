@@ -28,6 +28,9 @@ module.exports = {
     virtual_balance: {
       type: Sequelize.DECIMAL(10, 2),
     },
+    virtual_allocated_balance: {
+      type: Sequelize.DECIMAL(10, 2),
+    },
     rating: {
       type: Sequelize.DECIMAL(10, 1),
     },

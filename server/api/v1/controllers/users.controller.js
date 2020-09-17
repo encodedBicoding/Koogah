@@ -415,6 +415,19 @@ class UserController {
 
     const { ref } = req.query;
 
+    const isFound = await Customers.findOne({
+      where: {
+        email
+      },
+    });
+
+    if (isFound) {
+      return res.status(400).json({
+        status: 400,
+        message: 'A user with the given email already exists',
+      });
+    }
+
     const VERIFY_TOKEN = await jwt.sign({
       email,
       first_name,
@@ -422,6 +435,7 @@ class UserController {
       last_name,
       is_courier: false,
     });
+  
 
     const VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${req.headers.host}/v1/user/customer/verify/email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
 
@@ -454,18 +468,6 @@ class UserController {
 
     const MSG_OBJ = createVerificationMail(email, USR_OBJ, 'customer');
 
-    const isFound = await Customers.findOne({
-      where: {
-        email
-      },
-    });
-
-    if (isFound) {
-      return res.status(400).json({
-        status: 400,
-        message: 'A user with the given email already exists',
-      });
-    }
     return Promise.try(async () => {
       await sendMail(MSG_OBJ);
       await Customers.create(NEW_USER);

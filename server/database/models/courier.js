@@ -151,11 +151,11 @@ module.exports = (sequelize, DataTypes) => {
   Courier.beforeCreate(async (courier) => {
     // eslint-disable-next-line require-atomic-updates
     courier.password = await courier.encryptPassword();
-    courier.first_name = courier.encryptMainData(courier.first_name);
-    courier.last_name = courier.encryptMainData(courier.last_name);
-    courier.address = courier.encryptMainData(courier.address);
-    courier.nationality = courier.encryptMainData(courier.nationality);
-    courier.mobile_number = courier.encryptMainData(courier.mobile_number);
+    // courier.first_name = courier.encryptMainData(courier.first_name);
+    // courier.last_name = courier.encryptMainData(courier.last_name);
+    // courier.address = courier.encryptMainData(courier.address);
+    // courier.nationality = courier.encryptMainData(courier.nationality);
+    // courier.mobile_number = courier.encryptMainData(courier.mobile_number);
 
   });
 
@@ -173,26 +173,27 @@ module.exports = (sequelize, DataTypes) => {
     return bcrypt.compare(password, this.password);
   };
   Courier.prototype.getSafeDataValues = function getSafeDataValues() {
+    let secret_key = process.env.SECRET_KEY;
     let { password, ...data } = this.dataValues;
-    data = Object.keys(data).reduce((acc, curr) => {
-      acc = this.dataValues;
-      if (curr === 'first_name') {
-        acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
-      }
-      if (curr === 'last_name') {
-        acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
-      }
-      if (curr === 'address') {
-        acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
-      }
-      if (curr === 'nationality') {
-        acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
-      }
-      if (curr === 'mobile_number') {
-        acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
-      }
-      return acc;
-    }, {})
+    // data = Object.keys(data).reduce((acc, curr) => {
+    //   acc = this.dataValues;
+    //   if (curr === 'first_name') {
+    //     acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
+    //   }
+    //   if (curr === 'last_name') {
+    //     acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
+    //   }
+    //   if (curr === 'address') {
+    //     acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
+    //   }
+    //   if (curr === 'nationality') {
+    //     acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
+    //   }
+    //   if (curr === 'mobile_number') {
+    //     acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
+    //   }
+    //   return acc;
+    // }, {})
     return data;
   };
 

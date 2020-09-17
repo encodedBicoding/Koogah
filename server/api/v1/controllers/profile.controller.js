@@ -50,7 +50,7 @@ class Profile {
       }
       return res.status(200).json({
         status: 200,
-        message: 'Profile retreived successfully',
+        message: 'Profile retrieved successfully',
         data
       });
     }).catch((err) => {

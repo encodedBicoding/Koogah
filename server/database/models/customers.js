@@ -41,6 +41,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 0.00,
     },
+    virtual_allocated_balance: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.00,
+    },
     rating: {
       type: DataTypes.DECIMAL(10, 1),
       defaultValue: 0.0,
@@ -123,12 +128,14 @@ module.exports = (sequelize, DataTypes) => {
 
   Customers.beforeCreate(async (customer) => {
     customer.password = await customer.encryptPassword();
-    customer.first_name = customer.encryptMainData(customer.first_name);
-    customer.last_name = customer.encryptMainData(customer.last_name);
-    customer.address = customer.encryptMainData(customer.address);
-    customer.nationality = customer.encryptMainData(customer.nationality);
-    customer.mobile_number_one = customer.encryptMainData(customer.mobile_number_one);
-    customer.mobile_number_two = customer.mobile_number_two ? customer.encryptMainData(customer.mobile_number_two) : ''
+
+    //TODO
+    // customer.first_name = customer.encryptMainData(customer.first_name);
+    // customer.last_name = customer.encryptMainData(customer.last_name);
+    // customer.address = customer.encryptMainData(customer.address);
+    // customer.nationality = customer.encryptMainData(customer.nationality);
+    // customer.mobile_number_one = customer.encryptMainData(customer.mobile_number_one);
+    // customer.mobile_number_two = customer.mobile_number_two ? customer.encryptMainData(customer.mobile_number_two) : ''
 
   });
 
@@ -148,28 +155,29 @@ module.exports = (sequelize, DataTypes) => {
   Customers.prototype.getSafeDataValues = function getSafeDataValues() {
     let secret_key = process.env.SECRET_KEY;
     let { password, ...data } = this.dataValues;
-    data = Object.keys(data).reduce((acc, curr) => {
-      acc = this.dataValues;
-      if (curr === 'first_name') {
-        acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
-      }
-      if (curr === 'last_name') {
-        acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
-      }
-      if (curr === 'address') {
-        acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
-      }
-      if (curr === 'nationality') {
-        acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
-      }
-      if (curr === 'mobile_number_one') {
-        acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
-      }
-      if (curr === 'mobile_number_two' && this.dataValues[curr]) {
-        acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
-      }
-      return acc;
-    }, {})
+    // TODO: Encrypt data
+    // data = Object.keys(data).reduce((acc, curr) => {
+    //   acc = this.dataValues;
+    //   if (curr === 'first_name') {
+    //     acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
+    //   }
+    //   if (curr === 'last_name') {
+    //     acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
+    //   }
+    //   if (curr === 'address') {
+    //     acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
+    //   }
+    //   if (curr === 'nationality') {
+    //     acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
+    //   }
+    //   if (curr === 'mobile_number_one') {
+    //     acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
+    //   }
+    //   if (curr === 'mobile_number_two' && this.dataValues[curr]) {
+    //     acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
+    //   }
+    //   return acc;
+    // }, {})
     return data;
   };
 

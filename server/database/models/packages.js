@@ -14,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
     pending_dispatchers: {
       type: DataTypes.ARRAY(DataTypes.BIGINT),
       allowNull: true,
+      defaultValue: [],
     },
     is_currently_tracking: {
       type: DataTypes.BOOLEAN,

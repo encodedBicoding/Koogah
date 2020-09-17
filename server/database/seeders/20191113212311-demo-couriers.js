@@ -66,7 +66,7 @@ module.exports = {
         account_number: '223482253',
         bank_name: 'uba',
         pending: 0,
-        is_approved: false,
+        is_approved: true,
         last_payout: 0.00,
         total_payouts: 0.00,
         is_admin: false,

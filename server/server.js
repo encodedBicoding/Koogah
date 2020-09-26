@@ -22,7 +22,8 @@ import Auth from './middlewares/auth';
 import './WebSockets/socket.io';
 
 const accepted_urls = [
-  'https://koogah.com',
+  'https://koogah.com/*',
+  'https://*.koogah.com',
   'http://localhost:8081',
   'http://10.0.2.2:8081',
 ];

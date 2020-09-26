@@ -85,7 +85,7 @@ class Package {
         // and/or send a websocket notification to all couriers registered in the package location area
         return res.status(200).json({
           status: 200,
-          message: 'Package created successfully. Please wait, a dispatcher will reach out to you soon',
+          message: 'Package created successfully. Please wait, dispatcher\'s will reach out to you soon',
           package_detail,
         });
       }).catch((err) => {
@@ -362,6 +362,12 @@ class Package {
         new_weight,
         _package.distance,
       );
+      if (!new_delivery_price) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Weight must match one of ["0-5","6-10", "11-15", "16-25", "26-40", "50-100", "101-200", "201-300", "301-400", "401-500", "501>"],',
+        });
+      }
       return Promise.try(async () => {
         await Packages.update({
           pending_weight: new_weight,
@@ -599,7 +605,7 @@ class Package {
           {
             model: Couriers,
             as: 'dispatcher',
-            attributes: ['first_name', 'last_name', 'profile_image'],
+            attributes: ['id','first_name', 'last_name', 'profile_image'],
           },
         ],
       });
@@ -651,6 +657,22 @@ class Package {
           {
             model: Customers,
             as: 'customer',
+            include: [
+              'id',
+              'first_name',
+              'last_name',
+              'has_business',
+              'business_name',
+              'rating',
+              'profile_image',
+              'mobile_number_one',
+              'mobile_number_two',
+              'address',
+              'nationality',
+              'email',
+              'state',
+              'town'
+            ]
           },
         ],
       });
@@ -700,6 +722,20 @@ class Package {
           {
             model: Couriers,
             as: 'dispatcher',
+            attributes: [
+              'id', 
+              'first_name',
+              'last_name',
+              'email',
+              'mobile_number',
+              'state',
+              'town',
+              'nationality',
+              'sex',
+              'profile_image',
+              'rating',
+              'deliveries',
+          ]
           },
         ],
       });
@@ -745,6 +781,21 @@ class Package {
             {
               model: Couriers,
               as: 'dispatcher',
+              attributes: [
+                'id', 
+                'first_name',
+                'last_name',
+                'email',
+                'mobile_number',
+                'state',
+                'town',
+                'nationality',
+                'sex',
+                'profile_image',
+                'rating',
+                'deliveries',
+  
+            ]
             },
           ],
         });
@@ -982,7 +1033,8 @@ class Package {
         dispatcher_id: null,
         status: 'not-picked',
         pickup_time: null,
-        pickup_decline_cause: decline_cause
+        pickup_decline_cause: decline_cause,
+        pending_delivery_price: null
       }, {
         where: {
         package_id

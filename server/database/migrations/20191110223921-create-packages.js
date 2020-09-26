@@ -61,6 +61,12 @@ module.exports = {
     dropoff_address: {
       type: Sequelize.STRING,
     },
+    nearest_busstop: {
+      type: Sequelize.TEXT,
+    },
+    landmark: {
+      type: Sequelize.TEXT,
+    },
     status: {
       type: Sequelize.ENUM('picked-up', 'not-picked', 'delivered'),
     },

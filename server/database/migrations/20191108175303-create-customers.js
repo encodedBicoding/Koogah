@@ -82,6 +82,9 @@ module.exports = {
     refered_by: {
       type: Sequelize.STRING,
     },
+    ws_connected_channels: {
+      type: Sequelize.ARRAY(Sequelize.STRING)
+    },
     created_at: {
       allowNull: false,
       type: Sequelize.DATE,

@@ -92,6 +92,8 @@ class Schema {
       pickup_address: Joi.string().required(),
       dropoff_address: Joi.string().required(),
       image_urls: Joi.array().required(),
+      nearest_busstop: Joi.string(),
+      landmark: Joi.string()
     });
   }
 
@@ -107,9 +109,13 @@ class Schema {
       description: Joi.string().required(),
       from_state: Joi.string().required(),
       to_state: Joi.string().required(),
+      from_town: Joi.string().required(),
+      to_town: Joi.string().required(),
       pickup_address: Joi.string().required(),
       dropoff_address: Joi.string().required(),
       image_urls: Joi.array().required(),
+      nearest_busstop: Joi.string(),
+      landmark: Joi.string()
     });
   }
 
@@ -125,9 +131,15 @@ class Schema {
       description: Joi.string().required(),
       from_country: Joi.string().required(),
       to_country: Joi.string().required(),
+      from_state: Joi.string().required(),
+      to_state: Joi.string().required(),
+      from_town: Joi.string().required(),
+      to_town: Joi.string().required(),
       pickup_address: Joi.string().required(),
       dropoff_address: Joi.string().required(),
       image_urls: Joi.array().required(),
+      nearest_busstop: Joi.string(),
+      landmark: Joi.string()
     });
   }
 

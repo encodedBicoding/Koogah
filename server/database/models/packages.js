@@ -77,6 +77,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    nearest_busstop: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    landmark: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     status: {
       type: DataTypes.ENUM('picked-up', 'not-picked', 'delivered'),
       allowNull: false,

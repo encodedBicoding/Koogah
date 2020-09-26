@@ -140,6 +140,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
     },
+    ws_connected_channels: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      defaultValue: []
+    },
   },
 
   {

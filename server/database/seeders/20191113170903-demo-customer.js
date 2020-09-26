@@ -14,6 +14,7 @@ module.exports = {
         is_courier: false,
         is_active: true,
         virtual_balance: 34000.00,
+        virtual_allocated_balance: 0.00,
         verify_token: null,
         mobile_number_one: '09032922527',
         mobile_number_two: null,

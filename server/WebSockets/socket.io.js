@@ -13,7 +13,7 @@ const WsServer = new WebSocket.Server({
   server,
   port: 8080,
   path: '/geotracking',
-  host: process.env.NODE_ENV === 'production' ? 'www.koogah.com' : '127.0.0.1',
+  host: process.env.NODE_ENV === 'production' ? 'www.koogah.herokuapp.com' : '127.0.0.1',
 });
 WsServer.on('connection', async function (ws, req) {
   const urlQuery = new URLSearchParams(req.url.split('/geotracking').join(''));

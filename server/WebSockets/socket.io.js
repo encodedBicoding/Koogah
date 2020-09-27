@@ -8,32 +8,21 @@ const server = require('http').createServer(app);
 config();
 
 const socketFunction = new WebSocketFunctions();
+let WsServer;
 
-const WsServer = new WebSocket.Server({
-  server,
-  port: 8080,
-  path: '/geotracking',
-  host: '127.0.0.1',
-  perMessageDeflate: {
-    zlibDeflateOptions: {
-      // See zlib defaults.
-      chunkSize: 1024,
-      memLevel: 7,
-      level: 3
-    },
-    zlibInflateOptions: {
-      chunkSize: 10 * 1024
-    },
-    // Other options settable:
-    clientNoContextTakeover: true, // Defaults to negotiated value.
-    serverNoContextTakeover: true, // Defaults to negotiated value.
-    serverMaxWindowBits: 10, // Defaults to negotiated value.
-    // Below options specified as default values.
-    concurrencyLimit: 10, // Limits zlib concurrency for perf.
-    threshold: 1024 // Size (in bytes) below which messages
-    // should not be compressed.
-  }
-});
+if (process.env.NODE_ENV === 'production') {
+  WsServer = new WebSocket.Server({
+    server,
+    path: '/geotracking',
+  })
+} else {
+  WsServer = new WebSocket.Server({
+    server,
+    port: 8080,
+    path: '/geotracking',
+    host: '127.0.0.1',
+  });
+}
 WsServer.on('connection', async function (ws, req) {
   const urlQuery = new URLSearchParams(req.url.split('/geotracking').join(''));
   let id = `${urlQuery.get('userId')}:${urlQuery.get('type')}`;

@@ -1,8 +1,11 @@
 import app from '../server';
 import { Customers, Couriers } from '../database/models';
 import WebSocket from 'ws';
+import { config } from 'dotenv';
 import WebSocketFunctions from './functions';
 const server = require('http').createServer(app);
+
+config();
 
 const socketFunction = new WebSocketFunctions();
 
@@ -10,7 +13,7 @@ const WsServer = new WebSocket.Server({
   server,
   port: 8080,
   path: '/geotracking',
-  host: '127.0.0.1',
+  host: process.env.NODE_ENV === 'production' ? 'www.koogah.herokuapp.com' : '127.0.0.1',
 });
 WsServer.on('connection', async function (ws, req) {
   const urlQuery = new URLSearchParams(req.url.split('/geotracking').join(''));

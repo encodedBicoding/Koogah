@@ -48,29 +48,29 @@ userRoute.post(
   signupCustomer_StepOne,
 );
 
-userRoute.get(
+userRoute.post(
   '/verify/email',
   signUpCourier_StepTwo,
 );
 
-userRoute.get(
+userRoute.post(
   '/customer/verify/email',
   signUpCustomer_StepTwo,
 );
 
-userRoute.get(
+userRoute.post(
   '/verify/mobile',
   validateMobileCode,
   signUpCourier_StepThree,
 );
 
-userRoute.get(
+userRoute.post(
   '/customer/verify/mobile',
   validateMobileCode,
   signupCustomer_StepThree,
 );
 
-userRoute.get(
+userRoute.post(
   '/approved/welcome',
   signUpCourier_StepFour,
 );

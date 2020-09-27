@@ -127,6 +127,11 @@ class Payment {
       let refering_user;
       let virtual_balance;
       const total_user_balance = Number(user.virtual_balance) + Number(amount);
+
+      // update user koogah coin
+      // koogah coin worth process.env.KOOGAH_COIN_WORTH
+      const coin = Math.floor(Number(amount) * 0.01);
+      const customer_coin_balance = Number(user.koogah_coin) + Number(coin);
       // if the customer was referred by another user
       // first check if the user is a customer
       // if not, check if the user is a courier
@@ -184,6 +189,7 @@ class Payment {
       // update virtual balance of customer who paid in money
       await Customers.update({
         virtual_balance: total_user_balance,
+        koogah_coin: customer_coin_balance,
       }, {
         where: {
           email: user.email,
@@ -225,13 +231,12 @@ class Payment {
   static pay_dispatcher(req, res) {
     const { user } = req.session;
     const {
-      package_id,
-      dispatcher_id
+      package_id
     } = req.params;
     return Promise.try(async () => {
       const isFound = await Transactions.findOne({
         where: {
-          [Op.and]: [{ package_id }, { dispatcher_id }],
+          package_id
         },
       });
       if (isFound) {
@@ -249,6 +254,18 @@ class Payment {
         return res.status(404).json({
           status: 404,
           error: 'No package found with the specified id',
+        });
+      }
+      if (user.id !== is_package_valid.customer_id) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Not Allowed'
+        })
+      }
+      if (is_package_valid.is_paid_for) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Oops, seems you have already paid this dispatcher for this package',
         });
       }
       if (Number(user.virtual_balance) < Number(is_package_valid.delivery_price)) {
@@ -305,12 +322,22 @@ class Payment {
         email: dispatcher.email,
         type: 'courier',
         desc: 'CD003',
-        message: `A customer just paid you ${is_package_valid.delivery_price} to deliver a package with id: ${package_id}. \nService charge of ${fees} was deducted, \nYour total payable fee for this delivery is ${total_amount_payable}`,
+        message: `A customer just paid you ${is_package_valid.delivery_price} for delivering a package with id: ${package_id}. \nService charge of ${fees} was deducted, \nYour total payable fee for this delivery is ${total_amount_payable}`,
         title: 'New payment for delivery',
         action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`, // ensure courier is logged in
       };
       await Notifications.create({ ...NEW_NOTIFICATION });
+
       const new_transaction = await Transactions.create({ ...transaction_details });
+
+      await Packages.update({
+        is_paid_for: true,
+      }, {
+        where: {
+          package_id
+        }
+      });
+
       return res.status(200).json({
         status: 200,
         message: 'Dispatcher paid sucessfully',
@@ -325,6 +352,144 @@ class Payment {
         });
       });
   }
+  /**
+   * @method pay_with_koogah_coin
+   * @memberof Payment
+   * @params req, res
+   * @description this method allows a customer to pay a dispatcher for their services with koogah coin.
+   * @return JSON object
+   */
+
+  static async pay_with_koogah_coin(req, res) {
+    const { user } = req.session;
+    const { package_id } = req.params;
+    return Promise.try(async () => {
+      const isFound = await Transactions.findOne({
+        where: {
+          package_id,
+        },
+      });
+      if (isFound) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Oops, seems you have already paid this dispatcher for this package',
+        });
+      }
+      const is_package_valid = await Packages.findOne({
+        where: {
+          package_id,
+        },
+      });
+      if (!is_package_valid) {
+        return res.status(404).json({
+          status: 404,
+          error: 'No package found with the specified id',
+        });
+      }
+      if (user.id !== is_package_valid.customer_id) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Not Allowed'
+        })
+      }
+      if (is_package_valid.is_paid_for) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Oops, seems you have already paid this dispatcher for this package',
+        });
+      }
+      // convert koogah coin to determine value;
+      // in Naira, it is worth 10 Naira.
+      const KOOGAH_COIN_WORTH = process.env.KOOGAH_COIN_WORTH;
+      const user_koogah_coin_balance = Number(KOOGAH_COIN_WORTH) * Number(user.koogah_coin);
+
+      if (Number(user_koogah_coin_balance) < Number(is_package_valid.delivery_price)) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Sorry, you have insufficient KC balance',
+        });
+      }
+
+      let customer_remaining_kc_balance = Math.floor(Number(user_koogah_coin_balance) - Number(is_package_valid.delivery_price));
+      // convert current kc balance
+      // 1 percent of the current value;
+      customer_remaining_kc_balance = Math.floor(customer_remaining_kc_balance * 0.01); 
+
+      // get dispatcher to update their account + minus the 25 percent charge.
+      const dispatcher = await Couriers.findOne({
+        where: {
+          id: is_package_valid.dispatcher_id,
+        },
+      });
+      if (!dispatcher) {
+        return res.status(404).json({
+          status: 404,
+          error: 'Oops, seems this dispatcher doesn\'t exists anymore...',
+        });
+      }
+      const fees = Number(is_package_valid.delivery_price) * 0.25;
+      const total_amount_payable = Number(is_package_valid.delivery_price) - fees;
+      const dispatcher_new_balance = Number(dispatcher.virtual_balance) + total_amount_payable;
+
+      const transaction_details = {
+        customer_id: user.id,
+        dispatcher_id: is_package_valid.dispatcher_id,
+        amount_paid: is_package_valid.delivery_price,
+        reason: 'dispatch-payment',
+        fees,
+        payment_mode: 'in-app',
+        package_id,
+      };
+      await Customers.update({
+        koogah_coin: customer_remaining_kc_balance
+      }, {
+        where: {
+          id: user.id
+        }
+      });
+
+      await Couriers.update({
+        virtual_balance: dispatcher_new_balance,
+      },
+      {
+        where: {
+          email: dispatcher.email,
+        },
+      });
+      const NEW_NOTIFICATION = {
+        email: dispatcher.email,
+        type: 'courier',
+        desc: 'CD003',
+        message: `A customer just paid you ${is_package_valid.delivery_price} for delivering a package with id: ${package_id}. \nService charge of ${fees} was deducted, \nYour total payable fee for this delivery is ${total_amount_payable}`,
+        title: 'New payment for delivery',
+        action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`, // ensure courier is logged in
+      };
+      await Notifications.create({ ...NEW_NOTIFICATION });
+
+      const new_transaction = await Transactions.create({ ...transaction_details });
+
+      await Packages.update({
+        is_paid_for: true,
+      }, {
+        where: {
+          package_id
+        }
+      });
+
+      return res.status(200).json({
+        status: 200,
+        message: 'Dispatcher paid sucessfully',
+        data: new_transaction,
+      });
+    }).catch((err) => { 
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
+  }
+
 }
 
 export default Payment;

@@ -11,10 +11,15 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: null,
     },
-    pending_dispatcher_id: {
-      type: DataTypes.BIGINT,
+    pending_dispatchers: {
+      type: DataTypes.ARRAY(DataTypes.BIGINT),
       allowNull: true,
-      defaultValue: null,
+      defaultValue: [],
+    },
+    is_currently_tracking: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
     weight: {
       type: DataTypes.STRING,
@@ -72,6 +77,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    nearest_busstop: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    landmark: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     status: {
       type: DataTypes.ENUM('picked-up', 'not-picked', 'delivered'),
       allowNull: false,
@@ -101,7 +114,12 @@ module.exports = (sequelize, DataTypes) => {
     pickup_decline_cause: {
       type: DataTypes.TEXT,
       allowNull: true,
-    }
+    },
+    is_paid_for: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
   },
   {
     underscored: true,

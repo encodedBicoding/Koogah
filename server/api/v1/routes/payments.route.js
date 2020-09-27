@@ -17,6 +17,7 @@ const {
   topup_virtual_balance_StepOne,
   topup_virtual_balance_StepTwo,
   pay_dispatcher,
+  pay_with_koogah_coin,
 } = Payment;
 
 paymentRoutes.route('/customer/topup')
@@ -35,12 +36,22 @@ paymentRoutes.route('/customer/topup')
     topup_virtual_balance_StepTwo,
   );
 paymentRoutes.post(
-  '/customer/pay/:package_id/:dispatcher_id',
+  '/customer/pay/:package_id',
   passport.authenticate('bearer', { session: false }),
   checkSession,
   isCustomerLoggedIn,
   check_pay_dispatcher_query,
   pay_dispatcher,
 );
+
+paymentRoutes.post(
+  '/customer/pay_with_kc/:package_id',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  check_pay_dispatcher_query,
+  pay_with_koogah_coin
+)
+
 
 export default paymentRoutes;

@@ -27,7 +27,8 @@ const {
   report_user_schema,
   courier_rating_schema_params,
   customer_rating_schema_params,
-  decline_pickup_body_schema
+  decline_pickup_body_schema,
+  approve_decline_package_schema
 } = Schema;
 
 /**
@@ -142,6 +143,25 @@ class Validate {
 
   static check_package_id(req, res, next) {
     const isvalid = package_id_schema().validate(req.params);
+    if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      });
+    }
+    return next();
+  }
+
+    /**
+   * @method check_approve_decline_package
+   * @description This method validates package_id and dispatcher_id
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_approve_decline_package(req, res, next) {
+    const isvalid = approve_decline_package_schema().validate(req.params);
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,

@@ -21,7 +21,10 @@ const {
   customer_view_all_package,
   courier_view_all_package,
   courier_view_packages_in_marketplace,
-  declinePickup
+  declinePickup,
+  allPackagePendingDispatchers,
+  startDispatch,
+  allCurrentlyTrackingPackages
 } = Package;
 
 const {
@@ -32,7 +35,8 @@ const {
   check_delivery_type,
   check_package_status,
   check_decline_pickup_body,
-  check_decline_pickup_query
+  check_decline_pickup_query,
+  check_approve_decline_package
 } = Validate;
 
 const packageRoute = express();
@@ -55,11 +59,11 @@ packageRoute.patch(
   show_interest,
 );
 packageRoute.patch(
-  '/customer/interest/:package_id',
+  '/customer/interest/:package_id/:dispatcher_id',
   passport.authenticate('bearer', { session: false }),
   checkSession,
   isCustomerLoggedIn,
-  check_package_id,
+  check_approve_decline_package,
   check_response,
   approve_or_decline,
 );
@@ -130,7 +134,7 @@ packageRoute.get(
   checkSession,
   isCourierLoggedIn,
   courier_view_packages_in_marketplace,
-)
+);
 
 packageRoute.post(
   '/courier/pickup/decline',
@@ -140,6 +144,29 @@ packageRoute.post(
   check_decline_pickup_query,
   check_decline_pickup_body,
   declinePickup
+);
+packageRoute.get(
+  '/dispatcher/all/pending/:package_id',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  check_package_id,
+  allPackagePendingDispatchers
+);
+packageRoute.put(
+  '/courier/start/dispatch/:package_id',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCourierLoggedIn,
+  check_package_id,
+  startDispatch
+);
+packageRoute.get(
+  '/all/active/tracking',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  allCurrentlyTrackingPackages
 )
 packageRoute.put(
   '/customer/upload/multiple',
@@ -149,5 +176,6 @@ packageRoute.put(
   multipleMulter,
   multiple_upload,
 );
+
 
 export default packageRoute;

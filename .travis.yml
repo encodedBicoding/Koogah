@@ -13,4 +13,4 @@ services:
   - postgresql
 before_script:
   - npm install
-  - psql -c 'create database koogah_test_db; ' -U postgres
+  - psql -c 'create database libera_test_db; ' -U postgres

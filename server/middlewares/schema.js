@@ -57,16 +57,10 @@ class Schema {
     return Joi.object({
       first_name: Joi.string().min(3).max(30).required(),
       last_name: Joi.string().min(3).max(30).required(),
-      business_name: Joi.string().min(3).max(100),
-      has_business: Joi.bool().required(),
+      country_code: Joi.string().required(),
       email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
       password: Joi.string().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/).required(),
-      repeat_password: Joi.ref('password'),
       mobile_number_one: Joi.string().min(10).max(11).required(),
-      mobile_number_two: Joi.string().min(10).max(11),
-      state: Joi.string().required(),
-      town: Joi.string().required(),
-      address: Joi.string().required(),
     });
   }
 
@@ -98,6 +92,8 @@ class Schema {
       pickup_address: Joi.string().required(),
       dropoff_address: Joi.string().required(),
       image_urls: Joi.array().required(),
+      nearest_busstop: Joi.string(),
+      landmark: Joi.string()
     });
   }
 
@@ -113,9 +109,13 @@ class Schema {
       description: Joi.string().required(),
       from_state: Joi.string().required(),
       to_state: Joi.string().required(),
+      from_town: Joi.string().required(),
+      to_town: Joi.string().required(),
       pickup_address: Joi.string().required(),
       dropoff_address: Joi.string().required(),
       image_urls: Joi.array().required(),
+      nearest_busstop: Joi.string(),
+      landmark: Joi.string()
     });
   }
 
@@ -131,9 +131,15 @@ class Schema {
       description: Joi.string().required(),
       from_country: Joi.string().required(),
       to_country: Joi.string().required(),
+      from_state: Joi.string().required(),
+      to_state: Joi.string().required(),
+      from_town: Joi.string().required(),
+      to_town: Joi.string().required(),
       pickup_address: Joi.string().required(),
       dropoff_address: Joi.string().required(),
       image_urls: Joi.array().required(),
+      nearest_busstop: Joi.string(),
+      landmark: Joi.string()
     });
   }
 
@@ -211,7 +217,6 @@ class Schema {
   static pay_dispatcher_schema() {
     return Joi.object({
       package_id: Joi.string().required(),
-      dispatcher_id: Joi.number().required()
     });
   }
 
@@ -375,6 +380,19 @@ class Schema {
   static report_user_schema() {
     return Joi.object({
       report: Joi.string().required(),
+    });
+  }
+
+  /**
+   * @method approve_decline_package_schema
+   * @description This method return Joi object which delivers a schema to report a user
+   * @memberof Schema
+   * @return Joi Object
+   */
+  static approve_decline_package_schema() {
+    return Joi.object({
+      package_id: Joi.string().required(),
+      dispatcher_id: Joi.string().required(),
     });
   }
 }

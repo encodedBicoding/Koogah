@@ -13,8 +13,11 @@ module.exports = {
     dispatcher_id: {
       type: Sequelize.BIGINT,
     },
-    pending_dispatcher_id: {
-      type: Sequelize.BIGINT,
+    pending_dispatchers: {
+      type: Sequelize.ARRAY(Sequelize.BIGINT),
+    },
+    is_currently_tracking: {
+      type: Sequelize.BOOLEAN
     },
     weight: {
       type: Sequelize.STRING,
@@ -58,6 +61,12 @@ module.exports = {
     dropoff_address: {
       type: Sequelize.STRING,
     },
+    nearest_busstop: {
+      type: Sequelize.TEXT,
+    },
+    landmark: {
+      type: Sequelize.TEXT,
+    },
     status: {
       type: Sequelize.ENUM('picked-up', 'not-picked', 'delivered'),
     },
@@ -78,6 +87,10 @@ module.exports = {
     },
     pickup_decline_cause: {
       type: Sequelize.TEXT
+    },
+    is_paid_for: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
     },
     created_at: {
       allowNull: false,

@@ -23,7 +23,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    action_link: DataTypes.TEXT,
+    action_link: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null,
+    },
     is_read: {
       type: DataTypes.BOOLEAN,
       allowNull: false,

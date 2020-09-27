@@ -7,3 +7,4 @@ new-weight-change = CD006
 approval-decline-weight-change = CD007
 new-package-delivered = CD008
 dispatcher-pickup-decline = CD009
+dispatcher-started-dispatching = CD010

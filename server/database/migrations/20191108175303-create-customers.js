@@ -28,6 +28,9 @@ module.exports = {
     virtual_balance: {
       type: Sequelize.DECIMAL(10, 2),
     },
+    virtual_allocated_balance: {
+      type: Sequelize.DECIMAL(10, 2),
+    },
     rating: {
       type: Sequelize.DECIMAL(10, 1),
     },
@@ -61,6 +64,9 @@ module.exports = {
     town: {
       type: Sequelize.STRING,
     },
+    nationality: {
+      type: Sequelize.STRING,
+    },
     email: {
       type: Sequelize.STRING,
     },
@@ -75,6 +81,12 @@ module.exports = {
     },
     refered_by: {
       type: Sequelize.STRING,
+    },
+    ws_connected_channels: {
+      type: Sequelize.ARRAY(Sequelize.STRING)
+    },
+    koogah_coin: {
+      type: Sequelize.BIGINT
     },
     created_at: {
       allowNull: false,

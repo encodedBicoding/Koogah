@@ -48,13 +48,19 @@ class Package {
         if (!delivery_price) {
           return res.status(400).json({
             status: 400,
-            error: 'Weight must match one of ["0-5","6-10", "11-15", "16-25", "26-40", "50-100", "101-200", "201-300", "301-400", "401-500", "500>"],',
+            error: 'Weight must match one of ["0-5","6-10", "11-15", "16-25", "26-40", "50-100", "101-200", "201-300", "301-400", "401-500", "501>"],',
           });
         }
         if (Number(delivery_price) > Number(user.virtual_balance)) {
           return res.status(400).json({
             status: 400,
             error: `You must top-up your account with at least ₦${Number(delivery_price) - Number(user.virtual_balance)} before requesting this dispatch`
+          })
+        }
+        if ((Number(user.virtual_balance) - Number(user.virtual_allocated_balance)) < Number(delivery_price)) {
+          return res.status(400).json({
+            status: 400,
+            error: 'Sorry you have reached your package balance threshold, \nplease top-up your account or delete a package that has not been picked-up'
           })
         }
         const package_id = uuid();
@@ -67,11 +73,19 @@ class Package {
           package_id,
           ...data,
         });
-        // this should create a new package creation notification
+        const updated_V_A_B = Number(user.virtual_allocated_balance) + Number(delivery_price)
+        await Customers.update({
+          virtual_allocated_balance: updated_V_A_B
+        }, {
+          where: {
+            id: user.id
+          }
+        });
+        // TODO: this should create a new package creation notification
         // and/or send a websocket notification to all couriers registered in the package location area
         return res.status(200).json({
           status: 200,
-          message: 'Package created successfully. Please wait, a dispatcher will reach out to you soon',
+          message: 'Package created successfully. Please wait, dispatcher\'s will reach out to you soon',
           package_detail,
         });
       }).catch((err) => {
@@ -124,22 +138,16 @@ class Package {
           error: 'This package has already been picked up by another dispatcher',
         });
       }
-      if (_package.pending_dispatcher_id === user.id) {
+      if (_package.pending_dispatchers.includes(user.id)) {
         return res.status(400).json({
           status: 400,
           error: 'You have already indicated interest for the package. Please wait for the owner to approve you.',
         });
       }
-      if (_package.pending_dispatcher_id) {
-        return res.status(400).json({
-          status: 400,
-          error: 'A dispatcher has already indicated interest for this package. You can only indicate an interest if they were disapproved by the owner of the package',
-        });
-      }
       // update Package and send a notification to the owner of the package.
       return Promise.try(async () => {
         await Packages.update({
-          pending_dispatcher_id: user.id,
+          pending_dispatchers: _package.pending_dispatchers.concat(user.id),
         },
         {
           where: {
@@ -161,7 +169,7 @@ class Package {
           type: 'customer',
           desc: 'CD004',
           title: `Interested dispatcher for package: ${package_id}`,
-          message: 'A dispatcher is interested in your package. Please ensure you checkout the dispatcher\'s profile first, before approving them',
+          message: _package.pending_dispatchers.length <= 1 ? 'A dispatcher is interested in your package. Please ensure you checkout the dispatcher\'s profile first, before approving them' : 'Another dispatcher is interested in your package. Please ensure you checkout the dispatcher\'s profile first, before approving them',
           action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/profile/courier/pv/${user.id}` : `http://localhost:4000/v1/profile/courier/pv/${user.id}`, // ensure customer is logged in
         };
         await Notifications.create({ ...NEW_NOTIFICATION });
@@ -194,7 +202,7 @@ class Package {
    */
 
   static approve_or_decline(req, res) {
-    const { package_id } = req.params;
+    const { package_id, dispatcher_id } = req.params;
     const { response } = req.query;
     const { user } = req.session;
     const NEW_NOTIFICATION = {
@@ -218,17 +226,23 @@ class Package {
           error: 'You are not allowed to perform this action. Please contact support@koogah.com',
         });
       }
-      if (!_package.pending_dispatcher_id) {
+      if (!_package.pending_dispatchers) {
         return res.status(400).json({
           status: 400,
           error: 'Cannot perform action. No Pending dispatcher for this package',
         });
       }
+      if (!_package.pending_dispatchers.includes(dispatcher_id)) {
+        return res.status(404).json({
+          status: 404,
+          error: 'The selected dispatcher is not interested in dispatching this package'
+        })
+      }
       if (response === 'approve') {
         const date_time = new Date().toLocaleString();
         const dispatcher = await Couriers.findOne({
           where: {
-            id: _package.pending_dispatcher_id,
+            id: dispatcher_id,
           },
         });
 
@@ -246,9 +260,9 @@ class Package {
         }
 
         await Packages.update({
-          dispatcher_id: _package.pending_dispatcher_id,
+          dispatcher_id,
           pickup_time: date_time,
-          pending_dispatcher_id: null,
+          pending_dispatchers: [],
           status: 'picked-up',
         },
         {
@@ -275,7 +289,7 @@ class Package {
       if (response === 'decline') {
         const dispatcher = await Couriers.findOne({
           where: {
-            id: _package.pending_dispatcher_id,
+            id: dispatcher_id,
           },
         });
         await Packages.update({
@@ -348,6 +362,12 @@ class Package {
         new_weight,
         _package.distance,
       );
+      if (!new_delivery_price) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Weight must match one of ["0-5","6-10", "11-15", "16-25", "26-40", "50-100", "101-200", "201-300", "301-400", "401-500", "501>"],',
+        });
+      }
       return Promise.try(async () => {
         await Packages.update({
           pending_weight: new_weight,
@@ -444,12 +464,29 @@ class Package {
       });
       if (response === 'approve') {
         // check if customer's virtual balance is enough for dispatch the goods
-        if (parseInt(_package.delivery_price, 10) > parseInt(user.virtual_balance, 10)) {
+        if (Number(_package.pending_delivery_price) > Number(user.virtual_balance)) {
           return res.status(400).json({
             status: 400,
-            error: 'You must top-up to approve this new weight change'
+            error: 'Please top-up your account to approve this new weight change'
           })
         }
+        // remove the previous delivery cost from the allocated virual balance
+        // then compare with the user current virtual balance against the new delivery price
+        let updated_V_A_B = Number(user.virtual_allocated_balance) - Number(_package.delivery_price);
+        if ((Number(user.virtual_balance) - Number(updated_V_A_B)) < Number(_package.pending_delivery_price)) {
+          return res.status(400).json({
+            status: 400,
+            error: 'Please top-up your account to approve this new weight change'
+          })
+        }
+        updated_V_A_B = Number(updated_V_A_B) + Number(_package.pending_delivery_price);
+        await Customers.update({
+          virtual_allocated_balance: updated_V_A_B
+        }, {
+          where: {
+            id: user.id
+          }
+        })
         await Packages.update({
           weight: _package.pending_weight,
           delivery_price: _package.pending_delivery_price,
@@ -541,6 +578,7 @@ class Package {
       const date_time = new Date();
       await Packages.update({
         status: 'delivered',
+        is_currently_tracking: false,
         dropoff_time: date_time,
       },
       {
@@ -567,7 +605,7 @@ class Package {
           {
             model: Couriers,
             as: 'dispatcher',
-            attributes: ['first_name', 'last_name', 'profile_image'],
+            attributes: ['id','first_name', 'last_name', 'profile_image'],
           },
         ],
       });
@@ -582,7 +620,7 @@ class Package {
         desc: 'CD008',
         message: `The dispatcher for the package with id: ${package_id}, just marked the package as delivered`,
         title: 'New Package Delivered',
-        action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/package/owner/view/${package_id}` : `http://localhost:4000/v1/package/owner/view/${package_id}`, // ensure customer is logged in
+        action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/package/owner/view/${package_id}` : `http://localhost:4000/v1/package/owner/view/${package_id}`, // ensure customer is logged in TODO: fix action link
       };
       await Notifications.create({ ...NEW_NOTIFICATION });
       return res.status(200).json({
@@ -619,6 +657,22 @@ class Package {
           {
             model: Customers,
             as: 'customer',
+            attributes: [
+              "id",
+              'first_name',
+              'last_name',
+              'has_business',
+              'business_name',
+              'rating',
+              'profile_image',
+              'mobile_number_one',
+              'mobile_number_two',
+              'address',
+              'nationality',
+              'email',
+              'state',
+              'town'
+            ]
           },
         ],
       });
@@ -668,6 +722,20 @@ class Package {
           {
             model: Couriers,
             as: 'dispatcher',
+            attributes: [
+              "id",
+              'first_name',
+              'last_name',
+              'email',
+              'mobile_number',
+              'state',
+              'town',
+              'nationality',
+              'sex',
+              'profile_image',
+              'rating',
+              'deliveries',
+          ]
           },
         ],
       });
@@ -713,6 +781,21 @@ class Package {
             {
               model: Couriers,
               as: 'dispatcher',
+              attributes: [
+                "id",
+                'first_name',
+                'last_name',
+                'email',
+                'mobile_number',
+                'state',
+                'town',
+                'nationality',
+                'sex',
+                'profile_image',
+                'rating',
+                'deliveries',
+  
+            ]
             },
           ],
         });
@@ -812,7 +895,7 @@ class Package {
         if (!to) { 
           all_package_in_marketplace = await Packages.findAll({
             where: {
-              [Op.and]: [
+              [Op.or]: [
                   { from_state: state }, 
                   { to_state: state },
                   { from_town: from },
@@ -902,6 +985,14 @@ class Package {
      })
    }
 
+  /**
+   * @method declinePickup
+   * @memberof Package
+   * @params req, res
+   * @description Couriers can decline pickup if they fail to come to an agreement with a customer
+   * @return JSON object
+   */
+
   static declinePickup(req, res) {
     return Promise.try( async() => {
       const { decline_cause } = req.body;
@@ -942,7 +1033,8 @@ class Package {
         dispatcher_id: null,
         status: 'not-picked',
         pickup_time: null,
-        pickup_decline_cause: decline_cause
+        pickup_decline_cause: decline_cause,
+        pending_delivery_price: null
       }, {
         where: {
         package_id
@@ -970,6 +1062,156 @@ class Package {
       })
     })
   }
+
+  /**
+   * @method allPackagePendingDispatchers
+   * @memberof Package
+   * @params req, res
+   * @description Customers can get all pending dispatch requests in a package.
+   * @return JSON object
+   */
+
+  static allPackagePendingDispatchers(req, res) {
+    return Promise.try( async () => {
+      const { package_id } = req.params;
+      const _package = await Packages.findOne({
+        where: {
+          package_id
+        }
+      });
+      if (!_package) return res.status(404).json({
+        status: 404,
+        message: 'Oops, seems this package doesn\'t exist anymore'
+      });
+
+      const pending_dispatchers = [];
+      for(var i=0; i<_package.pending_dispatchers.length; i++) {
+        let _dispatcher = await Couriers.findOne({
+          where: {
+            id: _package.pending_dispatchers[i]
+          }
+        });
+        if (!_dispatcher) {
+          continue;
+        }
+        pending_dispatchers.push(_dispatcher.getSafeDataValues());
+
+        if (i === (_package.pending_dispatchers.length - 1)) {
+          return res.status(200).json({
+            status: 200,
+            message: 'dispatchers retrieved successfully',
+            data: pending_dispatchers
+          })
+        }
+      }
+    }).catch((error ) => {
+      log(error);
+      return res.status(400).json({
+        status: 400,
+        error
+      });
+    });
+  }
+
+  /**
+   * @method startDispatch //Start Tracking
+   * @memberof Package
+   * @params req, res
+   * @description Couriers can mark a package as tracking, this means they have started their journey to dispatch the package
+   * @return JSON object
+   */
+
+  static startDispatch(req, res) {
+    return Promise.try(async () =>{
+      const {package_id } = req.params;
+      const { user } = req.session;
+      const NEW_NOTIFICATION = {
+        type: 'customer',
+      }
+      const _package = await Packages.findOne({ 
+        where: {
+          package_id
+        }
+      });
+
+      if(!_package) return res.status(400).json({
+        status: 400,
+        message: 'Oops, seems package doesn\'t exist anymore'
+      });
+
+      if (_package.dispatcher_id !== user.id) {
+        return res.status(400).json({
+          status: 400,
+          message: 'Sorry, cannot dispatch package you didn\'t pick up'
+        })
+      }
+
+      const customer = await Customers.findOne({
+        where: {
+          id: _package.customer_id
+        }
+      })
+
+      await Packages.update({
+        is_currently_tracking: true
+      }, {
+        where: {
+        package_id
+      }});
+
+      NEW_NOTIFICATION.email = customer.email;
+      NEW_NOTIFICATION.desc = 'CD010';
+      NEW_NOTIFICATION.message = `Your package with id: ${package_id} is now being dispatched`;
+      NEW_NOTIFICATION.title = 'New Dispatch started';
+      NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
+
+      await Notifications.create({ ...NEW_NOTIFICATION });
+
+      return res.status(200).json({
+        status: 200,
+        message: 'You have successfully started this dispatch.'
+      })
+
+    }).catch((error)=> {
+      log(error);
+      return res.status(400).json({
+        status: 400,
+        error
+      });
+    })
+  }
+
+  /**
+   * @method allCurrentlyTrackingPackages
+   * @memberof Package
+   * @params req, res
+   * @description Customers can get all their packages currently tracking
+   * @return JSON object
+   */
+
+   static allCurrentlyTrackingPackages(req, res) {
+     return Promise.try(async () => {
+       const { user} = req.session;
+       const _packages = await Packages.findAll({
+         where: {
+           [Op.and]: [{customer_id: user.id}, {is_currently_tracking: true}]
+         }
+       });
+
+       return res.status(200).json({
+         status: 200,
+         message: 'Packages retrieved successfully',
+         data: _packages
+       })
+     }).catch((err)=> {
+       log(err);
+       return res.status(400).json({
+        status: 400,
+        err
+      });
+     })
+   }
+
 }
 
 

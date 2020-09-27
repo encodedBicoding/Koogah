@@ -19,9 +19,11 @@ import morgan from 'morgan';
 import client from './redis/redis.client';
 import RouteV1 from './api/v1/routes';
 import Auth from './middlewares/auth';
+import './WebSockets/socket.io';
 
 const accepted_urls = [
-  'https://koogah.com',
+  'https://koogah.com/*',
+  'https://*.koogah.com',
   'http://localhost:8081',
   'http://10.0.2.2:8081',
 ];
@@ -65,7 +67,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false, limit: '50mb' }));
 app.use(session({
   secret: process.env.SESSION_SECRET,
-  cookie: { maxAge: 60000, secure: false },
+  cookie: { maxAge: 60000, secure: isProduction ? true : false, path: "/" },
   name: '__KoogahSess__',
   resave: false,
   saveUninitialized: true,
@@ -90,6 +92,9 @@ app.use('*', apiLimiter);
 app.use('/v1', RouteV1);
 
 app.set('title', 'Koogah');
+if (isProduction) {
+  app.set('trust proxy', 1)
+}
 
 app.use((req, res, next) => {
   const err = new Error('Resource does not exist');

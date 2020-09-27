@@ -85,6 +85,9 @@ module.exports = {
     ws_connected_channels: {
       type: Sequelize.ARRAY(Sequelize.STRING)
     },
+    koogah_coin: {
+      type: Sequelize.BIGINT
+    },
     created_at: {
       allowNull: false,
       type: Sequelize.DATE,

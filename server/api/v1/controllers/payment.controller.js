@@ -127,6 +127,11 @@ class Payment {
       let refering_user;
       let virtual_balance;
       const total_user_balance = Number(user.virtual_balance) + Number(amount);
+
+      // update user koogah coin
+      // koogah coin worth process.env.KOOGAH_COIN_WORTH
+      const coin = Math.floor(Number(amount) * 0.01);
+      const customer_coin_balance = Number(user.koogah_coin) + Number(coin);
       // if the customer was referred by another user
       // first check if the user is a customer
       // if not, check if the user is a courier
@@ -184,6 +189,7 @@ class Payment {
       // update virtual balance of customer who paid in money
       await Customers.update({
         virtual_balance: total_user_balance,
+        koogah_coin: customer_coin_balance,
       }, {
         where: {
           email: user.email,

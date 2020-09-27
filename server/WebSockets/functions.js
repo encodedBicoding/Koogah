@@ -38,15 +38,14 @@ class WebSocketFunctions {
               id: userId
             }
           });
-
-          const updated_user = await Customers.findOne({
-            where: {
-              id: userId
-            }
-          });
-          const { ws_connected_channels } = updated_user.getSafeDataValues();
-          return ws_connected_channels;
         }
+        const updated_user = await Customers.findOne({
+          where: {
+            id: userId
+          }
+        });
+        const { ws_connected_channels } = updated_user.getSafeDataValues();
+        return ws_connected_channels;
       }
      } catch (err) {
       console.error(err);

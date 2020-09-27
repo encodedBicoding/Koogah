@@ -13,8 +13,8 @@
     "start": "export NODE_ENV=production && node ./build/server.js",
     "migrate": "npx sequelize-cli db:migrate",
     "migrate:undo": "npx sequelize-cli db:migrate:undo",
-    "seed": "export NODE_ENV=development && npx sequelize-cli db:seed:all",
-    "seed:undo": "export NODE_ENV=development && npx sequelize-cli db:seed:undo:all",
+    "seed": "npx sequelize-cli db:seed:all",
+    "seed:undo": "npx sequelize-cli db:seed:undo:all",
     "start:redis": "brew services start redis && redis-cli"
   },
   "author": "Dominic Olije <dominicisioma000@gmail.com>",

@@ -78,7 +78,7 @@ module.exports = {
       },
       {
         first_name: 'Lizzy',
-        last_name: 'Breezy',
+        last_name: 'Temenu',
         email: 'lizzy@breezy.com',
         is_courier: true,
         is_active: false,
@@ -111,6 +111,7 @@ module.exports = {
         created_at: faker.date.future(1),
         updated_at: faker.date.future(1),
       },
+
     ], {}),
 
   down: (queryInterface) => queryInterface.bulkDelete('Couriers', null, {}),

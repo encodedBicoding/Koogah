@@ -657,8 +657,8 @@ class Package {
           {
             model: Customers,
             as: 'customer',
-            include: [
-              'id',
+            attributes: [
+              "id",
               'first_name',
               'last_name',
               'has_business',
@@ -723,7 +723,7 @@ class Package {
             model: Couriers,
             as: 'dispatcher',
             attributes: [
-              'id', 
+              "id",
               'first_name',
               'last_name',
               'email',
@@ -782,7 +782,7 @@ class Package {
               model: Couriers,
               as: 'dispatcher',
               attributes: [
-                'id', 
+                "id",
                 'first_name',
                 'last_name',
                 'email',
@@ -895,7 +895,7 @@ class Package {
         if (!to) { 
           all_package_in_marketplace = await Packages.findAll({
             where: {
-              [Op.and]: [
+              [Op.or]: [
                   { from_state: state }, 
                   { to_state: state },
                   { from_town: from },

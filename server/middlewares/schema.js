@@ -217,7 +217,6 @@ class Schema {
   static pay_dispatcher_schema() {
     return Joi.object({
       package_id: Joi.string().required(),
-      dispatcher_id: Joi.number().required()
     });
   }
 

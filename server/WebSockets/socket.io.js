@@ -3,7 +3,7 @@ import { Customers, Couriers } from '../database/models';
 import WebSocket from 'ws';
 import { config } from 'dotenv';
 import WebSocketFunctions from './functions';
-const SERVER = require('http').createServer();
+const SERVER = require('http').createServer(app);
 
 const port = process.env.PORT ||  8080;
 
@@ -15,11 +15,12 @@ const WsServer = new WebSocket.Server({
   server: SERVER,
 });
 
-SERVER.on('request', app);
-
 WsServer.on('connection', async function (ws, req) {
-  console.log('connected');
-  console.log(req);
+  console.log('connected to websocket');
+  const { __koogah_ws_session_secret } = req.headers;
+  if (__koogah_ws_session_secret !== process.env.KOOGAH_WS_SESSION_SECRET) {
+    ws.close();
+  }
   try { 
     const urlQuery = new URLSearchParams(req.url.split('/geotracking').join(''));
     let id = `${urlQuery.get('userId')}:${urlQuery.get('type')}`;

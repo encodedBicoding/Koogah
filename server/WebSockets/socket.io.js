@@ -1,32 +1,75 @@
 import app from '../server';
 import { Customers, Couriers } from '../database/models';
 import WebSocket from 'ws';
+import isValidUT8 from 'utf-8-validate';
 import { config } from 'dotenv';
 import WebSocketFunctions from './functions';
+
 const SERVER = require('http').createServer(app);
 
-const port = process.env.PORT ||  8080;
+const port = process.env.PORT || 8080;
 
 config();
 
 const socketFunction = new WebSocketFunctions();
 
 const WsServer = new WebSocket.Server({
-  server: SERVER,
+  noServer: true
 });
 
-WsServer.on('connection', async function (ws, req) {
-  const { __koogah_ws_session_secret } = req.headers;
-  if (!__koogah_ws_session_secret) {
-    ws.close();
-    console.log('cannot connect');
-    return false;
+// server upgrade function;
+SERVER.on('upgrade', function upgrade(request, socket, head) { 
+  const accepted_hosts = [];
+  const accepted_path = ['/geotracking'];
+  const { __koogah_ws_session_secret } = request.headers;
+  try {
+    if (!isValidUT8(head)) {
+      socket.destroy();
+      return;
+    }
+    authenticate(request, (err, client) => {
+      if (err || !client) {
+        socket.destroy();
+        return;
+      }
+
+      if (!__koogah_ws_session_secret) {
+        socket.destroy();
+        return;
+      }
+
+      if (__koogah_ws_session_secret !== process.env.KOOGAH_WS_SESSION_SECRET) {
+        socket.destroy();
+        return;
+      }
+      
+      const { host } = request.headers;
+      const { url } = request;
+      const path = url.split('?')[0];
+      if (!accepted_path.includes(path)) {
+        socket.destroy()
+        return;
+      }
+
+      // before final deploy, work on the acceptable hosts;
+      console.log('before final deploy, work on the acceptable hosts')
+      console.log('host', host);
+
+      WsServer.handleUpgrade(request, socket, head, (ws) => {
+        WsServer.emit('connection', ws, request, client);
+      });
+    });
+    return;
+
+  } catch (err) {
+    console.log(err);
+    return;
   }
-  if (__koogah_ws_session_secret !== process.env.KOOGAH_WS_SESSION_SECRET) {
-    ws.close();
-    console.log('cannot connect');
-    return false;
-  }
+});
+
+
+// GEOTRACKING SOCKET SERVER;
+WsServer.on('connection', async function (ws, req, client) {
   try { 
     const urlQuery = new URLSearchParams(req.url.split('/geotracking').join(''));
     let id = `${urlQuery.get('userId')}:${urlQuery.get('type')}`;
@@ -41,7 +84,6 @@ WsServer.on('connection', async function (ws, req) {
         ws_connected_channels = USER.ws_connected_channels;
       } catch (err) {
         ws.close();
-        console.log('connection closed');
         return false;
       }
     } else if (userType === 'customer') {
@@ -50,18 +92,16 @@ WsServer.on('connection', async function (ws, req) {
         ws_connected_channels = USER.ws_connected_channels
       } catch (err) {
         ws.close();
-        console.log('connection closed');
         return false;
       }
     }
     if (!USER) {
       ws.close();
-      console.log('connection closed');
       return false;
     }
 
-    if (ws.readyState == 1) {
-      console.log('connected to websocket');
+
+    if (ws.readyState === WebSocket.OPEN) {
       // find the client
       // check if the client is already subscribed to channels if the client exists.
       ws.connectionId = id;
@@ -71,6 +111,8 @@ WsServer.on('connection', async function (ws, req) {
       ws.send(`connected to the server, my id is ${ws.connectionId}`);
       ws.on('message', async function(message) {
         let msg = JSON.parse(message);
+
+        // subscribe to channel
         if (msg.event === 'subscribe') {
           try { 
             let response = await socketFunction.subscribe(ws.userId, ws.userType, msg.channel);
@@ -78,13 +120,14 @@ WsServer.on('connection', async function (ws, req) {
             ws.subscribed_channel = response;
           } catch (err) {
             ws.close();
-            console.log('connection closed');
             return false;
           }
         }
         if (msg.event === 'publish') {
           WsServer.clients.forEach((client) => {
-            if (client.subscribed_channels.includes(msg.channel) && client.connectionId !== msg.senderId) {
+            if (client.subscribed_channels.includes(msg.channel)
+              && client.connectionId !== msg.senderId
+              && client.readyState === WebSocket.OPEN) {
               client.send(msg.message);
             }
           })
@@ -95,9 +138,14 @@ WsServer.on('connection', async function (ws, req) {
 
   } catch (err) {
     ws.close();
-    console.log('connection closed');
+    return false;
   };
 });
+
+
+function authenticate(req, cb) {
+  cb(req.socket._hadError, req.client);
+}
 
 SERVER.listen(port, () => {
   console.log('Websocket and APP running on same port: %d', port)

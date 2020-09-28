@@ -18,8 +18,12 @@ const WsServer = new WebSocket.Server({
 WsServer.on('connection', async function (ws, req) {
   console.log('connected to websocket');
   const { __koogah_ws_session_secret } = req.headers;
+  if (!__koogah_ws_session_secret) {
+    ws.close();
+  }
   if (__koogah_ws_session_secret !== process.env.KOOGAH_WS_SESSION_SECRET) {
     ws.close();
+    console.log('passed here');
   }
   try { 
     const urlQuery = new URLSearchParams(req.url.split('/geotracking').join(''));

@@ -19,7 +19,7 @@ import morgan from 'morgan';
 import client from './redis/redis.client';
 import RouteV1 from './api/v1/routes';
 import Auth from './middlewares/auth';
-import './WebSockets/socket.io';
+
 
 const accepted_urls = [
   'https://koogah.com/*',

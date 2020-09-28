@@ -6,7 +6,6 @@ import WebSocketFunctions from './functions';
 let server = require('http').createServer(app)
 
 config();
-console.log('page called');
 
 const socketFunction = new WebSocketFunctions();
 let WsServer;
@@ -15,7 +14,7 @@ if (process.env.NODE_ENV === 'production') {
   server = require('https').createServer(app);
   WsServer = new WebSocket.Server({
     server,
-    port: 8080,
+    port: process.env.PORT || 8080,
     path: '/geotracking',
     clientTracking: true,
   })

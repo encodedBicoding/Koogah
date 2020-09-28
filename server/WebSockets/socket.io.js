@@ -12,6 +12,7 @@ let WsServer;
 if (process.env.NODE_ENV === 'production') {
   WsServer = new WebSocket.Server({
     server: app,
+    port: process.env.PORT || 8080,
     path: '/geotracking',
   })
 } else {

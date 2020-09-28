@@ -3,7 +3,6 @@ import { Customers, Couriers } from '../database/models';
 import WebSocket from 'ws';
 import { config } from 'dotenv';
 import WebSocketFunctions from './functions';
-const server = require('http').createServer(app);
 
 config();
 
@@ -12,13 +11,12 @@ let WsServer;
 
 if (process.env.NODE_ENV === 'production') {
   WsServer = new WebSocket.Server({
-    server,
+    app,
     path: '/geotracking',
-    port: 8080,
   })
 } else {
   WsServer = new WebSocket.Server({
-    server,
+    app,
     port: 8080,
     path: '/geotracking',
     host: '127.0.0.1',

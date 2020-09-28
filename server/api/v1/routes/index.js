@@ -10,7 +10,6 @@ import profileRoutes from './profile.route';
 const route = express();
 
 route.get('/', (req, res) => {
-  console.log(req);
   return res.status(200).json({
     status: 200,
     message: 'Welcome to Koogah',

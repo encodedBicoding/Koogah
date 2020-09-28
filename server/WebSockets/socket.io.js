@@ -14,7 +14,7 @@ if (process.env.NODE_ENV === 'production') {
   server = require('https').createServer(app);
   WsServer = new WebSocket.Server({
     server,
-    port: 443,
+    port: 8080,
     host: 'koogah.herokuapp.com',
     path: '/geotracking',
     clientTracking: true,
@@ -22,7 +22,7 @@ if (process.env.NODE_ENV === 'production') {
 } else {
   WsServer = new WebSocket.Server({
     server,
-    port: 443,
+    port: 8080,
     path: '/geotracking',
     host: '0.0.0.0',
     clientTracking: true,

@@ -3,7 +3,7 @@ import { Customers, Couriers } from '../database/models';
 import WebSocket from 'ws';
 import { config } from 'dotenv';
 import WebSocketFunctions from './functions';
-const SERVER = require('http').createServer();
+const SERVER = require('http').createServer(app);
 
 const port = process.env.PORT ||  8080;
 
@@ -14,8 +14,6 @@ const socketFunction = new WebSocketFunctions();
 const WsServer = new WebSocket.Server({
   server: SERVER,
 });
-
-SERVER.on('request', app);
 
 WsServer.on('connection', async function (ws, req) {
   console.log('connected to websocket');

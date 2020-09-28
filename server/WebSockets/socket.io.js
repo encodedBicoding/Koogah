@@ -3,32 +3,20 @@ import { Customers, Couriers } from '../database/models';
 import WebSocket from 'ws';
 import { config } from 'dotenv';
 import WebSocketFunctions from './functions';
-let server = require('http').createServer(app);
-const port = process.env.PORT || 8080;
+const SERVER = require('http').createServer();
 
-server.listen(port);
+const port = process.env.PORT ||  8080;
 
 config();
 
 const socketFunction = new WebSocketFunctions();
-let WsServer;
 
-if (process.env.NODE_ENV === 'production') {
-  server = require('https').createServer(app);
-  WsServer = new WebSocket.Server({
-    server,
-    port: 443,
-    path: '/geotracking',
-    clientTracking: true,
-  })
-} else {
-  WsServer = new WebSocket.Server({
-    server,
-    path: '/geotracking',
-    host: '0.0.0.0',
-    clientTracking: true,
-  });
-}
+const WsServer = new WebSocket.Server({
+  server: SERVER,
+});
+
+SERVER.on('request', app);
+
 WsServer.on('connection', async function (ws, req) {
   console.log('connected');
   const urlQuery = new URLSearchParams(req.url.split('/geotracking').join(''));
@@ -92,6 +80,8 @@ WsServer.on('connection', async function (ws, req) {
   }
 });
 
-
+SERVER.listen(port, () => {
+  console.log('Websocket and APP running on same port: %d', port)
+});
 
 export default WsServer;

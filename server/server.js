@@ -140,9 +140,4 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-app.listen(PORT, () => {
-  if (!isProduction) log(`App running on port ${PORT}`);
-});
-
-
 export default app;

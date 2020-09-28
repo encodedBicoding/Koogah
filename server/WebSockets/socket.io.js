@@ -6,6 +6,7 @@ import WebSocketFunctions from './functions';
 let server = require('http').createServer(app)
 
 config();
+console.log('page called');
 
 const socketFunction = new WebSocketFunctions();
 let WsServer;

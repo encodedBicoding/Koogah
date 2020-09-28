@@ -14,7 +14,7 @@ if (process.env.NODE_ENV === 'production') {
   server = require('https').createServer(app);
   WsServer = new WebSocket.Server({
     server,
-    port: process.env.PORT,
+    port: 443,
     host: '0.0.0.0',
     path: '/geotracking',
     clientTracking: true,
@@ -22,7 +22,7 @@ if (process.env.NODE_ENV === 'production') {
 } else {
   WsServer = new WebSocket.Server({
     server,
-    port: 8080,
+    port: 443,
     path: '/geotracking',
     host: '0.0.0.0',
     clientTracking: true,

@@ -14,15 +14,14 @@ if (process.env.NODE_ENV === 'production') {
   server = require('https').createServer(app);
   WsServer = new WebSocket.Server({
     server,
-    port: 8080,
-    host: 'herokuapp.com',
+    port: 443,
     path: '/geotracking',
     clientTracking: true,
   })
 } else {
   WsServer = new WebSocket.Server({
     server,
-    port: 8080,
+    port: 443,
     path: '/geotracking',
     host: '0.0.0.0',
     clientTracking: true,

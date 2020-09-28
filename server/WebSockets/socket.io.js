@@ -15,7 +15,7 @@ if (process.env.NODE_ENV === 'production') {
   WsServer = new WebSocket.Server({
     server,
     port: 8080,
-    host: 'koogah.herokuapp.com',
+    host: 'herokuapp.com',
     path: '/geotracking',
     clientTracking: true,
   })

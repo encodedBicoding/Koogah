@@ -24,6 +24,7 @@ SERVER.on('upgrade', function upgrade(request, socket, head) {
   const { __koogah_ws_session_secret } = request.headers;
   try {
     if (!isValidUT8(head)) {
+      socket.destroy();
       return;
     }
     authenticate(request, (err, client) => {

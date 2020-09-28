@@ -28,6 +28,7 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 WsServer.on('connection', async function (ws, req) {
+  console.log('connected');
   const urlQuery = new URLSearchParams(req.url.split('/geotracking').join(''));
   let id = `${urlQuery.get('userId')}:${urlQuery.get('type')}`;
   let userId = urlQuery.get('userId').toString();

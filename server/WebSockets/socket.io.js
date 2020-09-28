@@ -16,14 +16,16 @@ const WsServer = new WebSocket.Server({
 });
 
 WsServer.on('connection', async function (ws, req) {
-  console.log('connected to websocket');
   const { __koogah_ws_session_secret } = req.headers;
   if (!__koogah_ws_session_secret) {
     ws.close();
+    console.log('cannot connect');
+    return false;
   }
   if (__koogah_ws_session_secret !== process.env.KOOGAH_WS_SESSION_SECRET) {
     ws.close();
-    console.log('passed here');
+    console.log('cannot connect');
+    return false;
   }
   try { 
     const urlQuery = new URLSearchParams(req.url.split('/geotracking').join(''));
@@ -39,7 +41,8 @@ WsServer.on('connection', async function (ws, req) {
         ws_connected_channels = USER.ws_connected_channels;
       } catch (err) {
         ws.close();
-        console.log(err);
+        console.log('connection closed');
+        return false;
       }
     } else if (userType === 'customer') {
       try { 
@@ -47,14 +50,18 @@ WsServer.on('connection', async function (ws, req) {
         ws_connected_channels = USER.ws_connected_channels
       } catch (err) {
         ws.close();
-        console.log(err)
+        console.log('connection closed');
+        return false;
       }
     }
     if (!USER) {
       ws.close();
+      console.log('connection closed');
+      return false;
     }
 
     if (ws.readyState == 1) {
+      console.log('connected to websocket');
       // find the client
       // check if the client is already subscribed to channels if the client exists.
       ws.connectionId = id;
@@ -71,7 +78,8 @@ WsServer.on('connection', async function (ws, req) {
             ws.subscribed_channel = response;
           } catch (err) {
             ws.close();
-            console.log(err)
+            console.log('connection closed');
+            return false;
           }
         }
         if (msg.event === 'publish') {
@@ -86,8 +94,8 @@ WsServer.on('connection', async function (ws, req) {
     }
 
   } catch (err) {
-    console.log(err);
     ws.close();
+    console.log('connection closed');
   };
 });
 

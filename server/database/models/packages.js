@@ -86,7 +86,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
     },
     status: {
-      type: DataTypes.ENUM('picked-up', 'not-picked', 'delivered'),
+      type: DataTypes.ENUM('picked-up', 'not-picked', 'delivered', 'tracking'),
       allowNull: false,
       defaultValue: 'not-picked',
     },

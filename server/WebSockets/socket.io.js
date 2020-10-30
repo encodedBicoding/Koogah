@@ -14,7 +14,7 @@ config();
 const socketFunction = new WebSocketFunctions();
 
 const WsServer = new WebSocket.Server({
-  noServer: true
+  noServer: true,
 });
 
 // server upgrade function;
@@ -52,6 +52,7 @@ SERVER.on('upgrade', function upgrade(request, socket, head) {
       }
 
       // before final deploy, work on the acceptable hosts;
+      // set websocket origin on the client
       console.log('before final deploy, work on the acceptable hosts')
       console.log('host', host);
 
@@ -77,12 +78,12 @@ WsServer.on('connection', async function (ws, req, client) {
     let userType = urlQuery.get('type');
     let USER;
     let ws_connected_channels;
-
     if (userType === 'dispatcher') {
       try { 
         USER = await Couriers.findOne({ where: { id: userId } });
         ws_connected_channels = USER.ws_connected_channels;
       } catch (err) {
+        // check ws.terminate() - it works
         ws.close();
         return false;
       }
@@ -99,7 +100,6 @@ WsServer.on('connection', async function (ws, req, client) {
       ws.close();
       return false;
     }
-
 
     if (ws.readyState === WebSocket.OPEN) {
       // find the client

@@ -262,7 +262,6 @@ class Package {
         await Packages.update({
           dispatcher_id,
           pickup_time: date_time,
-          pending_dispatchers: [],
           status: 'picked-up',
         },
         {
@@ -286,20 +285,59 @@ class Package {
         NEW_NOTIFICATION.title = 'New Dispatch Approval';
         NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
       }
+      // change this decline function
       if (response === 'decline') {
         const dispatcher = await Couriers.findOne({
           where: {
             id: dispatcher_id,
           },
         });
-        await Packages.update({
-          pending_dispatcher_id: null,
-        },
-        {
-          where: {
-            package_id,
+        if (_package.status === 'picked-up') {
+            // update the dispatcher's pending packages;
+            // and reduce their pick ups
+          const current_pending_deliveries = parseInt(dispatcher.pending, 10) - 1;
+          const current_pickups = parseInt(dispatcher.pickups, 10) - 1;
+          await Couriers.update({
+            pending: current_pending_deliveries,
+            pickups: current_pickups
+          }, {
+            where: {
+              id: dispatcher_id
+            }
+          });
+          // remove the dispatcher from the list of pending dispatchers;
+          let pending_dispatchers = _package.pending_dispatchers;
+          // get index of dispatcher.
+          const idx = pending_dispatchers.findIndex((d) => d === dispatcher_id);
+          pending_dispatchers.splice(idx, 1);
+
+          await Packages.update({
+            dispatcher_id: null,
+            pending_dispatchers,
+            pickup_time: null,
+            status: 'not-picked'
           },
-        });
+            {
+              where: {
+                package_id,
+            }
+          })
+        } else {
+          // remove the dispatcher from the list of pending dispatchers;
+          let pending_dispatchers = _package.pending_dispatchers;
+          // get index of dispatcher.
+          const idx = pending_dispatchers.findIndex((d) => d === dispatcher_id);
+          pending_dispatchers.splice(idx, 1);
+          await Packages.update({
+            pending_dispatchers,
+            status: 'not-picked'
+          },
+          {
+            where: {
+              package_id,
+            },
+          });
+        }
         NEW_NOTIFICATION.email = dispatcher.email;
         NEW_NOTIFICATION.desc='CD005';
         NEW_NOTIFICATION.message = `A customer has declined your request to dispatch their package with id: ${package_id}.`;
@@ -1014,9 +1052,12 @@ class Package {
         })
       }
       // update the dispatcher's pending;
+      // and reduce their pick ups
       const current_pending_deliveries = parseInt(user.pending, 10) - 1;
+      const current_pickups = parseInt(user.pickups, 10) - 1
       await Couriers.update({
-        pending: current_pending_deliveries
+        pending: current_pending_deliveries,
+        pickups: current_pickups
       }, {
         where: {
           id: user.id
@@ -1153,7 +1194,9 @@ class Package {
       })
 
       await Packages.update({
-        is_currently_tracking: true
+        is_currently_tracking: true,
+        status: 'tracking',
+        pending_dispatchers: [],
       }, {
         where: {
         package_id

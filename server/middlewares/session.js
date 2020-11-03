@@ -35,7 +35,7 @@ const checkSession = function checkSession(req, res, next) {
               || actual_payload.exp !== request_payload.exp
           ) {
             return res.status(400).json({
-              status: 400,
+              status: 401,
               error: 'Session expired. Please log in again',
             });
           }
@@ -106,7 +106,7 @@ export const isCustomerLoggedIn = function isCustomerLoggedIn(req, res, next) {
     });
     if (!isFound.is_verified) return res.status(401).json({
       status: 401,
-      error: 'Cannot perform this action until you have verified your account. Please check your email for a verification link sent to you, or',
+      error: 'Cannot perform this action until you have verified your account. Please check your email for a verification link sent to you',
       resend_link: (isProduction) ? `https://koogah.herokuapp.com/v1/user/customer/verify/email?key=${isFound.verify_token}&code=CUSTOMER` : `http://localhost:4000/v1/user/customer/verify/email?key=${isFound.verify_token}&code=CUSTOMER`,
     });
     if (payload.is_courier) {

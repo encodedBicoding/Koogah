@@ -47,7 +47,6 @@ const app = express();
 const SessionStore = connectRedis(session);
 app.enable('trust proxy');
 
-const PORT = parseInt(process.env.PORT, 10) || 4000;
 const isProduction = app.get('env') === 'production';
 
 const apiLimiter = new RateLimit({

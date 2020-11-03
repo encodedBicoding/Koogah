@@ -285,7 +285,7 @@ class Package {
         NEW_NOTIFICATION.title = 'New Dispatch Approval';
         NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
       }
-      // change this decline function
+
       if (response === 'decline') {
         const dispatcher = await Couriers.findOne({
           where: {

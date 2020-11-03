@@ -413,7 +413,7 @@ class Payment {
       let customer_remaining_kc_balance = Math.floor(Number(user_koogah_coin_balance) - Number(is_package_valid.delivery_price));
       // convert current kc balance
       // 1 percent of the current value;
-      customer_remaining_kc_balance = Math.floor(customer_remaining_kc_balance * 0.01); 
+      customer_remaining_kc_balance = Math.floor(customer_remaining_kc_balance / KOOGAH_COIN_WORTH); 
 
       // get dispatcher to update their account + minus the 25 percent charge.
       const dispatcher = await Couriers.findOne({

@@ -28,7 +28,9 @@ const {
   courier_rating_schema_params,
   customer_rating_schema_params,
   decline_pickup_body_schema,
-  approve_decline_package_schema
+  approve_decline_package_schema,
+  password_reset_request_schema,
+  reset_password_schema
 } = Schema;
 
 /**
@@ -542,6 +544,44 @@ class Validate {
     }
     return next();
    }
+  
+  /**
+   * @method check_password_reset_request
+   * @description This method validates password reset request body
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_password_reset_request(req, res, next) {
+    const isvalid = password_reset_request_schema().validate(req.body);
+    if (isvalid.hasOwnProperty('error')) {
+     return res.status(400).json({
+       status: 400,
+       error: isvalid.error.details,
+     });
+   }
+   return next();
+  }
+  
+  /**
+   * @method check_reset_password
+   * @description This method validates reset password body
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_reset_password(req, res, next) {
+    const isvalid = reset_password_schema().validate(req.body);
+    if (isvalid.hasOwnProperty('error')) {
+     return res.status(400).json({
+       status: 400,
+       error: isvalid.error.details,
+     });
+   }
+   return next();
+  }
 }
 
 export default Validate;

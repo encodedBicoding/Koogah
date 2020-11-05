@@ -395,6 +395,33 @@ class Schema {
       dispatcher_id: Joi.string().required(),
     });
   }
+
+  /**
+   * @method password_reset_request_schema
+   * @description This method return Joi object which delivers a schema to request password reset
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static password_reset_request_schema() {
+    return Joi.object({
+      email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
+      account_type: Joi.string().valid('courier', 'customer').required()
+    })
+  }
+
+  /**
+   * @method reset_password_schema
+   * @description This method return Joi object which delivers a schema to reset password
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static reset_password_schema() {
+    return Joi.object({
+      new_password: Joi.string().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/).required(),
+    })
+  }
 }
 
 

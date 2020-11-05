@@ -66,7 +66,7 @@ export const createVerificationMail = function createVerificationMail(user_email
           </ul>
 
           <p>
-            If the verification link above doesn't open, copy and paste the code below in a browser.
+            If the verification link above doesn't open up a broswer, copy and paste the link below into a browser.
             <p>
               ${verify_link}
             </p>
@@ -215,10 +215,58 @@ export const createApprovalMailToCourier = function sendApprovalMailToCourier(us
   `
 
   let msgObj = {
-    to: email,
+    to: user_email,
     from: 'noreply@koogah.com',
-    subject: 'Approval notice - Welcome to Koogah'
+    subject: 'Approval notice - Welcome to Koogah',
+    html,
   }
 
   return msgObj
+}
+
+export const createPasswordResetEmail = function createPasswordResetEmail(userObj) {
+  let { first_name, last_name, password_reset_link, account_type, user_email } = userObj;
+  first_name = toSentenceCase.call(null, first_name);
+  last_name = toSentenceCase.call(null, last_name);
+  let html = `
+    <table width='100%' cellspacing='0' cellpadding='0'>
+      <tr>
+        <td>
+          <table>
+            <tr>
+              <td>
+                <div>
+                  <div>
+                    <p>Hi ${first_name} ${last_name},</p>
+                    <div>
+                      <p>A password reset request was made from your ${account_type} account, kindly ignore this email if this wasn't requested by you.</p>
+                      <div>
+                        <p>
+                          to reset your password, click on the link below:
+                        </p>
+                        <p>
+                          <a href="${password_reset_link}">RESET_PASSWORD</a>
+                        </p>
+                      </div>
+                      <div>
+                        <p>If the above link was unclickable, copy and paste the link below into a browser</p>
+                        <p>${password_reset_link}<p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  `;
+  let msgObj = {
+    to: user_email,
+    from: 'noreply@koogah.com',
+    subject: 'Password Reset',
+    html,
+  };
+  return msgObj;
 }

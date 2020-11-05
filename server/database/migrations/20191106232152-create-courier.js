@@ -88,6 +88,9 @@ module.exports = {
     approval_code: {
       type: Sequelize.TEXT,
     },
+    password_reset_token: {
+      type: Sequelize.TEXT
+    },
     is_approved: {
       type: Sequelize.BOOLEAN,
     },

@@ -3,6 +3,7 @@
 /* eslint-disable import/no-cycle */
 /* eslint-disable camelcase */
 import { config } from 'dotenv';
+import bcrypt from 'bcrypt';
 import log from 'fancy-log';
 import Sequelize from 'sequelize';
 import {
@@ -14,8 +15,9 @@ import jwt from '../helpers/jwt';
 import sendMail, { 
     createVerificationMail, 
     createCourierApprovalMail,
-    createApprovalMailToCourier
-  } from '../helpers/mail';
+    createApprovalMailToCourier,
+    createPasswordResetEmail
+} from '../helpers/mail';
 import client from '../../../redis/redis.client';
 import generate_ref from '../helpers/ref.id';
 
@@ -501,6 +503,7 @@ class UserController {
           error: 'Invalid Token, Please contact our support team to lay any complains. mailto::support@koogah.com',
         });
       }
+      console.log(payload);
 
     const verifying_user = await Customers.findOne({
       where: {
@@ -985,6 +988,197 @@ class UserController {
         error: err,
       });
     });
+  }
+  /**
+   * @method request_password_reset
+   * @memberof UserController
+   * @description This method allows a user request password reset
+   * @params req, res
+   * @return JSON object
+   */
+
+  static request_password_reset(req, res) {
+    const { email, account_type } = req.body;
+    return Promise.try(async () => { 
+      if (account_type === 'courier') {
+        const isFound = await Couriers.findOne({
+          where: {
+            email
+          }
+        });
+        if (!isFound) {
+          return res.status(400).json({
+            status: 400,
+            error: 'No account associated with the provided email address'
+          })
+        }
+
+        const PASSWORD_RESET_TOKEN = await jwt.sign({
+          email,
+          bvn: isFound.bvn,
+          first_name: isFound.first_name,
+          last_name: isFound.last_name,
+          account_type,
+        });
+
+        // based on the account type, 
+        // determine what frontend application to send the user to.
+        const PASSWORD_RESET_LINK = `${isProduction ? 'https' : 'http'}://${req.headers.host}/v1/user/pR?token=${PASSWORD_RESET_TOKEN}&code=COURIER`;
+
+        const user_msg_obj = {
+          first_name: isFound.first_name,
+          last_name: isFound.last_name,
+          user_email: email,
+          password_reset_link: PASSWORD_RESET_LINK,
+          account_type,
+        };
+        const MSG_OBJ = createPasswordResetEmail(user_msg_obj);
+
+        await sendMail(MSG_OBJ);
+
+        await Couriers.update({
+          password_reset_token: PASSWORD_RESET_TOKEN
+        }, {
+          where: {
+            email,
+          }
+        });
+      } else if (account_type === 'customer') {
+        const isFound = await Customers.findOne({
+          where: {
+            email,
+          }
+        });
+        if (!isFound) {
+          return res.status(400).json({
+            status: 400,
+            error: 'No account associated with the provided email address'
+          })
+        };
+        const PASSWORD_RESET_TOKEN = await jwt.sign({
+          email,
+          bvn: isFound.bvn,
+          first_name: isFound.first_name,
+          last_name: isFound.last_name,
+          account_type,
+        });
+        // based on the account type, 
+        // determine what frontend application to send the user to.
+        const PASSWORD_RESET_LINK = `${isProduction ? 'https' : 'http'}://${req.headers.host}/v1/user/pR?token=${PASSWORD_RESET_TOKEN}&code=CUSTOMER`;
+        const user_msg_obj = {
+          first_name: isFound.first_name,
+          last_name: isFound.last_name,
+          user_email: email,
+          password_reset_link: PASSWORD_RESET_LINK,
+          account_type,
+        };
+        const MSG_OBJ = createPasswordResetEmail(user_msg_obj);
+
+        await sendMail(MSG_OBJ);
+        await Customers.update({
+          password_reset_token: PASSWORD_RESET_TOKEN
+        }, {
+          where: {
+            email,
+          }
+        });
+      }
+      return res.status(200).json({
+        status: 200,
+        message: 'A password reset link has been sent to your email address'
+      })
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    })
+  }
+
+  /**
+   * @method reset_password
+   * @memberof UserController
+   * @description This method allows a user reset their password
+   * @params req, res
+   * @return JSON object
+   */
+  static reset_password(req, res) {
+    const { new_password } = req.body;
+    const { token } = req.query;
+    return Promise.try(async () => { 
+      const USER = await jwt.verify(token);
+      if (!USER) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Reset link expired, please request for a new password reset link'
+        })
+      }
+      let isFound;
+
+      if (USER.account_type === 'courier') {
+        isFound = await Couriers.findOne({
+          where: {
+            email: USER.email
+          }
+        });
+      } else if (USER.account_type === 'customer') {
+        isFound = await Customers.findOne({
+          where: {
+            email: USER.email
+          }
+        });
+      }
+      if (!isFound) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Oops, user not found'
+        })
+      }
+      if (!isFound.password_reset_token) {
+        return res.status(400).json({
+          status: 400,
+          error: 'No password reset started for this user'
+        })
+      }
+      if (isFound.password_reset_token !== token) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Invalid reset link, please request for a new password reset link'
+        })
+      }
+      const saltRounds = 8;
+      const ENCRYPTED_NEW_PASSWORD = await bcrypt.hash(new_password, saltRounds);
+      
+      if (USER.account_type === 'courier') {
+        await Couriers.update({
+          password: ENCRYPTED_NEW_PASSWORD,
+          password_reset_token: null,
+        }, {
+          where: {
+            email: USER.email
+          }
+        })
+      } else if (USER.account_type === 'customer') {
+        await Customers.update({
+          password: ENCRYPTED_NEW_PASSWORD,
+          password_reset_token: null,
+        }, {
+          where: {
+          email: USER.email
+        }})
+      }
+      return res.status(200).json({
+        status: 200,
+        message: 'Password reset successful'
+      })
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    })
   }
 }
 

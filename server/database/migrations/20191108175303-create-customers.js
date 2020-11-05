@@ -88,6 +88,9 @@ module.exports = {
     koogah_coin: {
       type: Sequelize.BIGINT
     },
+    password_reset_token: {
+      type: Sequelize.TEXT
+    },
     created_at: {
       allowNull: false,
       type: Sequelize.DATE,

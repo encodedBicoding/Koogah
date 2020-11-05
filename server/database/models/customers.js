@@ -94,7 +94,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     nationality: {
       type: DataTypes.STRING,
-      defaultValue: 'nigerian',
+      defaultValue: 'nigeria',
     },
     email: {
       type: DataTypes.STRING,
@@ -127,6 +127,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BIGINT,
       allowNull: false,
       defaultValue: 0,
+    },
+    password_reset_token: {
+      type: DataTypes.TEXT,
+      allowNull: true
     },
   },
   {

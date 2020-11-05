@@ -20,6 +20,8 @@ const {
   rate_a_customer,
   sign_out,
   report_user,
+  request_password_reset,
+  reset_password
 } = UserController;
 
 const {
@@ -32,6 +34,8 @@ const {
   check_rating,
   check_report,
   check_profile_id,
+  check_password_reset_request,
+  check_reset_password
 } = Validate;
 
 const userRoute = express();
@@ -137,4 +141,14 @@ userRoute.post(
   check_report,
   report_user,
 );
+userRoute.post(
+  '/password-reset/request',
+  check_password_reset_request,
+  request_password_reset
+);
+userRoute.post(
+  '/reset/password',
+  check_reset_password,
+  reset_password,
+)
 export default userRoute;

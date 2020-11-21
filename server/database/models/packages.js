@@ -86,7 +86,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
     },
     status: {
-      type: DataTypes.ENUM('picked-up', 'not-picked', 'delivered', 'tracking'),
+      type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'not-picked',
     },
@@ -119,6 +119,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
+    },
+    payment_mode: {
+      type: DataTypes.STRING,
+      defaultValue: 'virtual_balance',
+    },
+    delivery_key: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
   },
   {

@@ -36,7 +36,8 @@ const {
   check_package_status,
   check_decline_pickup_body,
   check_decline_pickup_query,
-  check_approve_decline_package
+  check_approve_decline_package,
+  check_deliver_package
 } = Validate;
 
 const packageRoute = express();
@@ -87,11 +88,11 @@ packageRoute.patch(
 );
 
 packageRoute.patch(
-  '/courier/deliver/:package_id',
+  '/courier/deliver/:package_id/:delivery_key',
   passport.authenticate('bearer', { session: false }),
   checkSession,
   isCourierLoggedIn,
-  check_package_id,
+  check_deliver_package,
   mark_package_as_delivered,
 );
 

@@ -30,7 +30,9 @@ const {
   decline_pickup_body_schema,
   approve_decline_package_schema,
   password_reset_request_schema,
-  reset_password_schema
+  reset_password_schema,
+  deliver_package_schema,
+  refresh_token_schema
 } = Schema;
 
 /**
@@ -574,6 +576,44 @@ class Validate {
 
   static check_reset_password(req, res, next) {
     const isvalid = reset_password_schema().validate(req.body);
+    if (isvalid.hasOwnProperty('error')) {
+     return res.status(400).json({
+       status: 400,
+       error: isvalid.error.details,
+     });
+   }
+   return next();
+  }
+  
+  /**
+   * @method check_deliver_package
+   * @description This method validates deliver package schema
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_deliver_package(req, res, next) {
+    const isvalid = deliver_package_schema().validate(req.params);
+    if (isvalid.hasOwnProperty('error')) {
+     return res.status(400).json({
+       status: 400,
+       error: isvalid.error.details,
+     });
+   }
+   return next();
+  }
+  
+  /**
+   * @method check_refresh_token
+   * @description This method validates refresh token
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_refresh_token(req, res, next) {
+    const isvalid = refresh_token_schema().validate(req.query);
     if (isvalid.hasOwnProperty('error')) {
      return res.status(400).json({
        status: 400,

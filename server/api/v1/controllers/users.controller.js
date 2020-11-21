@@ -3,6 +3,7 @@
 /* eslint-disable import/no-cycle */
 /* eslint-disable camelcase */
 import { config } from 'dotenv';
+import j_w_t from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import log from 'fancy-log';
 import Sequelize from 'sequelize';
@@ -611,7 +612,8 @@ class UserController {
     const { iat, exp, ...data } = payload;
     const SESSION_TOKEN = await jwt.sign({
       ...data,
-    })
+    });
+    const REFRESH_TOKEN = j_w_t.sign(data, process.env.SECRET_KEY);
     const NEW_NOTIFICATION = {
       email: verifying_user.email,
       type: 'customer',
@@ -643,6 +645,7 @@ class UserController {
       const user = {
         ...approved_user.getSafeDataValues(),
         token: SESSION_TOKEN,
+        refresh_token: REFRESH_TOKEN,
       };
       res.status(200).json({
         status: 200,
@@ -698,8 +701,10 @@ class UserController {
       };
 
       SESSION_TOKEN = await jwt.sign(SESSION_USER, '24h');
+      const REFRESH_TOKEN = j_w_t.sign(SESSION_USER, process.env.SECRET_KEY);
       const user = isFound;
       user.token = SESSION_TOKEN;
+      user.refresh_token = REFRESH_TOKEN;
       client.set(`${user.email}:COURIER`, SESSION_TOKEN);
       return res.status(200).json({
         status: 200,
@@ -757,8 +762,10 @@ class UserController {
       };
 
       SESSION_TOKEN = await jwt.sign(SESSION_USER, '24h');
+      const REFRESH_TOKEN = j_w_t.sign(SESSION_USER, process.env.SECRET_KEY);
       const user = isFound;
       user.token = SESSION_TOKEN;
+      user.refresh_token = REFRESH_TOKEN;
       client.set(`${user.email}:CUSTOMER`, SESSION_TOKEN);
       return res.status(200).json({
         status: 200,
@@ -772,6 +779,74 @@ class UserController {
         error: err,
       });
     });
+  }
+
+  /**
+   * @method use_refresh
+   * @memberof UserController
+   * @description This method allows a courier to rate a customer
+   * @params req, res
+   * @return JSON object
+   */
+
+  static use_refresh(req, res) {
+    const { refresh_token } = req.query;
+    let isFound = undefined;
+    let user_type = undefined;
+    return Promise.try(async () => {
+      // verify token validity;
+      const user = j_w_t.verify(refresh_token, process.env.SECRET_KEY);
+      if (user) {
+        let { iat, ...data } = user;
+        // create a new token;
+        const SESSION_TOKEN = await jwt.sign(data, '24h');
+        if (user.is_courier) {
+          user_type = 'COURIER';
+          isFound = await Couriers.findOne({
+            where: {
+              email: user.email
+            }
+          })
+        } else {
+          user_type = 'CUSTOMER';
+          isFound = await Customers.findOne({
+            where: {
+              email: user.email
+            }
+          })
+        }
+
+        if (!isFound) {
+          return res.status(401).json({
+            status: 401,
+            error: 'User does not exist'
+          })
+        }
+
+        const USER = isFound.getSafeDataValues();
+        USER.token = SESSION_TOKEN;
+        USER.refresh_token = refresh_token;
+        client.set(`${USER.email}:${user_type}`, SESSION_TOKEN);
+
+        return res.status(200).json({
+          status: 200,
+          message: 'Refresh Login successful',
+          user: USER
+        })
+
+      } else {
+        return res.status(401).json({
+          status: 401,
+          error: 'Not Authorized'
+        })
+      }
+    }).catch((err) => {
+    log(err);
+    return res.status(400).json({
+      status: 400,
+      error: err,
+    });
+    })
   }
   
   /**
@@ -912,8 +987,8 @@ class UserController {
   static sign_out(req, res) {
     const { user } = req.session;
     const type = user.is_courier ? 'COURIER' : 'CUSTOMER';
-    client.del(`${user.email}:${type}`);
     delete req.session.user;
+    client.del(`${user.email}:${type}`);
     return Promise.try(() => res.status(200).json({
       status: 200,
       message: 'Logged out successfully',

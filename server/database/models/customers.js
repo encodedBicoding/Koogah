@@ -128,6 +128,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 0,
     },
+    virtual_allocated_kc_balance: {
+      type: DataTypes.BIGINT,
+      allowNull: false,
+      defaultValue: 0,
+    },
     password_reset_token: {
       type: DataTypes.TEXT,
       allowNull: true
@@ -141,15 +146,6 @@ module.exports = (sequelize, DataTypes) => {
 
   Customers.beforeCreate(async (customer) => {
     customer.password = await customer.encryptPassword();
-
-    //TODO
-    // customer.first_name = customer.encryptMainData(customer.first_name);
-    // customer.last_name = customer.encryptMainData(customer.last_name);
-    // customer.address = customer.encryptMainData(customer.address);
-    // customer.nationality = customer.encryptMainData(customer.nationality);
-    // customer.mobile_number_one = customer.encryptMainData(customer.mobile_number_one);
-    // customer.mobile_number_two = customer.mobile_number_two ? customer.encryptMainData(customer.mobile_number_two) : ''
-
   });
 
   Customers.prototype.encryptPassword = async function encryptPassword() {
@@ -166,31 +162,7 @@ module.exports = (sequelize, DataTypes) => {
     return await bcrypt.compare(password, this.password);
   };
   Customers.prototype.getSafeDataValues = function getSafeDataValues() {
-    let secret_key = process.env.SECRET_KEY;
     let { password, ...data } = this.dataValues;
-    // TODO: Encrypt data
-    // data = Object.keys(data).reduce((acc, curr) => {
-    //   acc = this.dataValues;
-    //   if (curr === 'first_name') {
-    //     acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
-    //   }
-    //   if (curr === 'last_name') {
-    //     acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
-    //   }
-    //   if (curr === 'address') {
-    //     acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
-    //   }
-    //   if (curr === 'nationality') {
-    //     acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
-    //   }
-    //   if (curr === 'mobile_number_one') {
-    //     acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
-    //   }
-    //   if (curr === 'mobile_number_two' && this.dataValues[curr]) {
-    //     acc[curr] = CryptoJS.AES.decrypt(this.dataValues[curr], secret_key).toString(CryptoJS.enc.Utf8);
-    //   }
-    //   return acc;
-    // }, {})
     return data;
   };
 

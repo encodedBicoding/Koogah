@@ -68,7 +68,7 @@ module.exports = {
       type: Sequelize.TEXT,
     },
     status: {
-      type: Sequelize.ENUM('picked-up', 'not-picked', 'delivered'),
+      type: Sequelize.STRING,
     },
     pickup_time: {
       type: Sequelize.TEXT,
@@ -91,6 +91,14 @@ module.exports = {
     is_paid_for: {
       type: Sequelize.BOOLEAN,
       allowNull: false,
+    },
+    payment_mode: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
+    delivery_key: {
+      type: Sequelize.STRING,
+      allowNull: false
     },
     created_at: {
       allowNull: false,

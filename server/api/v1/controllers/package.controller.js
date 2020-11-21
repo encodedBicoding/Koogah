@@ -7,6 +7,7 @@ import fetch from 'node-fetch';
 import { config } from 'dotenv';
 import checkType from '../helpers/check.type';
 import calc_delivery_price from '../helpers/calc.price';
+import generate_ref from '../helpers/ref.id';
 import {
   Packages, Couriers, Notifications, Customers,
 } from '../../../database/models';
@@ -37,6 +38,9 @@ class Package {
     if (type === 'intra-state') {
       data.to_state = data.from_state;
     }
+    if (!data.payment_mode) {
+      data.payment_mode = 'virtual_balance';
+    }
     // calculate the distance between package pickup location
     // and package dropoff location
     return Promise.try(async () => fetch(`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${checkType('from', data, type)}&destinations=${checkType('to', data, type)}&key=${process.env.GOOGLE_API_KEY}`)
@@ -45,25 +49,75 @@ class Package {
         const distance_in_km = result.rows[0].elements[0].distance.text;
         const distance = Math.ceil(Number(distance_in_km.split(' ')[0].replace(',', '')));
         const delivery_price = calc_delivery_price(type, weight, distance);
+
         if (!delivery_price) {
           return res.status(400).json({
             status: 400,
             error: 'Weight must match one of ["0-5","6-10", "11-15", "16-25", "26-40", "50-100", "101-200", "201-300", "301-400", "401-500", "501>"],',
           });
         }
-        if (Number(delivery_price) > Number(user.virtual_balance)) {
+
+        if (data.payment_mode === 'virtual_balance') {
+          if (Number(delivery_price) > Number(user.virtual_balance)) {
+            return res.status(400).json({
+              status: 400,
+              error: `You must top-up your account with at least ₦${Number(delivery_price) - Number(user.virtual_balance)} before requesting this dispatch`
+            })
+          }
+          if ((Number(user.virtual_balance) - Number(user.virtual_allocated_balance)) < Number(delivery_price)) {
+            return res.status(400).json({
+              status: 400,
+              error: 'Sorry you have reached your package balance threshold, \nplease top-up your account or delete a package that has not been picked-up'
+            })
+          }
+          const updated_V_A_B = Number(user.virtual_allocated_balance) + Number(delivery_price)
+          await Customers.update({
+            virtual_allocated_balance: updated_V_A_B
+          }, {
+            where: {
+              id: user.id
+            }
+          });
+        } else if (data.payment_mode === 'koogah_coin') {
+           // convert koogah coin to determine value;
+           // in Naira, it is worth 10 Naira.
+          const KOOGAH_COIN_WORTH = process.env.KOOGAH_COIN_WORTH;
+          const user_koogah_coin_balance = Number(KOOGAH_COIN_WORTH) * Number(user.koogah_coin);
+          // convert virtual allocated kc balance
+          const user_allocated_kc_balance = Number(KOOGAH_COIN_WORTH) * Number(user.virtual_allocated_kc_balance);
+          if (Number(delivery_price) > Number(user_koogah_coin_balance)) {
+            return res.status(400).json({
+              status: 400,
+              error: 'Sorry, you have insufficient KC balance'
+            })
+          }
+          if ((Number(user_koogah_coin_balance) - Number(user_allocated_kc_balance)) < Number(delivery_price)) {
+            return res.status(400).json({
+              status: 400,
+              error: 'Sorry, you have reached your package koogah coin balance threshhold,\n please select a different means of payment'
+            })
+          }
+          // before saving, convert it back.
+          let updated_V_A_KC_B = Number(user_allocated_kc_balance) + Number(delivery_price);
+          updated_V_A_KC_B = Math.floor(updated_V_A_KC_B / KOOGAH_COIN_WORTH);
+
+          await Customers.update({
+            virtual_allocated_kc_balance: updated_V_A_KC_B
+          }, {
+              where: {
+              id: user.id
+            }
+          })
+        } else {
           return res.status(400).json({
             status: 400,
-            error: `You must top-up your account with at least ₦${Number(delivery_price) - Number(user.virtual_balance)} before requesting this dispatch`
+            error: 'Invalid payment mode'
           })
         }
-        if ((Number(user.virtual_balance) - Number(user.virtual_allocated_balance)) < Number(delivery_price)) {
-          return res.status(400).json({
-            status: 400,
-            error: 'Sorry you have reached your package balance threshold, \nplease top-up your account or delete a package that has not been picked-up'
-          })
-        }
+
+        // create the package.
         const package_id = uuid();
+        const delivery_key = generate_ref('delivery');
         const package_detail = await Packages.create({
           type_of_dispatch: type,
           customer_id: user.id,
@@ -71,21 +125,15 @@ class Package {
           distance,
           delivery_price,
           package_id,
+          delivery_key,
           ...data,
         });
-        const updated_V_A_B = Number(user.virtual_allocated_balance) + Number(delivery_price)
-        await Customers.update({
-          virtual_allocated_balance: updated_V_A_B
-        }, {
-          where: {
-            id: user.id
-          }
-        });
+
         // TODO: this should create a new package creation notification
         // and/or send a websocket notification to all couriers registered in the package location area
         return res.status(200).json({
           status: 200,
-          message: 'Package created successfully. Please wait, dispatcher\'s will reach out to you soon',
+          message: 'Package created successfully. Please wait, dispatchers will reach out to you soon',
           package_detail,
         });
       }).catch((err) => {
@@ -158,6 +206,9 @@ class Package {
           where: {
             package_id,
           },
+          attributes: {
+            exclude: ['delivery_key']
+          }
         });
         const customer = await Customers.findOne({
           where: {
@@ -420,6 +471,9 @@ class Package {
           where: {
             package_id,
           },
+          attributes: {
+            exclude: ['delivery_key']
+          }
         });
         const package_owner = await Customers.findOne({
           where: {
@@ -501,30 +555,69 @@ class Package {
         },
       });
       if (response === 'approve') {
-        // check if customer's virtual balance is enough for dispatch the goods
-        if (Number(_package.pending_delivery_price) > Number(user.virtual_balance)) {
-          return res.status(400).json({
-            status: 400,
-            error: 'Please top-up your account to approve this new weight change'
-          })
-        }
-        // remove the previous delivery cost from the allocated virual balance
-        // then compare with the user current virtual balance against the new delivery price
-        let updated_V_A_B = Number(user.virtual_allocated_balance) - Number(_package.delivery_price);
-        if ((Number(user.virtual_balance) - Number(updated_V_A_B)) < Number(_package.pending_delivery_price)) {
-          return res.status(400).json({
-            status: 400,
-            error: 'Please top-up your account to approve this new weight change'
-          })
-        }
-        updated_V_A_B = Number(updated_V_A_B) + Number(_package.pending_delivery_price);
-        await Customers.update({
-          virtual_allocated_balance: updated_V_A_B
-        }, {
-          where: {
-            id: user.id
+        if (_package.payment_mode === 'virtual_balance') {
+          // check if customer's virtual balance is enough for dispatch the goods
+          if (Number(_package.pending_delivery_price) > Number(user.virtual_balance)) {
+            return res.status(400).json({
+              status: 400,
+              error: 'Please top-up your account to approve this new weight change'
+            })
           }
-        })
+          // remove the previous delivery cost from the allocated virual balance
+          // then compare with the user current virtual balance against the new delivery price
+          let updated_V_A_B = Number(user.virtual_allocated_balance) - Number(_package.delivery_price);
+          if ((Number(user.virtual_balance) - Number(updated_V_A_B)) < Number(_package.pending_delivery_price)) {
+            return res.status(400).json({
+              status: 400,
+              error: 'Please top-up your account to approve this new weight change'
+            })
+          }
+          updated_V_A_B = Number(updated_V_A_B) + Number(_package.pending_delivery_price);
+          await Customers.update({
+            virtual_allocated_balance: updated_V_A_B
+          }, {
+            where: {
+              id: user.id
+            }
+          })
+        } 
+
+        if (_package.payment_mode === 'koogah_coin') {
+          // convert koogah coin to determine value;
+          // in Naira, it is worth 10 Naira
+          const KOOGAH_COIN_WORTH = process.env.KOOGAH_COIN_WORTH;
+          const user_koogah_coin_balance = Number(KOOGAH_COIN_WORTH) * Number(user.koogah_coin);
+
+          let user_allocated_kc_balance = Number(KOOGAH_COIN_WORTH) * Number(user.virtual_allocated_kc_balance);
+          if (Number(_package.pending_delivery_price) > Number(user_koogah_coin_balance)) {
+            return res.status(400).json({
+              status: 400,
+              error: 'Sorry, you have insufficient KC balance to approve this weight change',
+            })
+          }
+          // subtract the user alloc kc balance from the delivery price
+
+          user_allocated_kc_balance = Number(user.virtual_allocated_kc_balance) - Number(_package.delivery_price);
+          if ((Number(user_koogah_coin_balance) - Number(user_allocated_kc_balance)) < Number(_package.pending_delivery_price)) {
+            return res.status(400).json({
+              status: 400,
+              error: 'Sorry, you cannot complete this dispatch with Koogah coin, please use another payment mode'
+            })
+          }
+          let updated_V_A_KC_B = Number(user_allocated_kc_balance) + Number(_package.pending_delivery_price);
+          updated_V_A_KC_B = Math.floor(updated_V_A_KC_B / KOOGAH_COIN_WORTH);
+          
+          await Customers.update({
+            virtual_allocated_kc_balance: updated_V_A_KC_B
+          }, {
+              where: {
+              id: user.id
+            }
+          })
+
+
+        }
+   
         await Packages.update({
           weight: _package.pending_weight,
           delivery_price: _package.pending_delivery_price,
@@ -588,18 +681,39 @@ class Package {
 
   static mark_package_as_delivered(req, res) {
     const { user } = req.session;
-    const { package_id } = req.params;
+    const { package_id, delivery_key } = req.params;
     return Promise.try(async () => {
       const _package = await Packages.findOne({
         where: {
           package_id,
         },
       });
+      // validated delivery key;
+      if (!delivery_key) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Please include the delivery key of this package'
+        })
+      }
+      const KEY_CODE = delivery_key.slice(0, 5);
+      if (KEY_CODE !== process.env.DELIVERY_KEYCODE) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Invalid delivery code'
+        })
+      }
+
       if (!_package) {
         return res.status(404).json({
           status: 404,
           error: 'Oops, seems the package doesn\'t exist anymore',
         });
+      }
+      if (delivery_key !== _package.delivery_key) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Delivery code is wrong, please contact the person who requested the delivery'
+        })
       }
       if (_package.dispatcher_id !== user.id) {
         return res.status(401).json({
@@ -613,11 +727,12 @@ class Package {
           error: 'Oops, seems you have already delivered this package',
         });
       }
-      const date_time = new Date();
+      const date_time = new Date().toLocaleString();
       await Packages.update({
         status: 'delivered',
         is_currently_tracking: false,
         dropoff_time: date_time,
+        pending_dispatchers: [],
       },
       {
         where: {
@@ -639,11 +754,22 @@ class Package {
         where: {
           package_id,
         },
+        attributes: {
+          exclude: ['delivery_key']
+        },
         include: [
           {
             model: Couriers,
             as: 'dispatcher',
-            attributes: ['id','first_name', 'last_name', 'profile_image'],
+            attributes: [
+              'id',
+              'first_name',
+              'last_name',
+              'profile_image',
+              'rating',
+              'pickups',
+              'deliveries',
+            ],
           },
         ],
       });
@@ -690,6 +816,9 @@ class Package {
       const _package = await Packages.findOne({
         where: {
           package_id,
+        },
+        attributes: {
+          exclude: ['delivery_key']
         },
         include: [
           {
@@ -876,6 +1005,9 @@ class Package {
           where: {
             dispatcher_id: user.id,
           },
+          attributes: {
+            exclude: ['delivery_key']
+          },
           include: [
             {
               model: Customers,
@@ -940,6 +1072,9 @@ class Package {
                   { type_of_dispatch: dispatch_type },
                   { dispatcher_id: null}
                 ]
+            },
+            attributes: {
+              exclude: ['delivery_key']
             }
           })
          }
@@ -954,6 +1089,9 @@ class Package {
                   { type_of_dispatch: dispatch_type },
                   { dispatcher_id: null}
                 ]
+            },
+            attributes: {
+              exclude: ['delivery_key']
             }
           })
         }
@@ -968,6 +1106,9 @@ class Package {
                     { type_of_dispatch: dispatch_type },
                     { dispatcher_id: null}
                   ]
+              },
+              attributes: {
+                exclude: ['delivery_key']
               }
             })
          } else {
@@ -979,6 +1120,9 @@ class Package {
                   { type_of_dispatch: dispatch_type },
                   { dispatcher_id: null}
                 ]
+            },
+            attributes: {
+              exclude: ['delivery_key']
             }
           })
          }
@@ -993,6 +1137,9 @@ class Package {
                   { type_of_dispatch: dispatch_type },
                   { dispatcher_id: null}
                 ]
+             },
+             attributes: {
+              exclude: ['delivery_key']
             }
            })
          } else {
@@ -1004,6 +1151,9 @@ class Package {
                   { to_country: to},
                   { dispatcher_id: null}
                 ]
+            },
+            attributes: {
+              exclude: ['delivery_key']
             }
           })
          }
@@ -1196,7 +1346,6 @@ class Package {
       await Packages.update({
         is_currently_tracking: true,
         status: 'tracking',
-        pending_dispatchers: [],
       }, {
         where: {
         package_id

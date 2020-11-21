@@ -86,6 +86,7 @@ class Schema {
     return Joi.object({
       weight: Joi.string().required(),
       description: Joi.string().required(),
+      payment_mode: Joi.string().valid('virtual_balance', 'koogah_coin').required(),
       from_state: Joi.string().required(),
       from_town: Joi.string().required(),
       to_town: Joi.string().required(),
@@ -107,6 +108,7 @@ class Schema {
     return Joi.object({
       weight: Joi.string().required(),
       description: Joi.string().required(),
+      payment_mode: Joi.string().valid('virtual_balance', 'koogah_coin').required(),
       from_state: Joi.string().required(),
       to_state: Joi.string().required(),
       from_town: Joi.string().required(),
@@ -129,6 +131,7 @@ class Schema {
     return Joi.object({
       weight: Joi.string().required(),
       description: Joi.string().required(),
+      payment_mode: Joi.string().valid('virtual_balance', 'koogah_coin').required(),
       from_country: Joi.string().required(),
       to_country: Joi.string().required(),
       from_state: Joi.string().required(),
@@ -332,7 +335,20 @@ class Schema {
    */
   static package_status_schema() {
     return Joi.object({
-      status: Joi.string().valid('picked-up', 'not-picked', 'delivered'),
+      status: Joi.string().valid('picked-up', 'not-picked', 'delivered', 'tracking'),
+    });
+  }
+  
+  /**
+   * @method deliver_package_schema
+   * @description This method return Joi object which delivers a schema for package status
+   * @memberof Schema
+   * @return Joi Object
+   */
+  static deliver_package_schema() {
+    return Joi.object({
+      package_id: Joi.string().required(),
+      delivery_key: Joi.string().required(),
     });
   }
   /**
@@ -420,6 +436,19 @@ class Schema {
   static reset_password_schema() {
     return Joi.object({
       new_password: Joi.string().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/).required(),
+    })
+  }
+
+  /**
+   * @method refresh_token_schema
+   * @description This method return Joi object which delivers a schema to refresh token
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static refresh_token_schema() {
+    return Joi.object({
+      refresh_token: Joi.string().required(),
     })
   }
 }

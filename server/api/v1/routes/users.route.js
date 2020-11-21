@@ -21,7 +21,8 @@ const {
   sign_out,
   report_user,
   request_password_reset,
-  reset_password
+  reset_password,
+  use_refresh
 } = UserController;
 
 const {
@@ -35,7 +36,8 @@ const {
   check_report,
   check_profile_id,
   check_password_reset_request,
-  check_reset_password
+  check_reset_password,
+  check_refresh_token
 } = Validate;
 
 const userRoute = express();
@@ -90,6 +92,12 @@ userRoute.post(
   check_sign_in,
   signInCustomer,
 );
+
+userRoute.post(
+  '/refresh/token',
+  check_refresh_token,
+  use_refresh
+)
 
 userRoute.put(
   '/customer/rate/:dispatcher_id/:package_id',

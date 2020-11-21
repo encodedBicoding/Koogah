@@ -45,7 +45,8 @@ const checkSession = function checkSession(req, res, next) {
         }
         return res.status(401).json({
           status: 401,
-          error: 'Not Authorized. Please contact support on support@koogah.com',
+          error: 'Not Authorized.',
+          useRefresh: true,
         });
       } catch (error) {
         return res.status(500).json({

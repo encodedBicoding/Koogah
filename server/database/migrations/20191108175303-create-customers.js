@@ -88,6 +88,9 @@ module.exports = {
     koogah_coin: {
       type: Sequelize.BIGINT
     },
+    virtual_allocated_kc_balance: {
+      type: Sequelize.BIGINT
+    },
     password_reset_token: {
       type: Sequelize.TEXT
     },

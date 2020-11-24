@@ -24,7 +24,8 @@ const {
   declinePickup,
   allPackagePendingDispatchers,
   startDispatch,
-  allCurrentlyTrackingPackages
+  allCurrentlyTrackingPackages,
+  deletePackage,
 } = Package;
 
 const {
@@ -177,6 +178,15 @@ packageRoute.put(
   multipleMulter,
   multiple_upload,
 );
+
+packageRoute.delete(
+  '/customer/delete/:package_id',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  check_package_id,
+  deletePackage
+)
 
 
 export default packageRoute;

@@ -1403,6 +1403,99 @@ class Package {
       });
      })
    }
+  
+  /**
+   * @method deletePackage
+   * @memberof Package
+   * @params req, res
+   * @description Customers can delete packages...
+   * @return JSON object
+   */
+
+  static deletePackage(req, res) {
+    return Promise.try(async () => { 
+      const { package_id } = req.params;
+      const { user } = req.session;
+
+      // find the package;
+      const _package = await Packages.findOne({
+        where: {
+          package_id
+        }
+      });
+
+      if (!_package) {
+        return res.status(404).json({
+          status: 404,
+          error: 'Oops, seems package has already been deleted'
+        })
+      }
+      if (_package.customer_id !== user.id) {
+        return res.status(401).json({
+          status: 401,
+          error: 'Not Authorized to delete this package'
+        })
+      }
+
+      const benchmark = [
+        'tracking',
+        'picked-up'
+      ];
+
+      if (benchmark.includes(_package.status)) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Cannot delete a package that is currenty tracking or picked'
+        })
+      }
+
+      if (_package.status === 'not-picked') {
+        const delivery_price = _package.delivery_price;
+        if (_package.payment_mode === 'virtual_balance') {
+          const updated_V_A_B = Number(user.virtual_allocated_balance) - Number(delivery_price);
+          await Customers.update({
+            virtual_allocated_balance: updated_V_A_B
+          }, {
+            where: {
+              id: user.id
+            }
+          });
+        }
+        if (_package.payment_mode === 'koogah_coin') {
+          const KOOGAH_COIN_WORTH = process.env.KOOGAH_COIN_WORTH;
+          const user_allocated_kc_balance = Number(KOOGAH_COIN_WORTH) * Number(user.virtual_allocated_kc_balance);
+          let updated_V_A_KC_B = Number(user_allocated_kc_balance) - Number(delivery_price);
+          updated_V_A_KC_B = Math.floor(updated_V_A_KC_B / KOOGAH_COIN_WORTH);
+
+          await Customers.update({
+            virtual_allocated_kc_balance: updated_V_A_KC_B
+          }, {
+              where: {
+              id: user.id
+            }
+          })
+        }
+      }
+      // delete package;
+      await Packages.destroy({
+        where: {
+          package_id
+        }
+      });
+
+      return res.status(200).json({
+        status: 200,
+        message: 'Package deleted successfully'
+      })
+
+    }).catch((err) => {
+      log(err);
+       return res.status(400).json({
+        status: 400,
+        err
+      });
+    })
+  }
 
 }
 

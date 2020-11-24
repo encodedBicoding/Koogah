@@ -67,6 +67,7 @@ class Payout {
       // send a mail to the company informing them
       // of such payout.
       // the mail should contain the payout details and payout link
+      // pay the user directly using the company payment merchant
       log(payout_link);
       return res.status(200).json({
         status: 200,

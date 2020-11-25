@@ -128,6 +128,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
+    contact_name: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    contact_phone: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
   },
   {
     underscored: true,

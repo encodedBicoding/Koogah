@@ -124,12 +124,12 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: []
     },
     koogah_coin: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       defaultValue: 0,
     },
     virtual_allocated_kc_balance: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       defaultValue: 0,
     },

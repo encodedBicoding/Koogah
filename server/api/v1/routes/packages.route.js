@@ -26,6 +26,7 @@ const {
   startDispatch,
   allCurrentlyTrackingPackages,
   deletePackage,
+  editPackage
 } = Package;
 
 const {
@@ -186,6 +187,15 @@ packageRoute.delete(
   isCustomerLoggedIn,
   check_package_id,
   deletePackage
+)
+
+packageRoute.put(
+  '/customer/edit/:package_id',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  check_package_id,
+  editPackage
 )
 
 

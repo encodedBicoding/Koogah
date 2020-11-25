@@ -39,6 +39,7 @@
     "express-sslify": "^1.2.0",
     "faker": "^4.1.0",
     "fancy-log": "^1.3.3",
+    "google-distance-matrix": "^1.1.1",
     "googleapis": "^47.0.0",
     "helmet": "^3.21.2",
     "jsonwebtoken": "^8.5.1",

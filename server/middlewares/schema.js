@@ -94,7 +94,9 @@ class Schema {
       dropoff_address: Joi.string().required(),
       image_urls: Joi.array().required(),
       nearest_busstop: Joi.string(),
-      landmark: Joi.string()
+      landmark: Joi.string(),
+      contact_name: Joi.string().required(),
+      contact_phone: Joi.string().required()
     });
   }
 
@@ -117,7 +119,9 @@ class Schema {
       dropoff_address: Joi.string().required(),
       image_urls: Joi.array().required(),
       nearest_busstop: Joi.string(),
-      landmark: Joi.string()
+      landmark: Joi.string(),
+      contact_name: Joi.string().required(),
+      contact_phone: Joi.string().required()
     });
   }
 
@@ -142,7 +146,9 @@ class Schema {
       dropoff_address: Joi.string().required(),
       image_urls: Joi.array().required(),
       nearest_busstop: Joi.string(),
-      landmark: Joi.string()
+      landmark: Joi.string(),
+      contact_name: Joi.string().required(),
+      contact_phone: Joi.string().required()
     });
   }
 

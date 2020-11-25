@@ -86,10 +86,10 @@ module.exports = {
       type: Sequelize.ARRAY(Sequelize.STRING)
     },
     koogah_coin: {
-      type: Sequelize.BIGINT
+      type: Sequelize.DECIMAL(10, 2)
     },
     virtual_allocated_kc_balance: {
-      type: Sequelize.BIGINT
+      type: Sequelize.DECIMAL(10, 2)
     },
     password_reset_token: {
       type: Sequelize.TEXT

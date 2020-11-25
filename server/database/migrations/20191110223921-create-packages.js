@@ -100,6 +100,14 @@ module.exports = {
       type: Sequelize.STRING,
       allowNull: false
     },
+    contact_name: {
+      type: Sequelize.STRING,
+      allowNull: false
+    },
+    contact_phone: {
+      type: Sequelize.STRING,
+      allowNull: false
+    },
     created_at: {
       allowNull: false,
       type: Sequelize.DATE,

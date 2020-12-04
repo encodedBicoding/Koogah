@@ -1,7 +1,10 @@
-import { Customers, Couriers } from '../database/models';
+import { Customers, Couriers, PackagesTrackings } from '../database/models';
+import Sequelize from 'sequelize';
+const { Op } = Sequelize;
 
 class WebSocketFunctions {
-  async subscribe(userId, userType, channel) {
+  async subscribe(msg) {
+    const { userId, userType, channel } = msg;
     let USER;
     try {
       if (userType === 'dispatcher') {
@@ -53,7 +56,8 @@ class WebSocketFunctions {
     }
   }
 
-  async unsubscribe(userId, userType, channel) {
+  async unsubscribe(msg) {
+    const { userType, userId, channel } = msg;
     let USER;
     try {
       if (userType === 'dispatcher') {
@@ -71,7 +75,7 @@ class WebSocketFunctions {
             ws_connected_channels: user_subscribed_channels
           }, {
             where: {
-              id: userId
+              id: msg.userId
             }
           });
         }
@@ -104,6 +108,43 @@ class WebSocketFunctions {
 
     } catch (err) {
       console.log(err);
+      return false;
+    }
+  }
+
+  async getCustomerTrackings(msg) {
+    try {
+      const currentTracking = await PackagesTrackings.findOne({
+        where: {
+          [Op.and]: [
+            { package_id: msg.package_id },
+            { customer_id: msg.customer_id },
+            { dispatcher_id: msg.dispatcher_id }]
+        }
+      });
+      if (!currentTracking) {
+        return new Error('package does not exist')
+      }
+      await PackagesTrackings.update({
+        dispatcher_lat: msg.dispatcher_lat,
+        dispatcher_lng: msg.dispatcher_lng
+      }, {
+        where: {
+          [Op.and]: [
+            { package_id: msg.package_id },
+            { customer_id: msg.customer_id },
+            { dispatcher_id: msg.dispatcher_id }
+          ]
+        }
+      });
+
+      const all_trackings = await PackagesTrackings.findAll({
+        where: {
+          customer_id: msg.customer_id
+        }
+      });
+      return all_trackings;
+    } catch (error) {
       return false;
     }
   }

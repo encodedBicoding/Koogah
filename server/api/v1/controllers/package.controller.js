@@ -4,14 +4,16 @@ import Sequelize from 'sequelize';
 import distanceApi from 'google-distance-matrix';
 import log from 'fancy-log';
 import uuid from 'uuid/v4';
-import fetch from 'node-fetch';
 import { config } from 'dotenv';
 import checkType from '../helpers/check.type';
 import calc_delivery_price from '../helpers/calc.price';
 import generate_ref from '../helpers/ref.id';
 import {
-  Packages, Couriers, Notifications, Customers,
+  Packages, Couriers, Notifications, Customers, PushDevices, PackagesTrackings
 } from '../../../database/models';
+
+import PushNotify from '../../../PushNotifications';
+import geoPackageDestination from '../helpers/geo-package-destination';
 
 config();
 distanceApi.key(process.env.GOOGLE_API_KEY);
@@ -141,7 +143,7 @@ class Package {
               return res.status(200).json({
                 status: 200,
                 message: 'Package created successfully. Please wait, dispatchers will reach out to you soon',
-                package_detail,
+                data: package_detail,
               });
             } catch (err) {
               log(err);
@@ -237,10 +239,47 @@ class Package {
           type: 'customer',
           desc: 'CD004',
           title: `Interested dispatcher for package: ${package_id}`,
-          message: _package.pending_dispatchers.length <= 1 ? 'A dispatcher is interested in your package. Please ensure you checkout the dispatcher\'s profile first, before approving them' : 'Another dispatcher is interested in your package. Please ensure you checkout the dispatcher\'s profile first, before approving them',
+          message: _package.pending_dispatchers.length > 1 ? 'A dispatcher is interested in your package. Please ensure you checkout the dispatcher\'s profile first, before approving them' : 'Another dispatcher is interested in your package. Please ensure you checkout the dispatcher\'s profile first, before approving them',
           action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/profile/courier/pv/${user.id}` : `http://localhost:4000/v1/profile/courier/pv/${user.id}`, // ensure customer is logged in
         };
-        await Notifications.create({ ...NEW_NOTIFICATION });
+
+        const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
+
+
+        const _customer_device = await PushDevices.findOne({
+          where: {
+            [Op.and]: [{user_id: user.id},{is_active: true},{user_type: 'customer'}]
+          }
+        });
+
+        if (_customer_device) {
+          
+          let device_notify_obj = {};
+          if (_customer_device.platform === 'ios') {
+            device_notify_obj = {
+              title: `Interested dispatcher for package: ${package_id}`,
+              body: _package.pending_dispatchers.length > 1 ? 'A dispatcher is interested in your package.' : 'Another dispatcher is interested in your package.',
+              click_action: 'FLUTTER_NOTIFICATION_CLICK',
+            }
+          } else {
+            device_notify_obj = {
+              title: `Interested dispatcher for package: ${package_id}`,
+              body: _package.pending_dispatchers.length > 1 ? 'A dispatcher is interested in your package.' : 'Another dispatcher is interested in your package.',
+              click_action: 'FLUTTER_NOTIFICATION_CLICK',
+              icon: 'ic_launcher'
+            }
+          }
+  
+          const device_token = _customer_device.token;
+          const notification_message = PushNotify.createMessage(
+          device_notify_obj,
+          {
+            notification_id: _notification.id,
+            action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/profile/courier/pv/${user.id}` : `http://localhost:4000/v1/profile/courier/pv/${user.id}`, // ensure customer is logged in // to be changed later
+          });
+          PushNotify.sendMessage(notification_message, device_token);
+        }
+
         return res.status(200).json({
           status: 200,
           message: 'Your interest is acknowledged. The owner of the package will be notified shortly',
@@ -422,7 +461,7 @@ class Package {
       return res.status(200).json({
         status: 200,
         message: res_message,
-        updated_package,
+        data: updated_package,
       });
     }).catch((err) => {
       log(err);
@@ -509,7 +548,7 @@ class Package {
         return res.status(200).json({
           status: 200,
           message: 'package weight change awaits approval from package owner',
-          updated_package,
+          data: updated_package,
         });
       }).catch((err) => {
         log(err);
@@ -681,7 +720,7 @@ class Package {
       return res.status(200).json({
         status: 200,
         message: res_message,
-        updated_package,
+        data: updated_package,
       });
     }).catch((err) => {
       log(err);
@@ -822,14 +861,14 @@ class Package {
   }
 
   /**
-   * @method courier_preview_package
+   * @method courier_get_package
    * @memberof Package
    * @params req, res
-   * @description Couriers can preview a package they are approved to dispatch.
+   * @description Couriers can get a package they are approved to dispatch.
    * @return JSON object
    */
 
-  static courier_preview_package(req, res) {
+  static courier_get_package(req, res) {
     const { user } = req.session;
     const { package_id } = req.params;
     return Promise.try(async () => {
@@ -873,6 +912,67 @@ class Package {
         return res.status(404).json({
           status: 404,
           error: 'You are not authorized to view this package details',
+        });
+      }
+      return res.status(200).json({
+        status: 200,
+        message: 'Package retreived successfully',
+        data: _package,
+      });
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
+  }
+
+  /**
+   * @method courier_preview_package
+   * @memberof Package
+   * @params req, res
+   * @description Couriers can preview a package from the market place.
+   * @return JSON object
+   */
+
+  static courier_preview_package(req, res) {
+    const { package_id } = req.params;
+    return Promise.try(async () => {
+      const _package = await Packages.findOne({
+        where: {
+          package_id,
+        },
+        attributes: {
+          exclude: ['delivery_key']
+        },
+        include: [
+          {
+            model: Customers,
+            as: 'customer',
+            attributes: [
+              "id",
+              'first_name',
+              'last_name',
+              'has_business',
+              'business_name',
+              'rating',
+              'profile_image',
+              'mobile_number_one',
+              'mobile_number_two',
+              'address',
+              'nationality',
+              'email',
+              'state',
+              'town'
+            ]
+          },
+        ],
+      });
+      if (!_package) {
+        return res.status(404).json({
+          status: 404,
+          error: 'Package doesn\'t exists',
         });
       }
       return res.status(200).json({
@@ -935,7 +1035,7 @@ class Package {
       return res.status(200).json({
         status: 200,
         message: 'Package retreived successfully',
-        data: _package,
+        data: { ..._package },
       });
     }).catch((error) => {
       log(error);
@@ -1221,6 +1321,12 @@ class Package {
           error: 'Sorry, cannot decline a package you didn\'t pickup'
         })
       }
+      if (isFound.status === 'tracking') {
+        return res.status(400).json({
+          status: 400,
+          error: 'You cannot decline a package currently tracking'
+        })
+      }
       // update the dispatcher's pending;
       // and reduce their pick ups
       const current_pending_deliveries = parseInt(user.pending, 10) - 1;
@@ -1334,11 +1440,16 @@ class Package {
 
   static startDispatch(req, res) {
     return Promise.try(async () =>{
-      const {package_id } = req.params;
+      const {
+        package_id,
+        dispatcher_lat,
+        dispatcher_lng
+      } = req.params;
       const { user } = req.session;
       const NEW_NOTIFICATION = {
         type: 'customer',
       }
+      let destination_lng, destination_lat;
       const _package = await Packages.findOne({ 
         where: {
           package_id
@@ -1361,15 +1472,18 @@ class Package {
         where: {
           id: _package.customer_id
         }
-      })
+      });
 
-      await Packages.update({
-        is_currently_tracking: true,
-        status: 'tracking',
-      }, {
-        where: {
-        package_id
-      }});
+      if (!customer) {
+        return res.status(400).json({
+          status: 400,
+          message: 'Oops, seems the customer doesn\'t exist anymore'
+        })
+      }
+      const result = await geoPackageDestination(_package);
+ 
+      destination_lat = result[0].latitude;
+      destination_lng = result[0].longitude;
 
       NEW_NOTIFICATION.email = customer.email;
       NEW_NOTIFICATION.desc = 'CD010';
@@ -1377,11 +1491,40 @@ class Package {
       NEW_NOTIFICATION.title = 'New Dispatch started';
       NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
 
+      // create push notifications.
+
+      // create packages tracking.
+      const new_package_tracking = {};
+      new_package_tracking.package_id = package_id;
+      new_package_tracking.customer_id = _package.customer_id;
+      new_package_tracking.dispatcher_id = _package.dispatcher_id;
+      new_package_tracking.dispatcher_lat = dispatcher_lat;
+      new_package_tracking.dispatcher_lng = dispatcher_lng;
+      new_package_tracking.destination_lat = destination_lat;
+      new_package_tracking.destination_lng = destination_lng;
+
+
+      await PackagesTrackings.create({ ...new_package_tracking });
+      await Packages.update({
+        is_currently_tracking: true,
+        status: 'tracking',
+      }, {
+        where: {
+        package_id
+      }});
       await Notifications.create({ ...NEW_NOTIFICATION });
+
+      const dataResponse = {
+        package_id,
+        dispatcher_lat,
+        dispatcher_lng,
+        customer_id,
+      }
 
       return res.status(200).json({
         status: 200,
-        message: 'You have successfully started this dispatch.'
+        message: 'You have successfully started this dispatch.',
+        data: dataResponse
       })
 
     }).catch((error)=> {
@@ -1485,7 +1628,7 @@ class Package {
           const KOOGAH_COIN_WORTH = process.env.KOOGAH_COIN_WORTH;
           const user_allocated_kc_balance = Number(KOOGAH_COIN_WORTH) * Number(user.virtual_allocated_kc_balance);
           let updated_V_A_KC_B = Number(user_allocated_kc_balance) - Number(delivery_price);
-          updated_V_A_KC_B = Math.floor(updated_V_A_KC_B / KOOGAH_COIN_WORTH);
+          updated_V_A_KC_B = updated_V_A_KC_B / KOOGAH_COIN_WORTH;
 
           await Customers.update({
             virtual_allocated_kc_balance: updated_V_A_KC_B
@@ -1710,7 +1853,77 @@ class Package {
        err
      });
      })
-   }
+  }
+  
+  /**
+   * @method getEstimate
+   * @memberof Package
+   * @params req, res
+   * @description Customers can get estimates before creating packages
+   * @return JSON object
+   */
+
+  static getEstimate(req, res) {
+    return Promise.try(async () => {
+      let { type } = req.params;
+      const { ...data } = req.body;
+      if (type.length <= 5) {
+        type = `${type}-state`;
+      }
+
+      if (type === 'intra-state') {
+        data.to_state = data.from_state;
+      }
+      const origins = checkType('from', data, type);
+      const destinations = checkType('to', data, type);
+      distanceApi.matrix([origins], [destinations], async function (err, result) { 
+        try { 
+          if (err) {
+            throw new Error(err);
+          } else {
+            try { 
+              const distance_in_km = result.rows[0].elements[0].distance.text;
+              const distance = Math.ceil(Number(distance_in_km.split(' ')[0].replace(',', '')));
+              const delivery_price = calc_delivery_price(type, data.weight, distance);
+              if (!delivery_price) {
+                return res.status(400).json({
+                  status: 400,
+                  error: 'Weight must match one of ["0-5","6-10", "11-15", "16-25", "26-40", "50-100", "101-200", "201-300", "301-400", "401-500", "501>"],',
+                });
+              }
+              const dt = {
+                delivery_price,
+                ...data
+              }
+              return res.status(200).json({
+                status: 200,
+                data: dt
+              })
+            } catch (err) {
+              log(err);
+              return res.status(400).json({
+               status: 400,
+               err
+             });
+            }
+          }
+        } catch (err) {
+          log(err);
+          return res.status(400).json({
+           status: 400,
+           err
+         });
+        }
+      });
+
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+       status: 400,
+       err
+     });
+    })
+  }
 
 }
 

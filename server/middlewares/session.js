@@ -11,7 +11,7 @@ config();
 const isProduction = process.env.NODE_ENV === 'production';
 
 const checkSession = function checkSession(req, res, next) {
-  let token;
+  let token = '';
   if (!req.headers.authorization) {
     return res.status(401).json({
       status: 401,

@@ -22,7 +22,8 @@ const {
   report_user,
   request_password_reset,
   reset_password,
-  use_refresh
+  use_refresh,
+  is_session_valid
 } = UserController;
 
 const {
@@ -158,5 +159,21 @@ userRoute.post(
   '/reset/password',
   check_reset_password,
   reset_password,
+);
+
+userRoute.get(
+  '/customer/valid/session',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  is_session_valid
+);
+
+userRoute.get(
+  '/courier/valid/session',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCourierLoggedIn,
+  is_session_valid
 )
 export default userRoute;

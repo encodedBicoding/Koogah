@@ -3,13 +3,34 @@
 
 module.exports = (sequelize, DataTypes) => {
   const Awaiting = sequelize.define('Awaitings', {
-    first_name: DataTypes.STRING,
-    last_name: DataTypes.STRING,
-    bvn: DataTypes.STRING,
-    user_email: DataTypes.STRING,
-    mobile_number: DataTypes.STRING,
-    sex: DataTypes.STRING,
-    approval_link: DataTypes.TEXT,
+    first_name: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    last_name: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    bvn: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    user_email: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    mobile_number: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    sex: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    approval_link: {
+      type: DataTypes.TEXT,
+      allowNull: false
+    },
   }, {
     underscored: true,
     tableName: 'Awaitings',

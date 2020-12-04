@@ -5,6 +5,7 @@ import isValidUT8 from 'utf-8-validate';
 import http from 'http';
 import { config } from 'dotenv';
 import WebSocketFunctions from './functions';
+import jwt from '../api/v1/helpers/jwt';
 
 const cluster = require('cluster');
 const port = process.env.PORT || 8080;
@@ -36,7 +37,8 @@ if (cluster.isMaster) {
     console.log(`worker ${process.pid} is upgrading...`);
   const accepted_hosts = [];
   const accepted_path = ['/geotracking'];
-  const { __koogah_ws_session_secret } = request.headers;
+    const { __koogah_ws_session_secret } = request.headers;
+    const { authorization } = request.headers;
   try {
     if (!isValidUT8(head)) {
       socket.destroy();
@@ -49,6 +51,10 @@ if (cluster.isMaster) {
       }
 
       if (!__koogah_ws_session_secret) {
+        socket.destroy();
+        return;
+      }
+      if (!authorization) {
         socket.destroy();
         return;
       }
@@ -85,49 +91,58 @@ if (cluster.isMaster) {
   // GEOTRACKING SOCKET SERVER;
   WsServer.on('connection', async function (ws, req, client) {
     try { 
-      const urlQuery = new URLSearchParams(req.url.split('/geotracking').join(''));
-      let id = `${urlQuery.get('userId')}:${urlQuery.get('type')}`;
-      let userId = urlQuery.get('userId').toString();
-      let userType = urlQuery.get('type');
-      let USER;
+      let user;
       let ws_connected_channels;
-      if (userType === 'dispatcher') {
-        try { 
-          USER = await Couriers.findOne({ where: { id: userId } });
-          ws_connected_channels = USER.ws_connected_channels;
-        } catch (err) {
-          // check ws.terminate() - it works
-          ws.close();
-          return false;
-        }
-      } else if (userType === 'customer') {
-        try { 
-          USER = await Customers.findOne({ where: { id: userId } });
-          ws_connected_channels = USER.ws_connected_channels
-        } catch (err) {
-          ws.close();
-          return false;
-        }
-      }
-      if (!USER) {
-        ws.close();
+      let connectionId;
+      let userType;
+      const token = req.headers.authorization;
+      const payload = await jwt.verify(token);
+      if (!payload) {
+        ws.terminate();
         return false;
       }
-
+      if (payload.is_courier) {
+        try {
+          user = await Couriers.findOne({ where: { email: payload.email } });
+          ws_connected_channels = user.ws_connected_channels;
+          connectionId = `dispatcher:${user.email}:${user.id}`;
+          userType = 'dispatcher'
+        } catch (error) {
+          ws.terminate();
+          return false;
+        }
+      } else {
+        try {
+          user = await Customers.findOne({ where: { email: payload.email } });
+          ws_connected_channels = user.ws_connected_channels;
+          connectionId = `customer:${user.email}:${user.id}`;
+          userType = 'customer'
+        } catch (error) {
+          ws.terminate();
+          return false;
+        }
+      }
+      if (!user) {
+        ws.terminate();
+        return false;
+      }
       if (ws.readyState === WebSocket.OPEN) {
-        // find the client
-        // check if the client is already subscribed to channels if the client exists.
-        ws.connectionId = id;
-        ws.userId = userId;
-        ws.userType = userType;
+        ws.connectionId = connectionId;
         ws.subscribed_channels = ws_connected_channels;
-        ws.send(`connected to the server, my id is ${ws.connectionId}`);
+        ws.userType = userType;
+        const firstMsg = JSON.stringify({
+          type: 'welcome',
+          data: {
+            message: `connected to the server, my id is ${ws.connectionId}`
+          }
+        })
+        ws.send(firstMsg);
         ws.on('message', async function(message) {
           let msg = JSON.parse(message);
           // subscribe to channel
           if (msg.event === 'subscribe') {
             try { 
-              let response = await socketFunction.subscribe(ws.userId, ws.userType, msg.channel);
+              let response = await socketFunction.subscribe(msg);
               if (!response) ws.close();
               ws.subscribed_channels = response;
             } catch (err) {
@@ -135,16 +150,38 @@ if (cluster.isMaster) {
               return false;
             }
           }
-          if (msg.event === 'publish') {
-            WsServer.clients.forEach((client) => {
-              if (client.subscribed_channels.includes(msg.channel)
-                && client.connectionId !== msg.senderId
-                && client.readyState === WebSocket.OPEN) {
-                client.send(msg.message);
-              }
-            });
+          if (msg.event === 'tracking') {
+            try {
+              const updated_customer_trackings = await getCustomerTrackings(msg);
+              const customer_updated_trackings_message = JSON.stringify({
+                event: 'tracking_update',
+                payload: updated_customer_trackings,
+              });
+
+              WsServer.clients.forEach((client) => {
+                if (
+                  client.subscribed_channels.includes(msg.channel)
+                  && client.connectionId === msg.receiverId
+                  && client.readyState === WebSocket.OPEN
+                ) {
+                  client.send(customer_updated_trackings_message);
+                  }
+              })
+            } catch (error) {
+              ws.close();
+              return false;
+            }
           }
-    
+          // if (msg.event === 'publish') {
+          //   WsServer.clients.forEach((client) => {
+          //     if (client.subscribed_channels.includes(msg.channel)
+          //       && client.connectionId !== msg.senderId
+          //       && client.readyState === WebSocket.OPEN) {
+          //       client.send(msg.message);
+          //     }
+          //   });
+          // }
+  
         })
       }
 

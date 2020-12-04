@@ -17,6 +17,7 @@ const {
   approve_or_decline_weight_change,
   mark_package_as_delivered,
   courier_preview_package,
+  courier_get_package,
   customer_view_package,
   customer_view_all_package,
   courier_view_all_package,
@@ -26,7 +27,8 @@ const {
   startDispatch,
   allCurrentlyTrackingPackages,
   deletePackage,
-  editPackage
+  editPackage,
+  getEstimate
 } = Package;
 
 const {
@@ -39,7 +41,9 @@ const {
   check_decline_pickup_body,
   check_decline_pickup_query,
   check_approve_decline_package,
-  check_deliver_package
+  check_deliver_package,
+  check_edit_package,
+  check_start_dispatch
 } = Validate;
 
 const packageRoute = express();
@@ -99,6 +103,14 @@ packageRoute.patch(
 );
 
 packageRoute.get(
+  '/courier/:package_id',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCourierLoggedIn,
+  check_package_id,
+  courier_get_package,
+);
+packageRoute.get(
   '/preview/:package_id',
   passport.authenticate('bearer', { session: false }),
   checkSession,
@@ -157,11 +169,11 @@ packageRoute.get(
   allPackagePendingDispatchers
 );
 packageRoute.put(
-  '/courier/start/dispatch/:package_id',
+  '/courier/start/dispatch/:package_id/:dispatcher_lat/:dispatcher_lng',
   passport.authenticate('bearer', { session: false }),
   checkSession,
   isCourierLoggedIn,
-  check_package_id,
+  check_start_dispatch,
   startDispatch
 );
 packageRoute.get(
@@ -195,7 +207,14 @@ packageRoute.put(
   checkSession,
   isCustomerLoggedIn,
   check_package_id,
+  check_edit_package,
   editPackage
+)
+packageRoute.get(
+  '/estimate/:type',
+  check_delivery_type,
+  check_edit_package,
+  getEstimate
 )
 
 

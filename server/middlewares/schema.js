@@ -21,7 +21,7 @@ class Schema {
       last_name: Joi.string().trim().min(3).max(30)
         .required(),
       email: Joi.string().trim().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-      password: Joi.string().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/).required(),
+      password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
       repeat_password: Joi.ref('password'),
       mobile_number: Joi.string().min(10).max(11).required(),
       sex: Joi.string().valid('M', 'F').required(),
@@ -59,7 +59,7 @@ class Schema {
       last_name: Joi.string().min(3).max(30).required(),
       country_code: Joi.string().required(),
       email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-      password: Joi.string().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/).required(),
+      password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
       mobile_number_one: Joi.string().min(10).max(11).required(),
     });
   }
@@ -75,6 +75,35 @@ class Schema {
       type: Joi.string().valid('intra', 'inter', 'international').required(),
     });
   }
+
+  /**
+   * @method edit_package_schema
+   * @description This method return Joi object which delivers a schema when a customer edits a package for delivery
+   * @memberof Schema
+   * @return Joi Object
+   */
+  static edit_package_schema() {
+    return Joi.object({
+      weight: Joi.string(),
+      description: Joi.string(),
+      payment_mode: Joi.string().valid('virtual_balance', 'koogah_coin'),
+      from_country: Joi.string(),
+      to_country: Joi.string(),
+      from_state: Joi.string(),
+      to_state: Joi.string(),
+      from_town: Joi.string(),
+      to_town: Joi.string(),
+      pickup_address: Joi.string(),
+      dropoff_address: Joi.string(),
+      image_urls: Joi.array(),
+      nearest_busstop: Joi.string(),
+      landmark: Joi.string(),
+      contact_name: Joi.string(),
+      contact_phone: Joi.string(),
+      type_of_dispatch: Joi.string()
+    });
+  }
+
 
   /**
    * @method intra_package_schema
@@ -240,7 +269,7 @@ class Schema {
   static sign_in_schema() {
     return Joi.object({
       email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-      password: Joi.string().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/).required(),
+      password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
     });
   }
 
@@ -441,7 +470,7 @@ class Schema {
 
   static reset_password_schema() {
     return Joi.object({
-      new_password: Joi.string().pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/).required(),
+      new_password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
     })
   }
 
@@ -455,6 +484,21 @@ class Schema {
   static refresh_token_schema() {
     return Joi.object({
       refresh_token: Joi.string().required(),
+    })
+  }
+
+  /**
+   * @method start_dispatch_schema
+   * @description This method return Joi object which delivers a schema to start dispatch
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static start_dispatch_schema() {
+    return Joi.object({
+      package_id: Joi.string().required(),
+      dispatcher_lat: Joi.number().required(),
+      dispatcher_lng: Joi.number().required(),
     })
   }
 }

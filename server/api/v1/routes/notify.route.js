@@ -10,6 +10,9 @@ const notifyRoutes = express();
 const {
   get_all_unreads,
   read_notification,
+  store_device_token,
+  get_device_state,
+  update_device_state
 } = Notify;
 
 const {
@@ -46,4 +49,19 @@ notifyRoutes.post(
   check_notify_id,
   read_notification,
 );
+notifyRoutes.post(
+  '/token/:userId/:userType/:platform',
+  checkSession,
+  store_device_token,
+)
+notifyRoutes.route('/device-state')
+  .get(
+    passport.authenticate('bearer', { session: false }),
+    checkSession,
+    get_device_state)
+  .post(
+    passport.authenticate('bearer', { session: false }),
+    checkSession,
+    update_device_state)
+  
 export default notifyRoutes;

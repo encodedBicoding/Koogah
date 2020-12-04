@@ -32,7 +32,9 @@ const {
   password_reset_request_schema,
   reset_password_schema,
   deliver_package_schema,
-  refresh_token_schema
+  refresh_token_schema,
+  edit_package_schema,
+  start_dispatch_schema
 } = Schema;
 
 /**
@@ -88,6 +90,24 @@ class Validate {
 
   static customerSignup(req, res, next) {
     const isvalid = customerSignupSchema().validate(req.body);
+    if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      });
+    }
+    return next();
+  }
+  /**
+   * @method edit_package
+   * @description This method validates the input from a Customer on package editing
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_edit_package(req, res, next) {
+    const isvalid = edit_package_schema().validate(req.body);
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
@@ -614,6 +634,24 @@ class Validate {
 
   static check_refresh_token(req, res, next) {
     const isvalid = refresh_token_schema().validate(req.query);
+    if (isvalid.hasOwnProperty('error')) {
+     return res.status(400).json({
+       status: 400,
+       error: isvalid.error.details,
+     });
+   }
+   return next();
+  }
+
+  /**
+   * @method check_start_dispatch
+   * @description This method validates starting dispatch
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+  static check_start_dispatch(req, res, next) {
+    const isvalid = start_dispatch_schema().validate(req.params);
     if (isvalid.hasOwnProperty('error')) {
      return res.status(400).json({
        status: 400,

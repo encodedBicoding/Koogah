@@ -190,7 +190,9 @@ class UserController {
       return res.status(200).json({
         status: 200,
         message: 'Please insert the verification code sent to the mobile number you provided on registeration',
-        mobile: MOBILE_REDIRECT_LINK,
+        data: {
+          mobile_link: MOBILE_REDIRECT_LINK
+        },
       })
 
     }).catch((err) => {
@@ -387,7 +389,7 @@ class UserController {
       return res.status(200).json({
         status: 200,
         message: 'Account approved successfully',
-        user,
+        data: user,
       });
     }).catch((err) => {
       log(err);
@@ -407,7 +409,7 @@ class UserController {
    */
 
   static async signupCustomer_StepOne(req, res) {
-    const {
+    let {
       first_name,
       last_name,
       mobile_number_one,
@@ -429,6 +431,10 @@ class UserController {
         status: 400,
         message: 'A user with the given email already exists',
       });
+    }
+    let leading_digit = String(mobile_number_one[0]);
+    if (leading_digit !== 0) {
+      mobile_number_one = `0${mobile_number_one}`;
     }
 
     const VERIFY_TOKEN = await jwt.sign({
@@ -458,10 +464,10 @@ class UserController {
     const user_nationality = codes.find((c) => c.code === country_code).value;
 
     const NEW_USER = {
-      first_name,
-      last_name,
+      first_name: first_name.toLowerCase(),
+      last_name: last_name.toLowerCase(),
       mobile_number_one,
-      email,
+      email: email.toLowerCase(),
       password,
       nationality: user_nationality,
       verify_token: VERIFY_TOKEN,
@@ -504,7 +510,6 @@ class UserController {
           error: 'Invalid Token, Please contact our support team to lay any complains. mailto::support@koogah.com',
         });
       }
-      console.log(payload);
 
     const verifying_user = await Customers.findOne({
       where: {
@@ -548,7 +553,9 @@ class UserController {
     return res.status(200).json({
       status: 200,
       message: 'Please insert the verification code sent to the mobile number you provided on registeration',
-      mobile: MOBILE_REDIRECT_LINK,
+      data: {
+        mobile_link:  MOBILE_REDIRECT_LINK
+      },
     })
 
     }).catch((err) => {
@@ -650,7 +657,7 @@ class UserController {
       res.status(200).json({
         status: 200,
         message: 'Account created successfully',
-        user,
+        data: user,
       });
     }).catch((err) => {
       log(err);
@@ -709,7 +716,7 @@ class UserController {
       return res.status(200).json({
         status: 200,
         message: 'Logged in successfully',
-        user,
+        data: user,
       });
     }).catch((err) => {
       log(err);
@@ -770,7 +777,7 @@ class UserController {
       return res.status(200).json({
         status: 200,
         message: 'Logged in successfully',
-        user,
+        data: user,
       });
     }).catch((err) => {
       log(err);
@@ -831,7 +838,7 @@ class UserController {
         return res.status(200).json({
           status: 200,
           message: 'Refresh Login successful',
-          user: USER
+          data: USER
         })
 
       } else {
@@ -1247,6 +1254,30 @@ class UserController {
         status: 200,
         message: 'Password reset successful'
       })
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    })
+  }
+
+  /**
+   * @method is_session_valid
+   * @memberof UserController
+   * @description This method allows us check if a user session is valid
+   * @params req, res
+   * @return JSON object
+   */
+
+  static is_session_valid(req, res) {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      return res.status(200).json({
+        status: 200,
+        data: { ...user },
+      });
     }).catch((err) => {
       log(err);
       return res.status(400).json({

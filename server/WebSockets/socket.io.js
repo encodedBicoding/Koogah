@@ -6,6 +6,7 @@ import http from 'http';
 import { config } from 'dotenv';
 import WebSocketFunctions from './functions';
 import jwt from '../api/v1/helpers/jwt';
+import eventEmitter from '../EventEmitter';
 
 const cluster = require('cluster');
 const port = process.env.PORT || 8080;
@@ -88,6 +89,23 @@ if (cluster.isMaster) {
     return;
   }
   });
+  eventEmitter.on('new_notification', function (d) { 
+    // here send notification message to a certain user when they
+    // get new notifications.
+    const { connectionId, data } = d;
+    WsServer.clients.forEach((client) => {
+      if (client.connectionId === connectionId) {
+        if (client.readyState === WebSocket.OPEN) {
+          let wsNotifyMsg = {
+            event: 'in_app_notification',
+            payload: data
+          }
+          wsNotifyMsg = JSON.stringify(wsNotifyMsg);
+          client.send(wsNotifyMsg);
+        }
+      }
+    })
+  })
   // GEOTRACKING SOCKET SERVER;
   WsServer.on('connection', async function (ws, req, client) {
     try { 

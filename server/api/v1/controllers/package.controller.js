@@ -13,6 +13,7 @@ import {
 } from '../../../database/models';
 
 import PushNotify from '../../../PushNotifications';
+import eventEmitter from '../../../EventEmitter';
 import geoPackageDestination from '../helpers/geo-package-destination';
 
 config();
@@ -244,6 +245,35 @@ class Package {
         };
 
         const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
+        // get all user unread notifications;
+        let all_notifications = await Notifications.findAll({
+          where: {
+            [Op.and]: [{email: user.email}, {type: 'customer'}]
+          }
+        })
+        let backDate = new Date().setMonth(10);
+        all_notifications = all_notifications.filter((notification) => {
+          let notification_date = notification.createdAt.toLocaleString().split(',').join();
+          notification_date = notification_date.split('/');
+
+          let y = Number(notification_date[2].split(',')[0]);
+          let m = Number(notification_date[0]);
+          let d = Number(notification_date[1]);
+
+          let notification_date_obj = Date.UTC(y, m, d);
+
+          if (backDate < notification_date_obj) {
+            return notification;
+          }
+        });
+        // customer websocket id;
+        const customer_websocket_id = `customer:${user.email}:${user.id}`;
+        
+        // emit the new notification event;
+        eventEmitter.emit('new_notification', {
+          connectionId: customer_websocket_id,
+          data: all_notifications
+        });
 
 
         const _customer_device = await PushDevices.findOne({

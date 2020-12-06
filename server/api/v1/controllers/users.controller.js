@@ -458,7 +458,7 @@ class UserController {
     const codes = [
       {
         code: '+234',
-        value: 'nigerian'
+        value: 'nigeria'
       }
     ]
     const user_nationality = codes.find((c) => c.code === country_code).value;

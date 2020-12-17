@@ -125,7 +125,8 @@ class Schema {
       nearest_busstop: Joi.string(),
       landmark: Joi.string(),
       contact_name: Joi.string().required(),
-      contact_phone: Joi.string().required()
+      contact_phone: Joi.string().required(),
+      delivery_price: Joi.string().required(),
     });
   }
 
@@ -150,7 +151,8 @@ class Schema {
       nearest_busstop: Joi.string(),
       landmark: Joi.string(),
       contact_name: Joi.string().required(),
-      contact_phone: Joi.string().required()
+      contact_phone: Joi.string().required(),
+      delivery_price: Joi.string().required(),
     });
   }
 
@@ -177,7 +179,8 @@ class Schema {
       nearest_busstop: Joi.string(),
       landmark: Joi.string(),
       contact_name: Joi.string().required(),
-      contact_phone: Joi.string().required()
+      contact_phone: Joi.string().required(),
+      delivery_price: Joi.string().required(),
     });
   }
 

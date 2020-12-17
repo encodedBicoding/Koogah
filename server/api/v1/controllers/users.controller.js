@@ -433,7 +433,7 @@ class UserController {
       });
     }
     let leading_digit = String(mobile_number_one[0]);
-    if (leading_digit !== 0) {
+    if (leading_digit !== '0') {
       mobile_number_one = `0${mobile_number_one}`;
     }
 
@@ -446,7 +446,7 @@ class UserController {
     });
   
 
-    const VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${req.headers.host}/v1/user/customer/verify/email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
+    const VERIFY_LINK = `https://${process.env.CUSTOMER_MOBILE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
 
     const USR_OBJ = {
       first_name,

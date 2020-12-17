@@ -4,18 +4,18 @@ const checkType = (key, data, type) => {
     if (type === 'international') {
       return data.from_country;
     }
-    if (type !== 'intra-state') {
-      return data.from_state;
-    }
+    // if (type !== 'intra-state') {
+    //   return data.from_state;
+    // }
     return data.from_town;
   }
   if (key === 'to') {
     if (type === 'international') {
       return data.to_country;
     }
-    if (type !== 'intra-state') {
-      return data.to_state;
-    }
+    // if (type !== 'intra-state') {
+    //   return data.to_state;
+    // }
     return data.to_town;
   }
 };

@@ -100,10 +100,8 @@ export const createVerificationMail = function createVerificationMail(user_email
           <p>Thank you for joining our community. We make our dispatchers go through lots of procedures, and also taken lots of precautions</p>
           <p>to ensure you get the most out of this platform</p>
 
-          <h2 style='font-family: sans-serif; '>To verify your email, click this <a href='${verify_link}'>Link</a> </h2>
-
           <p>
-            If the verification link above doesn't open, copy and paste the code below in a browser.
+            Click the link below to verify your email.
             <p>
               ${verify_link}
             </p>

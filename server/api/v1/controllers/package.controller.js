@@ -36,7 +36,7 @@ class Package {
   static async request_dispatch(req, res) {
     const { user } = req.session;
     let { type } = req.params;
-    const { weight, ...data } = req.body;
+    const { weight, delivery_price, ...data } = req.body;
     if (type.length <= 5) {
       type = `${type}-state`;
     }
@@ -50,118 +50,84 @@ class Package {
     // calculate the distance between package pickup location
     // and package dropoff location
     return Promise.try(async () => {
-      const origins = checkType('from', data, type);
-      const destinations = checkType('to', data, type);
-      distanceApi.matrix([origins], [destinations], async function (err, result) {
-        try {
-          if (err) {
-            throw new Error(err);
-          } else {
-            try {
-              const distance_in_km = result.rows[0].elements[0].distance.text;
-              const distance = Math.ceil(Number(distance_in_km.split(' ')[0].replace(',', '')));
-              const delivery_price = calc_delivery_price(type, weight, distance);
-              if (!delivery_price) {
-                return res.status(400).json({
-                  status: 400,
-                  error: 'Weight must match one of ["0-5","6-10", "11-15", "16-25", "26-40", "50-100", "101-200", "201-300", "301-400", "401-500", "501>"],',
-                });
-              }
-              if (data.payment_mode === 'virtual_balance') {
-                if (Number(delivery_price) > Number(user.virtual_balance)) {
-                  return res.status(400).json({
-                    status: 400,
-                    error: `You must top-up your account with at least ₦${Number(delivery_price) - Number(user.virtual_balance)} before requesting this dispatch`
-                  })
-                }
-                if ((Number(user.virtual_balance) - Number(user.virtual_allocated_balance)) < Number(delivery_price)) {
-                  return res.status(400).json({
-                    status: 400,
-                    error: 'Sorry you have reached your package balance threshold, \nplease top-up your account or delete a package that has not been picked-up'
-                  })
-                }
-                const updated_V_A_B = Number(user.virtual_allocated_balance) + Number(delivery_price)
-                await Customers.update({
-                  virtual_allocated_balance: updated_V_A_B
-                }, {
-                  where: {
-                    id: user.id
-                  }
-                });
-              } else if (data.payment_mode === 'koogah_coin') {
-                 // convert koogah coin to determine value;
-                 // in Naira, it is worth 10 Naira.
-                const KOOGAH_COIN_WORTH = process.env.KOOGAH_COIN_WORTH;
-                const user_koogah_coin_balance = Number(KOOGAH_COIN_WORTH) * Number(user.koogah_coin);
-                // convert virtual allocated kc balance
-                const user_allocated_kc_balance = Number(KOOGAH_COIN_WORTH) * Number(user.virtual_allocated_kc_balance);
-                if (Number(delivery_price) > Number(user_koogah_coin_balance)) {
-                  return res.status(400).json({
-                    status: 400,
-                    error: 'Sorry, you have insufficient KC balance'
-                  })
-                }
-                if ((Number(user_koogah_coin_balance) - Number(user_allocated_kc_balance)) < Number(delivery_price)) {
-                  return res.status(400).json({
-                    status: 400,
-                    error: 'Sorry, you have reached your package koogah coin balance threshhold,\n please select a different means of payment'
-                  })
-                }
-                // before saving, convert it back.
-                let updated_V_A_KC_B = Number(user_allocated_kc_balance) + Number(delivery_price);
-                updated_V_A_KC_B = updated_V_A_KC_B / KOOGAH_COIN_WORTH;
-      
-                await Customers.update({
-                  virtual_allocated_kc_balance: updated_V_A_KC_B
-                }, {
-                    where: {
-                    id: user.id
-                  }
-                })
-              } else {
-                return res.status(400).json({
-                  status: 400,
-                  error: 'Invalid payment mode'
-                })
-              }
-    
-              // create the package.
-              const package_id = uuid();
-              const delivery_key = generate_ref('delivery');
-              const package_detail = await Packages.create({
-                type_of_dispatch: type,
-                customer_id: user.id,
-                weight,
-                distance,
-                delivery_price,
-                package_id,
-                delivery_key,
-                ...data,
-              });
-    
-              // TODO: this should create a new package creation notification
-              // and/or send a websocket notification to all couriers registered in the package location area
-              return res.status(200).json({
-                status: 200,
-                message: 'Package created successfully. Please wait, dispatchers will reach out to you soon',
-                data: package_detail,
-              });
-            } catch (err) {
-              log(err);
-              return res.status(400).json({
-               status: 400,
-               err
-             });
-            }
-          }
-        } catch (err) {
-          log(err);
-            return res.status(400).json({
-              status: 400,
-              err
-          });
+      if (data.payment_mode === 'virtual_balance') {
+        if (Number(delivery_price) > Number(user.virtual_balance)) {
+          return res.status(400).json({
+            status: 400,
+            error: `You must top-up your account with at least ₦${Number(delivery_price) - Number(user.virtual_balance)} before requesting this dispatch`
+          })
         }
-      })
+        if ((Number(user.virtual_balance) - Number(user.virtual_allocated_balance)) < Number(delivery_price)) {
+          return res.status(400).json({
+            status: 400,
+            error: 'Sorry you have reached your package balance threshold, \nplease top-up your account or delete a package that has not been picked-up'
+          })
+        }
+        const updated_V_A_B = Number(user.virtual_allocated_balance) + Number(delivery_price)
+        await Customers.update({
+          virtual_allocated_balance: updated_V_A_B
+        }, {
+          where: {
+            id: user.id
+          }
+        });
+      }else if (data.payment_mode === 'koogah_coin') {
+        // convert koogah coin to determine value;
+        // in Naira, it is worth 10 Naira.
+       const KOOGAH_COIN_WORTH = process.env.KOOGAH_COIN_WORTH;
+       const user_koogah_coin_balance = Number(KOOGAH_COIN_WORTH) * Number(user.koogah_coin);
+       // convert virtual allocated kc balance
+       const user_allocated_kc_balance = Number(KOOGAH_COIN_WORTH) * Number(user.virtual_allocated_kc_balance);
+       if (Number(delivery_price) > Number(user_koogah_coin_balance)) {
+         return res.status(400).json({
+           status: 400,
+           error: 'Sorry, you have insufficient KC balance'
+         })
+       }
+       if ((Number(user_koogah_coin_balance) - Number(user_allocated_kc_balance)) < Number(delivery_price)) {
+         return res.status(400).json({
+           status: 400,
+           error: 'Sorry, you have reached your package koogah coin balance threshhold,\n please select a different means of payment'
+         })
+       }
+       // before saving, convert it back.
+       let updated_V_A_KC_B = Number(user_allocated_kc_balance) + Number(delivery_price);
+       updated_V_A_KC_B = updated_V_A_KC_B / KOOGAH_COIN_WORTH;
+
+       await Customers.update({
+         virtual_allocated_kc_balance: updated_V_A_KC_B
+       }, {
+           where: {
+           id: user.id
+         }
+       })
+     } else {
+       return res.status(400).json({
+         status: 400,
+         error: 'Invalid payment mode'
+       })
+      }
+       // create the package.
+       const package_id = uuid();
+       const delivery_key = generate_ref('delivery');
+       const package_detail = await Packages.create({
+         type_of_dispatch: type,
+         customer_id: user.id,
+         weight,
+         distance,
+         delivery_price,
+         package_id,
+         delivery_key,
+         ...data,
+       });
+
+       // TODO: this should create a new package creation notification
+       // and/or send a websocket notification to all couriers registered in the package location area
+       return res.status(200).json({
+         status: 200,
+         message: 'Package created successfully. Please wait, dispatchers will reach out to you soon',
+         data: package_detail,
+       });
     }).catch((err) => {
       log(err);
       return res.status(400).json({

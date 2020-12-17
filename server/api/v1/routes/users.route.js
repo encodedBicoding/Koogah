@@ -5,6 +5,7 @@ import passport from 'passport';
 import UserController from '../controllers/users.controller';
 import checkSession, { isCustomerLoggedIn, isCourierLoggedIn } from '../../../middlewares/session';
 import Validate from '../../../middlewares/validate';
+import validateEmail from '../../../middlewares/email-validator';
 
 const {
   signUpCourier_StepOne,
@@ -46,12 +47,14 @@ const userRoute = express();
 userRoute.post(
   '/courier/signup',
   courierSignup,
+  validateEmail,
   signUpCourier_StepOne,
 );
 
 userRoute.post(
   '/customer/signup',
   customerSignup,
+  validateEmail,
   signupCustomer_StepOne,
 );
 

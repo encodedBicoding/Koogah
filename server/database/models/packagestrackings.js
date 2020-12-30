@@ -37,6 +37,15 @@ module.exports = (sequelize, DataTypes) => {
   });
   PackagesTracking.associate = function(models) {
     // associations can be defined here
+    PackagesTracking.belongsTo(models.Customers, {
+      foreignKey: 'customer_id',
+      as: 'customer',
+    });
+
+    PackagesTracking.belongsTo(models.Couriers, {
+      foreignKey: 'dispatcher_id',
+      as: 'dispatcher',
+    });
   };
   return PackagesTracking;
 };

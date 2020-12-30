@@ -124,4 +124,26 @@ export const isCustomerLoggedIn = function isCustomerLoggedIn(req, res, next) {
     error: err,
   }));
 };
+
+export const externalApiSession = (req, res, next) => {
+  return Promise.try(async () => { 
+    const { __koogah_external_api_session_secret } = req.headers;
+    if (!__koogah_external_api_session_secret) { 
+      return res.status(400).json({
+        status: 400,
+        error: 'Not Authorized to use this API'
+      })
+    }
+    if (__koogah_external_api_session_secret !== process.env.EXTERNAL_API_SESSION_SECRET) { 
+      return res.status(400).json({
+        status: 400,
+        error: 'Not Authorized to use this API'
+      })
+    }
+    return next();
+  }).catch((err) => res.status(400).json({
+    status: 400,
+    error: err,
+  }))
+ }
 export default checkSession;

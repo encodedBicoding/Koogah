@@ -7,6 +7,7 @@ import { config } from 'dotenv';
 import WebSocketFunctions from './functions';
 import jwt from '../api/v1/helpers/jwt';
 import eventEmitter from '../EventEmitter';
+import client from '../redis/redis.client';
 
 const cluster = require('cluster');
 const port = process.env.PORT || 8080;
@@ -89,9 +90,9 @@ if (cluster.isMaster) {
     return;
   }
   });
-  eventEmitter.on('new_notification', function (d) { 
+  eventEmitter.on('new_notification', function (d) {
     // here send notification message to a certain user when they
-    // get new notifications.
+    // get new notification
     const { connectionId, data } = d;
     WsServer.clients.forEach((client) => {
       if (client.connectionId === connectionId) {
@@ -105,7 +106,29 @@ if (cluster.isMaster) {
         }
       }
     })
-  })
+  });
+
+  eventEmitter.on('tracking', async function (msg) { 
+    try {
+      const updated_customer_trackings = await getCustomerTrackings(msg);
+      const customer_updated_trackings_message = JSON.stringify({
+        event: 'tracking_update',
+        payload: updated_customer_trackings,
+      });
+
+      WsServer.clients.forEach((client) => {
+        if (
+          client.subscribed_channels.includes(msg.channel)
+          && client.connectionId === msg.receiverId
+          && client.readyState === WebSocket.OPEN
+        ) {
+          client.send(customer_updated_trackings_message);
+          }
+      })
+    } catch (error) {
+      return false;
+    }
+  });
   // GEOTRACKING SOCKET SERVER;
   WsServer.on('connection', async function (ws, req, client) {
     try { 

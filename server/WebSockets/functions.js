@@ -123,7 +123,7 @@ class WebSocketFunctions {
         }
       });
       if (!currentTracking) {
-        return new Error('package does not exist')
+        return new Error('Tracking data does not exist')
       }
       await PackagesTrackings.update({
         dispatcher_lat: msg.dispatcher_lat,

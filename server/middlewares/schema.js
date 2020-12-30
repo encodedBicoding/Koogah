@@ -122,11 +122,12 @@ class Schema {
       pickup_address: Joi.string().required(),
       dropoff_address: Joi.string().required(),
       image_urls: Joi.array().required(),
-      nearest_busstop: Joi.string(),
       landmark: Joi.string(),
+      pickup_landmark: Joi.string(),
       contact_name: Joi.string().required(),
       contact_phone: Joi.string().required(),
       delivery_price: Joi.string().required(),
+      distance: Joi.string().required(),
     });
   }
 
@@ -373,7 +374,7 @@ class Schema {
    */
   static package_status_schema() {
     return Joi.object({
-      status: Joi.string().valid('picked-up', 'not-picked', 'delivered', 'tracking'),
+      status: Joi.string().valid('picked-up', 'not-picked', 'delivered', 'tracking', 'all'),
     });
   }
   
@@ -418,6 +419,9 @@ class Schema {
     return Joi.object({
       mobile_number_one: Joi.string().min(10).max(11),
       mobile_number_two: Joi.string().min(10).max(11),
+      email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }),
+      first_name: Joi.string(),
+      last_name: Joi.string(),
       state: Joi.string(),
       town: Joi.string(),
       address: Joi.string(),

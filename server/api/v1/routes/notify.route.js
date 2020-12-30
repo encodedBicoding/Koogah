@@ -8,7 +8,7 @@ import Validate from '../../../middlewares/validate';
 const notifyRoutes = express();
 
 const {
-  get_all_unreads,
+  get_all_notifications,
   read_notification,
   store_device_token,
   get_device_state,
@@ -20,18 +20,18 @@ const {
 } = Validate;
 
 notifyRoutes.get(
-  '/customer/all/unread',
+  '/customer/all',
   passport.authenticate('bearer', { session: false }),
   checkSession,
   isCustomerLoggedIn,
-  get_all_unreads,
+  get_all_notifications,
 );
 notifyRoutes.get(
-  '/courier/all/unread',
+  '/courier/all',
   passport.authenticate('bearer', { session: false }),
   checkSession,
   isCourierLoggedIn,
-  get_all_unreads,
+  get_all_notifications,
 );
 notifyRoutes.post(
   '/customer/read',

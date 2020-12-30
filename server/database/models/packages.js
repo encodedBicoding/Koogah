@@ -85,6 +85,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    pickup_landmark: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     status: {
       type: DataTypes.STRING,
       allowNull: false,

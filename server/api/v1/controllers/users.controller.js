@@ -538,7 +538,7 @@ class UserController {
 
     // this function should redirect the user to the Mobile App page
     // That contains the form so they can insert the code sent to their mobile phones
-    await sendSMS(payload.mobile_number, SMS_MESSAGE);
+    await sendSMS(payload.mobile_number_one, SMS_MESSAGE);
     await Customers.update(
       {
         verification_code: MOBILE_VERIFY_CODE,
@@ -650,9 +650,9 @@ class UserController {
       });
       client.set(`${approved_user.email}:CUSTOMER`, SESSION_TOKEN);
       const user = {
-        ...approved_user.getSafeDataValues(),
         token: SESSION_TOKEN,
         refresh_token: REFRESH_TOKEN,
+        ...approved_user.getSafeDataValues(),
       };
       res.status(200).json({
         status: 200,

@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 const weight_range = {
-  '0-5': 5,
+  '0-5': 8,
   '6-10': 15,
   '11-15': 25,
   '16-25': 40,

@@ -135,6 +135,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: false,
     },
+    is_currently_dispatching: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     referal_id: {
       type: DataTypes.STRING,
       allowNull: false,

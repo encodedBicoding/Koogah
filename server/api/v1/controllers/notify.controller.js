@@ -66,19 +66,34 @@ class Notify {
    * @return JSON object
    */
 
-  static get_all_unreads(req, res) {
+  static get_all_notifications(req, res) {
     const { user } = req.session;
     const type = user.is_courier ? 'courier' : 'customer';
     return Promise.try(async () => {
-      const all_unreads = await Notifications.findAll({
+      let all_notifications = await Notifications.findAll({
         where: {
-          [Op.and]: [{ email: user.email }, { type }, { is_read: false }],
+          [Op.and]: [{ email: user.email }, { type }],
         },
+      });
+      let backDate = new Date().setMonth(10);
+      all_notifications = all_notifications.filter((notification) => {
+        let notification_date = notification.createdAt.toLocaleString().split(',').join();
+        notification_date = notification_date.split('/');
+
+        let y = Number(notification_date[2].split(',')[0]);
+        let m = Number(notification_date[0]);
+        let d = Number(notification_date[1]);
+
+        let notification_date_obj = Date.UTC(y, m, d);
+
+        if (backDate < notification_date_obj) {
+          return notification;
+        }
       });
       return res.status(200).json({
         status: 200,
         message: `Retreived all notifications for user: ${user.email}`,
-        data: all_unreads,
+        data: all_notifications,
       });
     }).catch((err) => {
       log(err);

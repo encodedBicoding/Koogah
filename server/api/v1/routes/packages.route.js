@@ -2,7 +2,7 @@
 import express from 'express';
 import passport from 'passport';
 import Package from '../controllers/package.controller';
-import checkSession, { isCourierLoggedIn, isCustomerLoggedIn } from '../../../middlewares/session';
+import checkSession, { externalApiSession, isCourierLoggedIn, isCustomerLoggedIn } from '../../../middlewares/session';
 import Validate from '../../../middlewares/validate';
 import {
   multiple_upload,
@@ -28,7 +28,8 @@ const {
   allCurrentlyTrackingPackages,
   deletePackage,
   editPackage,
-  getEstimate
+  getEstimate,
+  singleTracking,
 } = Package;
 
 const {
@@ -144,7 +145,7 @@ packageRoute.get(
   courier_view_all_package,
 );
 packageRoute.get(
-  '/courier/marketplace',
+  '/market/courier',
   passport.authenticate('bearer', { session: false }),
   checkSession,
   isCourierLoggedIn,
@@ -210,8 +211,19 @@ packageRoute.put(
   check_edit_package,
   editPackage
 )
+
 packageRoute.get(
+  '/dispatcher/singletracking/:package_id',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCourierLoggedIn,
+  check_package_id,
+  singleTracking
+)
+
+packageRoute.post(
   '/estimate/:type',
+  externalApiSession,
   check_delivery_type,
   check_edit_package,
   getEstimate

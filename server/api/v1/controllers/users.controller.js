@@ -1286,6 +1286,101 @@ class UserController {
       });
     })
   }
+
+   /**
+   * @method change_password
+   * @memberof UserController
+   * @description This method allows us check if a user session is valid
+   * @params req, res
+   * @return JSON object
+   */
+
+  static change_password(req, res) { 
+    return Promise.try(async () => {
+      const bcrypt = require('bcrypt');
+      const { user } = req.session;
+      const { old_password, new_password } = req.body;
+      console.log('got hre');
+      console.log(req.body);
+      // confirm the old password
+      let main_user;
+      if (user.is_courier) { 
+        main_user = await Couriers.findOne({
+          where: {
+            email: user.email
+          }
+        });
+
+        if (!main_user) return res.status(400).json({
+          status: 400,
+          error: 'Oops, no user found here'
+        });
+        const is_old_password_valid = await main_user.decryptPassword(old_password)
+
+        if (!is_old_password_valid) { 
+          return res.status(409).json({
+            status: 409,
+            error: 'Old password is incorrect'
+          })
+        }
+        
+
+        const hashed_password = await bcrypt.hash(new_password, 8);
+
+        await Couriers.update({
+          password:hashed_password
+        }, {
+          where: {
+            email: user.email
+          }
+        });
+
+      } else {
+        main_user = await Customers.findOne({
+          where: {
+            email: user.email
+          }
+        });
+     
+
+        if (!main_user) return res.status(400).json({
+          status: 400,
+          error: 'Oops, no user found here'
+        });
+
+        const is_old_password_valid = await main_user.decryptPassword(old_password)
+
+        if (!is_old_password_valid) { 
+          return res.status(409).json({
+            status: 409,
+            error: 'Old password is incorrect'
+          })
+        }
+
+        const hashed_password = await bcrypt.hash(new_password, 8);
+
+        await Customers.update({
+          password:hashed_password
+        }, {
+          where: {
+            email: user.email
+          }
+        });
+      }
+
+      return res.status(200).json({
+        status: 200,
+        message: 'Password changed successfully',
+      })
+    }).catch(error => {
+      log(error);
+      return res.status(400).json({
+        status: 400,
+        error
+      })
+    }) 
+  }
+
 }
 
 export default UserController;

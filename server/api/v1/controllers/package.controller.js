@@ -5,6 +5,7 @@ import distanceApi from 'google-distance-matrix';
 import log from 'fancy-log';
 import uuid from 'uuid/v4';
 import { config } from 'dotenv';
+import moment from 'moment';
 import checkType from '../helpers/check.type';
 import calc_delivery_price from '../helpers/calc.price';
 import generate_ref from '../helpers/ref.id';
@@ -215,11 +216,16 @@ class Package {
         const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
 
         // get all user unread notifications;
+        let timestamp_benchmark = moment().subtract(5, 'months').format();
+
         let all_notifications = await Notifications.findAll({
           where: {
-            [Op.and]: [{email: customer.email}, {type: 'customer'}]
+            [Op.and]: [{ email: customer.email }, { type: 'customer' }],
+            created_at: {
+              [Op.gte]:timestamp_benchmark
+            }
           }
-        })
+        });
         const device_notify_obj = {
           title: NEW_NOTIFICATION.title,
           body: NEW_NOTIFICATION.message,
@@ -408,9 +414,13 @@ class Package {
       const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
 
       // get all user unread notifications;
+      let timestamp_benchmark = moment().subtract(5, 'months').format();
       let all_notifications = await Notifications.findAll({
         where: {
-          [Op.and]: [{ email: dispatcher.email }, { type: 'courier' }]
+          [Op.and]: [{ email: dispatcher.email }, { type: 'courier' }],
+          created_at: {
+            [Op.gte]: timestamp_benchmark
+          }
         }
       });
 
@@ -517,9 +527,13 @@ class Package {
 
         const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
         // get all user unread notifications;
+        let timestamp_benchmark = moment().subtract(5, 'months').format();
         let all_notifications = await Notifications.findAll({
           where: {
-            [Op.and]: [{ email: customer.email }, { type: 'customer' }]
+            [Op.and]: [{ email: package_owner.email }, { type: 'customer' }],
+            created_at: {
+              [Op.gte]: timestamp_benchmark
+            }
           }
         });
         const device_notify_obj = {
@@ -708,9 +722,13 @@ class Package {
       const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
 
       // get all user unread notifications;
+      let timestamp_benchmark = moment().subtract(5, 'months').format();
       let all_notifications = await Notifications.findAll({
         where: {
-          [Op.and]: [{ email: customer.email }, { type: 'courier' }]
+          [Op.and]: [{ email: dispatcher.email }, { type: 'courier' }],
+          created_at: {
+            [Op.gte]: timestamp_benchmark
+          }
         }
       });
       const device_notify_obj = {
@@ -861,9 +879,13 @@ class Package {
       };
       const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
       // get all user unread notifications;
+      let timestamp_benchmark = moment().subtract(5, 'months').format();
       let all_notifications = await Notifications.findAll({
         where: {
-          [Op.and]: [{email: customer.email}, {type: 'customer'}]
+          [Op.and]: [{ email: customer.email }, { type: 'customer' }],
+          created_at: {
+            [Op.gte]: timestamp_benchmark
+          }
         }
       });
       const device_notify_obj = {
@@ -1397,9 +1419,13 @@ class Package {
 
       const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
       // get all user unread notifications;
+      let timestamp_benchmark = moment().subtract(5, 'months').format();
       let all_notifications = await Notifications.findAll({
         where: {
-          [Op.and]: [{ email: customer.email }, { type: 'customer' }]
+          [Op.and]: [{ email: customer.email }, { type: 'customer' }],
+          created_at: {
+            [Op.gte]: timestamp_benchmark
+          }
         }
       });
       const device_notify_obj = {
@@ -1494,9 +1520,11 @@ class Package {
     return Promise.try(async () =>{
       const {
         package_id,
-        dispatcher_lat,
-        dispatcher_lng
       } = req.params;
+
+      const {
+        dispatcher_lat,
+        dispatcher_lng } = req.body;
       const { user } = req.session;
       const NEW_NOTIFICATION = {
         type: 'customer',
@@ -1574,9 +1602,14 @@ class Package {
       })
       const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
       // get all user unread notifications;
+      let timestamp_benchmark = moment().subtract(5, 'months').format();
+
       let all_notifications = await Notifications.findAll({
         where: {
-          [Op.and]: [{ email: customer.email }, { type: 'customer' }]
+          [Op.and]: [{ email: customer.email }, { type: 'customer' }],
+          created_at: {
+            [Op.gte]: timestamp_benchmark
+          }
         }
       });
       const device_notify_obj = {
@@ -2070,6 +2103,37 @@ class Package {
         error: err,
      });
     })
+  }
+
+  /**
+   * @method allTrackingPackages
+   * @memberof Package
+   * @params req, res
+   * @description Customers app get all tracking packages
+   * @return JSON object
+   */
+
+  static async allTrackingPackages(req, res) { 
+    return Promise.try(async () => {
+      const { user } = req.session;
+      const allTrackings = await PackagesTrackings.findAll({
+        where: {
+          customer_id: user.id
+        }
+      });
+
+      return res.status(200).json({
+        status: 200,
+        data: allTrackings,
+        message: 'Packages retrieved successfully'
+      })
+    }).catch((err) => { 
+      log(err);
+      return res.status(400).json({
+       status: 400,
+        error: err,
+     });
+    });
   }
 
 }

@@ -24,7 +24,8 @@ const {
   request_password_reset,
   reset_password,
   use_refresh,
-  is_session_valid
+  is_session_valid,
+  change_password
 } = UserController;
 
 const {
@@ -39,7 +40,8 @@ const {
   check_profile_id,
   check_password_reset_request,
   check_reset_password,
-  check_refresh_token
+  check_refresh_token,
+  check_change_password
 } = Validate;
 
 const userRoute = express();
@@ -162,6 +164,15 @@ userRoute.post(
   '/reset/password',
   check_reset_password,
   reset_password,
+);
+
+userRoute.post(
+  '/customer/change/password',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  check_change_password,
+  change_password
 );
 
 userRoute.get(

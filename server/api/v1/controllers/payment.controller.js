@@ -4,14 +4,17 @@ import fetch from 'node-fetch';
 import log from 'fancy-log';
 import Sequelize from 'sequelize';
 import { config } from 'dotenv';
+import moment from 'moment';
 import {
-  Customers, Transactions, Couriers, Packages, Notifications,
+  Customers, Transactions, Couriers, Packages, Notifications, TransactionHistory
 } from '../../../database/models';
 import client from '../../../redis/redis.client';
+import Notifier from '../helpers/notifier';
+
+const { Op } = Sequelize;
 
 config();
 const isProduction = process.env.NODE_ENV === 'production';
-const { Op } = Sequelize;
 /**
  * @class Payment
  * @description Defines methods to allow a customer pay for services and credit their account.
@@ -198,6 +201,18 @@ class Payment {
       const transaction_detail = await Transactions.create({ ...top_up_data });
       // send a notification to koogah business email address
       // informing them a customer just paid to their paystack account
+      const history = {
+        amount,
+        type: 'credit',
+        title: 'Account Top up',
+        decription: `Trans refID: (${reference}), SUCCESSFUL TOPUP`,
+        user_type: 'customer',
+        user_id: user.id,
+        transaction_id: transaction_detail.id,
+        image_url: null,
+      };
+      await TransactionHistory.create({ ...history });
+
       const NEW_NOTIFICATION = {
         type: 'customer',
         email: user.email,
@@ -205,7 +220,31 @@ class Payment {
         message: `Your top-up of ${amount} was successful.`,
         title: 'New successful topup',
       };
-      await Notifications.create({ ...NEW_NOTIFICATION });
+      const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
+
+      let timestamp_benchmark = moment().subtract(5, 'months').format();
+
+      let all_notifications = await Notifications.findAll({
+        where: {
+          [Op.and]: [{ email: user.email }, { type: 'customer' }],
+          created_at: {
+            [Op.gte]: timestamp_benchmark
+          }
+        }
+      });
+      const device_notify_obj = {
+        title: NEW_NOTIFICATION.title,
+        body: NEW_NOTIFICATION.message,
+        click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        icon: 'ic_launcher'
+      };
+      await Notifier(
+        all_notifications,
+        user,
+        'customer',
+        device_notify_obj,
+        _notification
+      );
       return res.status(200).json({
         status: 200,
         message: 'Balance top up successful',
@@ -330,10 +369,60 @@ class Payment {
           title: 'New payment for delivery',
           action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`, // ensure courier is logged in
         };
-        await Notifications.create({ ...NEW_NOTIFICATION });
+        const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
   
         new_transaction = await Transactions.create({ ...transaction_details });
-  
+
+        const history_customer = {
+          amount: is_package_valid.delivery_price,
+          type: 'debit',
+          title: 'Payment for delivery',
+          decription: `Package ID: ${is_package_valid.package_id} delivery payment`,
+          user_type: 'customer',
+          user_id: user.id,
+          transaction_id: new_transaction.id,
+          image_url: is_package_valid.image_urls[0],
+        };
+
+        const history_dispatcher = {
+          amount: total_amount_payable,
+          type: 'credit',
+          title: 'Payment for delivery',
+          decription: `Package ID: ${is_package_valid.package_id} delivery payment`,
+          user_type: 'dispatcher',
+          user_id: dispatcher.id,
+          transaction_id: new_transaction.id,
+          image_url: is_package_valid.image_urls[0],
+        };
+
+        await TransactionHistory.create({ ...history_customer });
+        await TransactionHistory.create({ ...history_dispatcher });
+
+
+      let timestamp_benchmark = moment().subtract(5, 'months').format();
+
+      let all_notifications = await Notifications.findAll({
+        where: {
+          [Op.and]: [{ email: dispatcher.email }, { type: 'courier' }],
+          created_at: {
+            [Op.gte]: timestamp_benchmark
+          }
+        }
+      });
+      const device_notify_obj = {
+        title: NEW_NOTIFICATION.title,
+        body: NEW_NOTIFICATION.message,
+        click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        icon: 'ic_launcher'
+      };
+      await Notifier(
+        all_notifications,
+        dispatcher,
+        'dispatcher',
+        device_notify_obj,
+        _notification
+        
+      );
         await Packages.update({
           is_paid_for: true,
         }, {
@@ -347,6 +436,7 @@ class Payment {
           error: 'Invalid payment mode'
         })
       }
+      
 
       return res.status(200).json({
         status: 200,
@@ -483,9 +573,60 @@ class Payment {
         title: 'New payment for delivery',
         action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`, // ensure courier is logged in
       };
-      await Notifications.create({ ...NEW_NOTIFICATION });
+        const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
 
-       new_transaction = await Transactions.create({ ...transaction_details });
+        new_transaction = await Transactions.create({ ...transaction_details });
+
+        const history_customer = {
+          amount: is_package_valid.delivery_price,
+          type: 'debit',
+          title: 'Payment for delivery',
+          decription: `Package ID: ${is_package_valid.package_id} delivery payment`,
+          user_type: 'customer',
+          user_id: user.id,
+          transaction_id: new_transaction.id,
+          image_url: is_package_valid.image_urls[0],
+        };
+
+        const history_dispatcher = {
+          amount: total_amount_payable,
+          type: 'credit',
+          title: 'Payment for delivery',
+          decription: `Package ID: ${is_package_valid.package_id} delivery payment`,
+          user_type: 'dispatcher',
+          user_id: dispatcher.id,
+          transaction_id: new_transaction.id,
+          image_url: is_package_valid.image_urls[0],
+        };
+
+        await TransactionHistory.create({ ...history_customer });
+        await TransactionHistory.create({ ...history_dispatcher });
+
+        let timestamp_benchmark = moment().subtract(5, 'months').format();
+
+        
+        let all_notifications = await Notifications.findAll({
+          where: {
+            [Op.and]: [{ email: dispatcher.email }, { type: 'courier' }],
+            created_at: {
+              [Op.gte]: timestamp_benchmark
+            }
+          }
+        });
+        const device_notify_obj = {
+          title: NEW_NOTIFICATION.title,
+          body: NEW_NOTIFICATION.message,
+          click_action: 'FLUTTER_NOTIFICATION_CLICK',
+          icon: 'ic_launcher'
+        };
+        await Notifier(
+          all_notifications,
+          dispatcher,
+          'dispatcher',
+          device_notify_obj,
+          _notification
+          
+        );
 
       await Packages.update({
         is_paid_for: true,

@@ -30,6 +30,7 @@ class Schema {
       state: Joi.string().required(),
       town: Joi.string().required(),
       address: Joi.string().required(),
+      profile_image: Joi.string(),
     });
   }
 
@@ -63,7 +64,6 @@ class Schema {
       mobile_number_one: Joi.string().min(10).max(11).required(),
     });
   }
-
   /**
    * @method delivery_type_schema
    * @description This method return Joi object which checks the type of dispatch
@@ -503,9 +503,22 @@ class Schema {
 
   static start_dispatch_schema() {
     return Joi.object({
-      package_id: Joi.string().required(),
       dispatcher_lat: Joi.number().required(),
       dispatcher_lng: Joi.number().required(),
+    })
+  }
+
+  /**
+   * @method change_password_schema
+   * @description This method return Joi object which enables a user to change password
+   * @memberof Schema
+   * @return Joi Object
+  */
+  
+  static change_password_schema() { 
+    return Joi.object({
+      old_password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
+      new_password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
     })
   }
 }

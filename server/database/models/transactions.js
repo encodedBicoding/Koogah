@@ -48,6 +48,9 @@ module.exports = (sequelize, DataTypes) => {
     Transactions.belongsTo(models.Customers, {
       foreignKey: 'customer_id',
     });
+    Transactions.hasMany(models.TransactionHistory, {
+      as: 'Transaction'
+    })
   };
   return Transactions;
 };

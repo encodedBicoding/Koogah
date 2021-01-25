@@ -46,7 +46,9 @@ class Profile {
         rating: dispatcher_profile.rating,
         pickups: dispatcher_profile.pickups,
         deliveries: dispatcher_profile.deliveries,
-        pending: dispatcher_profile.pending
+        pending: dispatcher_profile.pending,
+        is_verified: dispatcher_profile.is_verified,
+        is_currently_dispatching: dispatcher_profile.is_currently_dispatching,
       }
       return res.status(200).json({
         status: 200,

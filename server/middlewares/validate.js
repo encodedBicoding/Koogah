@@ -34,7 +34,8 @@ const {
   deliver_package_schema,
   refresh_token_schema,
   edit_package_schema,
-  start_dispatch_schema
+  start_dispatch_schema,
+  change_password_schema,
 } = Schema;
 
 /**
@@ -651,7 +652,26 @@ class Validate {
    * @return next
    */
   static check_start_dispatch(req, res, next) {
-    const isvalid = start_dispatch_schema().validate(req.params);
+    const isvalid = start_dispatch_schema().validate(req.body);
+    if (isvalid.hasOwnProperty('error')) {
+     return res.status(400).json({
+       status: 400,
+       error: isvalid.error.details,
+     });
+   }
+   return next();
+  }
+
+  /**
+   * @method check_change_password
+   * @description This method validates change password
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_change_password(req, res, next) {
+    const isvalid = change_password_schema().validate(req.body);
     if (isvalid.hasOwnProperty('error')) {
      return res.status(400).json({
        status: 400,

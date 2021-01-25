@@ -24,6 +24,7 @@ module.exports = {
         address: '17 bing street off facebook busstop',
         state: 'lagos',
         town: 'lagos',
+        nationality: 'nigeria',
         rating: 3.4,
         no_of_raters: 4,
         email: 'dominic@olije.com',

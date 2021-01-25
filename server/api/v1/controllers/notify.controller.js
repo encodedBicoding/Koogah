@@ -5,6 +5,7 @@ import {
   Notifications,
   PushDevices,
 } from '../../../database/models';
+import moment from 'moment';
 
 
 const { Op } = Sequelize;
@@ -70,25 +71,14 @@ class Notify {
     const { user } = req.session;
     const type = user.is_courier ? 'courier' : 'customer';
     return Promise.try(async () => {
+      let timestamp_benchmark = moment().subtract(5, 'months').format();
       let all_notifications = await Notifications.findAll({
         where: {
-          [Op.and]: [{ email: user.email }, { type }],
+          [Op.and]: [{ email: user.email }, { type }, { is_read: false }],
+          created_at: {
+            [Op.gte]: timestamp_benchmark
+          }
         },
-      });
-      let backDate = new Date().setMonth(10);
-      all_notifications = all_notifications.filter((notification) => {
-        let notification_date = notification.createdAt.toLocaleString().split(',').join();
-        notification_date = notification_date.split('/');
-
-        let y = Number(notification_date[2].split(',')[0]);
-        let m = Number(notification_date[0]);
-        let d = Number(notification_date[1]);
-
-        let notification_date_obj = Date.UTC(y, m, d);
-
-        if (backDate < notification_date_obj) {
-          return notification;
-        }
       });
       return res.status(200).json({
         status: 200,

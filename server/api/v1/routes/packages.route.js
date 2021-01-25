@@ -30,6 +30,7 @@ const {
   editPackage,
   getEstimate,
   singleTracking,
+  allTrackingPackages
 } = Package;
 
 const {
@@ -170,10 +171,11 @@ packageRoute.get(
   allPackagePendingDispatchers
 );
 packageRoute.put(
-  '/courier/start/dispatch/:package_id/:dispatcher_lat/:dispatcher_lng',
+  '/courier/start/dispatch/:package_id',
   passport.authenticate('bearer', { session: false }),
   checkSession,
   isCourierLoggedIn,
+  check_package_id,
   check_start_dispatch,
   startDispatch
 );
@@ -215,7 +217,7 @@ packageRoute.put(
 packageRoute.get(
   '/dispatcher/singletracking/:package_id',
   passport.authenticate('bearer', { session: false }),
-  checkSession,
+  passport.authenticate('bearer', { session: false }),
   isCourierLoggedIn,
   check_package_id,
   singleTracking
@@ -227,6 +229,15 @@ packageRoute.post(
   check_delivery_type,
   check_edit_package,
   getEstimate
+)
+
+
+packageRoute.get(
+  '/trackings',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  allTrackingPackages
 )
 
 

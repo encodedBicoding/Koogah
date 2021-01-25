@@ -20,28 +20,12 @@ export default async function Notifier(
     if (typeof user !== 'object' || Object.keys(user).length <= 0) { 
       throw new Error('Error: User object not valid');
     }
-
-    let backDate = new Date().setMonth(10);
-    let all_notifications = [];
-    all_notifications = NotificationArray.filter((notification) => { 
-      let notification_date = notification.createdAt.toLocaleString().split(',').join();
-      notification_date = notification_date.split('/');
-
-      let y = Number(notification_date[2].split(',')[0]);
-      let m = Number(notification_date[0]);
-      let d = Number(notification_date[1]);
-
-      let notification_date_obj = Date.UTC(y, m, d);
-      if (backDate < notification_date_obj) {
-        return notification;
-      }
-    });
-
+    
     const user_websocket_id = `${type.toLowerCase()}:${user.email}:${user.id}`;
 
     eventEmitter.emit('new_notification', {
       connectionId: user_websocket_id,
-      data: all_notifications
+      data: NotificationArray
     });
 
     const _user_device = await PushDevices.findOne({

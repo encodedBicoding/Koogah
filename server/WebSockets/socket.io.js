@@ -110,7 +110,7 @@ if (cluster.isMaster) {
 
   eventEmitter.on('tracking', async function (msg) { 
     try {
-      const updated_customer_trackings = await getCustomerTrackings(msg);
+      const updated_customer_trackings = await socketFunction.getCustomerTrackings(msg);
       const customer_updated_trackings_message = JSON.stringify({
         event: 'tracking_update',
         payload: updated_customer_trackings,
@@ -193,7 +193,7 @@ if (cluster.isMaster) {
           }
           if (msg.event === 'tracking') {
             try {
-              const updated_customer_trackings = await getCustomerTrackings(msg);
+              const updated_customer_trackings = await socketFunction.getCustomerTrackings(msg);
               const customer_updated_trackings_message = JSON.stringify({
                 event: 'tracking_update',
                 payload: updated_customer_trackings,

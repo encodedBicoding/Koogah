@@ -1,6 +1,7 @@
 import log from 'fancy-log';
-import { TransactionHistory, Transactions } from '../../../database/models';
+import { HistoryTransactions } from '../../../database/models';
 import Sequelize from 'sequelize';
+import moment from 'moment';
 
 const { Op } = Sequelize;
 
@@ -9,16 +10,14 @@ class History {
     return Promise.try(async () => { 
       const { user } = req.session;
       const user_type = user.is_courier ? 'dispatcher' : 'customer';
-      const _histories = TransactionHistory.findAll({
+      let timestamp_benchmark = moment().subtract(5, 'months').format();
+      const _histories =  await HistoryTransactions.findAll({
         where: {
-          [Op.and]: [{user_type}, {user_id: user.id}]
-        },
-        include: [
-          {
-            model: Transactions,
-            as: 'Transactions'
+          [Op.and]: [{ user_type }, { user_id: user.id }],
+          created_at: {
+            [Op.gte]: timestamp_benchmark
           }
-        ]
+        },
       });
 
       return res.status(200).json({

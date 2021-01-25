@@ -1,36 +1,44 @@
 'use strict';
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('TransactionHistories', {
+    return queryInterface.createTable('HistoryTransactions', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
+      user_id: {
+        type: Sequelize.BIGINT,
+        allowNull: false,
+      },
       type: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        allowNull: false,
       },
       amount: {
         type: Sequelize.DECIMAL(10, 2),
+        allowNull: false,
       },
       title: {
-        type: Sequelize.STRING
-      },
-      image_url: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        allowNull: false,
       },
       description: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        allowNull: false,
       },
       user_type: {
-        type: Sequelize.STRING
-      },
-      user_id: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        allowNull: false,
       },
       transaction_id: {
-        type: Sequelize.STRING
+        type: Sequelize.BIGINT,
+        allowNull: false,
+      },
+      image_url: {
+        type: Sequelize.TEXT,
+        allowNull: false,
       },
       created_at: {
         allowNull: false,
@@ -43,6 +51,6 @@ module.exports = {
     });
   },
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('TransactionHistories');
+    return queryInterface.dropTable('HistoryTransactions');
   }
 };

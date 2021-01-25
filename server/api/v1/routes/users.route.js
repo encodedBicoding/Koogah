@@ -25,7 +25,8 @@ const {
   reset_password,
   use_refresh,
   is_session_valid,
-  change_password
+  change_password,
+  has_rated_dispatcher,
 } = UserController;
 
 const {
@@ -189,5 +190,13 @@ userRoute.get(
   checkSession,
   isCourierLoggedIn,
   is_session_valid
+);
+
+userRoute.get(
+  '/customer/rated/:package_id/:dispatcher_id',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  has_rated_dispatcher
 )
 export default userRoute;

@@ -35,6 +35,7 @@ module.exports = {
         is_approved: true,
         last_payout: 3000.00,
         total_payouts: 7000.00,
+        is_currently_dispatching: false,
         is_admin: false,
         referal_id: '93nsajnijad',
         ws_connected_channels: [''],

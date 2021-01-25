@@ -8,7 +8,13 @@ import bcrypt from 'bcrypt';
 import log from 'fancy-log';
 import Sequelize from 'sequelize';
 import {
-  Couriers, Awaitings, Customers, Packages, Notifications, Reports,
+  Couriers,
+  Awaitings,
+  Customers,
+  Packages,
+  Notifications,
+  Reports,
+  Ratings
 } from '../../../database/models';
 import sendSMS from '../helpers/sms';
 import gen_verify_code from '../helpers/verify.code';
@@ -958,7 +964,7 @@ class UserController {
         });
       }
       const current_number_of_raters = (parseInt(dispatcher.no_of_raters, 10) + 1);
-      const new_rate_value = ((Number(dispatcher.rating) * parseInt(dispatcher.no_of_raters, 10) + parseInt(rating, 10)) / current_number_of_raters).toPrecision(2)
+      const new_rate_value = ((Number(dispatcher.rating) * parseInt(dispatcher.no_of_raters, 10) + parseInt(rating,10)) / current_number_of_raters).toPrecision(2)
       await Couriers.update({
         rating: new_rate_value,
         no_of_raters: current_number_of_raters,
@@ -969,10 +975,20 @@ class UserController {
         },
       });
       dispatcher = dispatcher.getSafeDataValues();
+
+      const new_ratings = {
+        package_id,
+        dispatcher_id,
+        customer_id: user.id,
+        rate_value: parseInt(rating, 10),
+        user_type: 'customer'
+      }
+
+      await Ratings.create({ ...new_ratings });
       
       return res.status(200).json({
         status: 200,
-        message: `You successfully rated ${dispatcher.first_name} ${dispatcher.last_name}:, ${rating}`,
+        message: `You successfully rated ${dispatcher.first_name} ${dispatcher.last_name}: ${rating}`,
       });
     }).catch((err) => {
       log(err);
@@ -1379,6 +1395,50 @@ class UserController {
         error
       })
     }) 
+  }
+
+   /**
+   * @method has_rated_dispatcher
+   * @memberof UserController
+   * @description This method checks if a customer has rated a dispatcher
+   * @params req, res
+   * @return JSON object
+   */
+
+
+  static has_rated_dispatcher(req, res) {
+    return Promise.try(async () => { 
+      const { user } = req.session;
+      const { dispatcher_id, package_id } = req.params;
+      const hasRated = await Ratings.findOne({
+        where: {
+          [Op.and]: [{ package_id }, { dispatcher_id }, { customer_id: user.id }, { user_type: 'customer' }]
+        }
+      });
+      if (hasRated) { 
+        return res.status(200).json({
+          status: 200,
+          message: 'rate data retrieved',
+          data: {
+            has_rated: true
+          }
+        });
+      } else {
+        return res.status(200).json({
+          status: 200,
+          message: 'rate data retrieved',
+          data: {
+            has_rated: false,
+          }
+        });
+      }
+    }).catch(error => {
+      log(error);
+      return res.status(400).json({
+        status: 400,
+        error
+      });
+    });
   }
 
 }

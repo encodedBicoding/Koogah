@@ -6,7 +6,12 @@ import Sequelize from 'sequelize';
 import { config } from 'dotenv';
 import moment from 'moment';
 import {
-  Customers, Transactions, Couriers, Packages, Notifications, TransactionHistory
+  Customers,
+  Transactions,
+  Couriers,
+  Packages,
+  Notifications,
+  HistoryTransactions,
 } from '../../../database/models';
 import client from '../../../redis/redis.client';
 import Notifier from '../helpers/notifier';
@@ -205,13 +210,13 @@ class Payment {
         amount,
         type: 'credit',
         title: 'Account Top up',
-        decription: `Trans refID: (${reference}), SUCCESSFUL TOPUP`,
+        description: `Trans refID: (${reference}), SUCCESSFUL TOPUP`,
         user_type: 'customer',
         user_id: user.id,
         transaction_id: transaction_detail.id,
         image_url: null,
       };
-      await TransactionHistory.create({ ...history });
+      await HistoryTransactions.create({ ...history });
 
       const NEW_NOTIFICATION = {
         type: 'customer',
@@ -263,7 +268,7 @@ class Payment {
    * @method pay_dispatcher
    * @memberof Payment
    * @params req, res
-   * @description this method allows a customer to pay a dispatcher for their services.
+   * @description this method allows a customer to pay a dispatcher for their services with account balance.
    * @return JSON object
    */
 
@@ -377,7 +382,7 @@ class Payment {
           amount: is_package_valid.delivery_price,
           type: 'debit',
           title: 'Payment for delivery',
-          decription: `Package ID: ${is_package_valid.package_id} delivery payment`,
+          description: `Package ID: ${is_package_valid.package_id} delivery payment`,
           user_type: 'customer',
           user_id: user.id,
           transaction_id: new_transaction.id,
@@ -388,15 +393,15 @@ class Payment {
           amount: total_amount_payable,
           type: 'credit',
           title: 'Payment for delivery',
-          decription: `Package ID: ${is_package_valid.package_id} delivery payment`,
+          description: `Package ID: ${is_package_valid.package_id} delivery payment`,
           user_type: 'dispatcher',
           user_id: dispatcher.id,
           transaction_id: new_transaction.id,
           image_url: is_package_valid.image_urls[0],
         };
 
-        await TransactionHistory.create({ ...history_customer });
-        await TransactionHistory.create({ ...history_dispatcher });
+        await HistoryTransactions.create({ ...history_customer });
+        await HistoryTransactions.create({ ...history_dispatcher });
 
 
       let timestamp_benchmark = moment().subtract(5, 'months').format();
@@ -581,7 +586,7 @@ class Payment {
           amount: is_package_valid.delivery_price,
           type: 'debit',
           title: 'Payment for delivery',
-          decription: `Package ID: ${is_package_valid.package_id} delivery payment`,
+          description: `Package ID: ${is_package_valid.package_id} delivery payment`,
           user_type: 'customer',
           user_id: user.id,
           transaction_id: new_transaction.id,
@@ -592,15 +597,15 @@ class Payment {
           amount: total_amount_payable,
           type: 'credit',
           title: 'Payment for delivery',
-          decription: `Package ID: ${is_package_valid.package_id} delivery payment`,
+          description: `Package ID: ${is_package_valid.package_id} delivery payment`,
           user_type: 'dispatcher',
           user_id: dispatcher.id,
           transaction_id: new_transaction.id,
           image_url: is_package_valid.image_urls[0],
         };
 
-        await TransactionHistory.create({ ...history_customer });
-        await TransactionHistory.create({ ...history_dispatcher });
+        await HistoryTransactions.create({ ...history_customer });
+        await HistoryTransactions.create({ ...history_dispatcher });
 
         let timestamp_benchmark = moment().subtract(5, 'months').format();
 

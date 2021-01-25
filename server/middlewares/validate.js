@@ -35,7 +35,7 @@ const {
   refresh_token_schema,
   edit_package_schema,
   start_dispatch_schema,
-  change_password_schema
+  change_password_schema,
 } = Schema;
 
 /**

@@ -6,7 +6,6 @@ import {
   PushDevices,
 } from '../../../database/models';
 import moment from 'moment';
-import { time } from 'faker';
 
 
 const { Op } = Sequelize;
@@ -75,7 +74,7 @@ class Notify {
       let timestamp_benchmark = moment().subtract(5, 'months').format();
       let all_notifications = await Notifications.findAll({
         where: {
-          [Op.and]: [{ email: user.email }, { type }],
+          [Op.and]: [{ email: user.email }, { type }, { is_read: false }],
           created_at: {
             [Op.gte]: timestamp_benchmark
           }

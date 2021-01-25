@@ -10,13 +10,18 @@ import checkType from '../helpers/check.type';
 import calc_delivery_price from '../helpers/calc.price';
 import generate_ref from '../helpers/ref.id';
 import {
-  Packages, Couriers, Notifications, Customers, PackagesTrackings
+  Packages,
+  Couriers,
+  Notifications,
+  Customers,
+  PackagesTrackings,
+  Transactions,
+  HistoryTransactions
 } from '../../../database/models';
 
 import geoPackageDestination from '../helpers/geo-package-destination';
 import Notifier from '../helpers/notifier';
 import eventEmitter from '../../../EventEmitter';
-
 
 config();
 distanceApi.key(process.env.GOOGLE_API_KEY);
@@ -208,8 +213,10 @@ class Package {
           email: customer.email,
           type: 'customer',
           desc: 'CD004',
-          title: `Interested dispatcher for package: ${package_id}`,
-          message: _package.pending_dispatchers.length <= 1 ? 'A dispatcher is interested in your package. Please ensure you checkout the dispatcher\'s profile first, before approving them' : 'Another dispatcher is interested in your package. Please ensure you checkout the dispatcher\'s profile first, before approving them',
+          title: 'Interested dispatcher for package',
+          entity_id: package_id,
+          is_viewable: true,
+          message: _package.pending_dispatchers.length <= 1 ? `A dispatcher is interested in your package with id: ${package_id} \nPlease ensure you checkout the dispatcher\'s profile first, before approving them.` : `Another dispatcher is interested in your package with id: ${package_id}. \nPlease ensure you checkout the dispatcher\'s profile first, before approving them.`,
           action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/profile/courier/pv/${user.id}` : `http://localhost:4000/v1/profile/courier/pv/${user.id}`, // ensure customer is logged in
         };
 
@@ -346,6 +353,7 @@ class Package {
             email: dispatcher.email,
           },
         });
+
         NEW_NOTIFICATION.email = dispatcher.email;
         NEW_NOTIFICATION.desc='CD005';
         NEW_NOTIFICATION.message = 'A customer has approved you to dispatch their package. \n Please ensure you meet them at a rather safe zone or outside their doors and/or gate';
@@ -410,6 +418,9 @@ class Package {
           package_id,
         },
       });
+
+      NEW_NOTIFICATION.entity_id = package_id;
+      NEW_NOTIFICATION.is_viewable = true;
 
       const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
 
@@ -518,9 +529,11 @@ class Package {
         });
         const NEW_NOTIFICATION = {
           email: package_owner.email,
+          entity_id: package_id,
+          is_viewable: true,
           type: 'customer',
           desc: 'CD006',
-          message: `The approved dispatcher for package with id: ${package_id} has changed the weight of the package`,
+          message: `The approved dispatcher for package with id: ${package_id} has requwated a change of weight for this package`,
           title: 'New weight change',
           action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/package/owner/view/${package_id}` : `http://localhost:4000/v1/package/owner/view/${package_id}`, // ensure customer is logged in
         };
@@ -719,6 +732,10 @@ class Package {
           package_id,
         },
       });
+
+      NEW_NOTIFICATION.entity_id = package_id;
+      NEW_NOTIFICATION.is_viewable = true;
+
       const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
 
       // get all user unread notifications;
@@ -776,7 +793,7 @@ class Package {
           package_id,
         },
       });
-      // validated delivery key;
+      // validate delivery key;
       if (!delivery_key) {
         return res.status(400).json({
           status: 400,
@@ -815,10 +832,87 @@ class Package {
           error: 'Oops, seems you have already delivered this package',
         });
       }
+      if (!user.is_currently_dispatching) { 
+        return res.status(400).json({
+          status: 400,
+          error: 'You cannot deliver a package, when you are not dispatching any'
+        })
+      }
+
+      const customer = await Customers.findOne({
+        where: {
+          id: _package.customer_id,
+        },
+      });
+
+      const user_new_delivery_count = parseInt(user.deliveries, 10) + 1;
+      const user_new_pending_count = parseInt(user.pending, 10) - 1;
+      const fees = Number(_package.delivery_price) * 0.30;
+      const total_amount_payable = Number(_package.delivery_price) - fees;
+      const dispatcher_new_balance = Number(user.virtual_balance) + total_amount_payable;
+
+      const transaction_details = {
+        customer_id: customer.id,
+        dispatcher_id: user.id,
+        amount_paid: _package.delivery_price,
+        reason: 'dispatch-payment',
+        fees,
+        payment_mode: 'in-app',
+        package_id: _package.package_id
+      };
+
+      // pay the dispatcher
+      if (_package.payment_mode === 'virtual_balance') {
+        const customer_remaining_balance = Number(customer.virtual_balance) - Number(_package.delivery_price);
+        const customer_remaining_allocated_balance = Number(customer.virtual_allocated_balance) - Number(_package.delivery_price);
+        await Customers.update({
+          virtual_balance: customer_remaining_balance,
+          virtual_allocated_balance: customer_remaining_allocated_balance
+        },
+        {
+          where: {
+            email: customer.email,
+          },
+        });
+
+      } else if (_package.payment_mode === 'koogah_coin') {
+        const KOOGAH_COIN_WORTH = process.env.KOOGAH_COIN_WORTH;
+        const customer_koogah_coin_balance = Number(KOOGAH_COIN_WORTH) * Number(customer.koogah_coin);
+        const customer_allocated_kc_balance = Number(KOOGAH_COIN_WORTH) * Number(customer.virtual_allocated_kc_balance);
+        let customer_remaining_kc_balance = Math.floor(Number(customer_koogah_coin_balance) - Number(_package.delivery_price));
+        customer_remaining_kc_balance = Math.floor(customer_remaining_kc_balance / KOOGAH_COIN_WORTH);
+
+        let customer_remaining_alloc_kc_balance = Math.floor(Number(customer_allocated_kc_balance) - Number(_package.delivery_price));
+        customer_remaining_alloc_kc_balance = Math.floor(customer_remaining_alloc_kc_balance / KOOGAH_COIN_WORTH);
+
+        await Customers.update({
+          koogah_coin: customer_remaining_kc_balance,
+          virtual_allocated_kc_balance: customer_remaining_alloc_kc_balance
+        }, {
+          where: {
+            email: customer.email
+          }
+        });
+      }
+      
+      await Couriers.update({
+        deliveries: user_new_delivery_count,
+        pending: user_new_pending_count,
+        is_currently_dispatching: false,
+        virtual_balance: dispatcher_new_balance,
+      },
+      {
+        where: {
+          email: user.email,
+        },
+      });
+
+      // end pay dispatcher
       const date_time = new Date().toLocaleString();
       await Packages.update({
         status: 'delivered',
         is_currently_tracking: false,
+        is_paid_for: true,
         dropoff_time: date_time,
         pending_dispatchers: [],
       },
@@ -826,19 +920,33 @@ class Package {
         where: {
           package_id,
         },
-      });
-      const user_new_delivery_count = parseInt(user.deliveries, 10) + 1;
-      const user_new_pending_count = parseInt(user.pending, 10) - 1;
-      await Couriers.update({
-        deliveries: user_new_delivery_count,
-        pending: user_new_pending_count,
-        is_currently_dispatching: false
-      },
-      {
-        where: {
-          email: user.email,
-        },
-      });
+        });
+      
+      const new_transaction = await Transactions.create({ ...transaction_details });
+      const history_customer = {
+        amount: _package.delivery_price,
+        type: 'debit',
+        title: 'Payment for delivery',
+        description: `Package ID: ${_package.package_id} delivery payment`,
+        user_type: 'customer',
+        user_id: customer.id,
+        transaction_id: new_transaction.id,
+        image_url: _package.image_urls[0]
+      };
+      const history_dispatcher = {
+        amount: total_amount_payable,
+        type: 'credit',
+        title: 'Payment for delivery',
+        description: `Package ID: ${_package.package_id} delivery payment`,
+        user_type: 'dispatcher',
+        user_id: user.id,
+        transaction_id: new_transaction.id,
+        image_url: _package.image_urls[0]
+      };
+
+      await HistoryTransactions.create({ ...history_customer });
+      await HistoryTransactions.create({ ...history_dispatcher });
+
       const updated_package = await Packages.findOne({
         where: {
           package_id,
@@ -864,25 +972,42 @@ class Package {
           },
         ],
       });
-      const customer = await Customers.findOne({
-        where: {
-          id: updated_package.customer_id,
-        },
-      });
       const NEW_NOTIFICATION = {
         email: customer.email,
         type: 'customer',
         desc: 'CD008',
-        message: `The dispatcher for the package with id: ${package_id}, just marked the package as delivered`,
+        entity_id: package_id,
+        is_viewable: true,
+        message: `Package with ID:${package_id} has been delivered, you have also been debited`,
         title: 'New Package Delivered',
         action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/package/owner/view/${package_id}` : `http://localhost:4000/v1/package/owner/view/${package_id}`, // ensure customer is logged in TODO: fix action link
       };
+
+      const NEW_DELIVERY_NOTIFICATION = {
+        email: user.email,
+        type: 'courier',
+        desc: 'CD003',
+        entity_id: null,
+        is_viewable: false,
+        message: `You have been credited with ${_package.delivery_price} for delivering a package with id: ${package_id}. \nService charge of ${fees} was deducted, \nYour total payable fee is ${total_amount_payable}`,
+        title: 'New payment for delivery',
+        action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`,
+      };
       const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
+      const _deliveryNotification = await Notifications.create({ ...NEW_DELIVERY_NOTIFICATION });
       // get all user unread notifications;
       let timestamp_benchmark = moment().subtract(5, 'months').format();
       let all_notifications = await Notifications.findAll({
         where: {
           [Op.and]: [{ email: customer.email }, { type: 'customer' }],
+          created_at: {
+            [Op.gte]: timestamp_benchmark
+          }
+        }
+      });
+      let all_dispatcher_notifications = await Notifications.findAll({
+        where: {
+          [Op.and]: [{ email: user.email }, { type: 'dispatcher' }],
           created_at: {
             [Op.gte]: timestamp_benchmark
           }
@@ -894,12 +1019,25 @@ class Package {
         click_action: 'FLUTTER_NOTIFICATION_CLICK',
         icon: 'ic_launcher'
       };
+      const dispatcher_device_notify_obj = {
+        title: NEW_DELIVERY_NOTIFICATION.title,
+        body: NEW_DELIVERY_NOTIFICATION.message,
+        click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        icon: 'ic_launcher'
+      };
       await Notifier(
         all_notifications,
         customer,
         'customer',
         device_notify_obj,
         _notification
+      );
+      await Notifier(
+        all_dispatcher_notifications,
+        user,
+        'dispatcher',
+        dispatcher_device_notify_obj,
+        _deliveryNotification
       );
       return res.status(200).json({
         status: 200,
@@ -1139,6 +1277,9 @@ class Package {
             ]
             },
           ],
+          order: [
+            ['status', 'DESC']
+          ]
         });
       } else {
         all_packages = await Packages.findAll({
@@ -1146,6 +1287,9 @@ class Package {
             customer_id: user.id,
             status,
           },
+          order: [
+            ['status', 'DESC']
+          ]
         });
       }
       return res.status(200).json({
@@ -1245,7 +1389,10 @@ class Package {
                   { from_town: from },
                   { type_of_dispatch: dispatch_type },
                   { dispatcher_id: null}
-                ]
+              ],
+              status: {
+                [Op.eq]: 'not-picked'
+              }
             },
             attributes: {
               exclude: ['delivery_key']
@@ -1262,7 +1409,10 @@ class Package {
                   { to_town: to},
                   { type_of_dispatch: dispatch_type },
                   { dispatcher_id: null}
-                ]
+              ],
+              status: {
+                [Op.eq]: 'not-picked'
+              }
             },
             attributes: {
               exclude: ['delivery_key']
@@ -1279,7 +1429,10 @@ class Package {
                     { from_state: from }, 
                     { type_of_dispatch: dispatch_type },
                     { dispatcher_id: null}
-                  ]
+                ],
+                status: {
+                  [Op.eq]: 'not-picked'
+                }
               },
               attributes: {
                 exclude: ['delivery_key']
@@ -1293,7 +1446,10 @@ class Package {
                   { to_state: to },
                   { type_of_dispatch: dispatch_type },
                   { dispatcher_id: null}
-                ]
+              ],
+              status: {
+                [Op.eq]: 'not-picked'
+              }
             },
             attributes: {
               exclude: ['delivery_key']
@@ -1310,7 +1466,10 @@ class Package {
                   { from_country: from }, 
                   { type_of_dispatch: dispatch_type },
                   { dispatcher_id: null}
-                ]
+               ],
+               status: {
+                [Op.eq]: 'not-picked'
+              }
              },
              attributes: {
               exclude: ['delivery_key']
@@ -1324,7 +1483,10 @@ class Package {
                   { type_of_dispatch: dispatch_type },
                   { to_country: to},
                   { dispatcher_id: null}
-                ]
+              ],
+              status: {
+                [Op.eq]: 'not-picked'
+              }
             },
             attributes: {
               exclude: ['delivery_key']
@@ -1413,6 +1575,8 @@ class Package {
 
       NEW_NOTIFICATION.email = customer.email;
       NEW_NOTIFICATION.desc = 'CD009';
+      NEW_NOTIFICATION.entity_id = package_id;
+      NEW_NOTIFICATION.is_viewable = true;
       NEW_NOTIFICATION.message = `A dispatcher just declined pickup for package with id: ${package_id}`,
       NEW_NOTIFICATION.title = 'New pickup decline';
       NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
@@ -1567,6 +1731,8 @@ class Package {
 
       NEW_NOTIFICATION.email = customer.email;
       NEW_NOTIFICATION.desc = 'CD010';
+      NEW_NOTIFICATION.entity_id = package_id;
+      NEW_NOTIFICATION.is_viewable = true;
       NEW_NOTIFICATION.message = `Your package with id: ${package_id} is now being dispatched`;
       NEW_NOTIFICATION.title = 'New Dispatch started';
       NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
@@ -1999,7 +2165,7 @@ class Package {
       }
       const origins = checkType('from', data, type);
       const destinations = checkType('to', data, type);
-      distanceApi.matrix([origins], [destinations], async function (err, result) { 
+      distanceApi.matrix([origins], [destinations] , async function (err, result) { 
         try { 
           if (err) {
             throw new Error(err);

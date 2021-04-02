@@ -100,9 +100,6 @@ class Payment {
    */
 
   static topup_virtual_balance_StepTwo(req, res) {
-    // use access code sent in step one
-    // pay with RN chargeCardWithAccessCode
-    // before calling this endpoint
     const { user } = req.session;
     const { reference } = req.query;
     return Promise.try(async () => client.get(`${reference}`, async (err, result) => {
@@ -214,7 +211,7 @@ class Payment {
         user_type: 'customer',
         user_id: user.id,
         transaction_id: transaction_detail.id,
-        image_url: null,
+        image_url: 'https://www.pngrepo.com/png/262721/512/wallet.png',
       };
       await HistoryTransactions.create({ ...history });
 
@@ -253,7 +250,7 @@ class Payment {
       return res.status(200).json({
         status: 200,
         message: 'Balance top up successful',
-        transaction_detail,
+        data: transaction_detail,
       });
     })).catch((err) => {
       log(err);

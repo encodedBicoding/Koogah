@@ -8,7 +8,11 @@ module.exports = (sequelize, DataTypes) => {
     description: DataTypes.STRING,
     user_type: DataTypes.STRING,
     transaction_id: DataTypes.BIGINT,
-    image_url: DataTypes.TEXT
+    image_url: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null,
+    }
   }, {
     underscored: true,
     tableName: 'HistoryTransactions',

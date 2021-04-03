@@ -749,7 +749,6 @@ class UserController {
           email,
         },
       });
-      console.log('got hwer');
       if (!isFound) {
         return res.status(404).json({
           status: 404,

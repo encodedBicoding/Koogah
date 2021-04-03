@@ -63,8 +63,8 @@ app.use(helmet());
 app.use(helmet.hidePoweredBy({ setTo: 'PHP 4.2.0' }));
 if (isProduction) app.use(enforce.HTTPS());
 app.use(cors(corsOption));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false, limit: '50mb' }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 app.use(session({
   secret: process.env.SESSION_SECRET,
   cookie: { maxAge: 60000, secure: isProduction ? true : false, path: "/" },

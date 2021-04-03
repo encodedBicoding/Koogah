@@ -83,7 +83,7 @@ class Notify {
       return res.status(200).json({
         status: 200,
         message: `Retreived all notifications for user: ${user.email}`,
-        data: all_notifications,
+        data: all_notifications.reverse(),
       });
     }).catch((err) => {
       log(err);

@@ -5,7 +5,6 @@ import express from 'express';
 import passport from 'passport';
 import cors from 'cors';
 import connectRedis from 'connect-redis';
-import bodyParser from 'body-parser';
 import errorHandler from 'errorhandler';
 import session from 'express-session';
 import { config } from 'dotenv';

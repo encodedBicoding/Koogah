@@ -21,5 +21,8 @@ module.exports = {
     use_env_variable: 'DATABASE_URL',
     dialect: process.env.DB_DIALECT,
     logging: false,
+    dialectOptions: {
+      ssl: true
+    }
   },
 };

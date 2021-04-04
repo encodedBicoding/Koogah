@@ -2,6 +2,9 @@
   "name": "koogah",
   "version": "1.0.0",
   "description": "",
+  "engines": {
+    "node": "10.16.3"
+  },
   "main": "./build/WebSockets/socket.io.js",
   "scripts": {
     "test": "export NODE_ENV=test && npm run seed:undo && npm run seed && nyc mocha --timeout 10000 --require @babel/register server/api/v1/tests/* --exit",

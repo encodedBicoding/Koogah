@@ -135,7 +135,7 @@ class Payment {
 
       // update user koogah coin
       // koogah coin worth process.env.KOOGAH_COIN_WORTH
-      const coin = Math.floor(Number(amount) * 0.01);
+      const coin = Math.floor(Number(amount) * 0.001);
       const customer_coin_balance = Number(user.koogah_coin) + Number(coin);
       // if the customer was referred by another user
       // first check if the user is a customer

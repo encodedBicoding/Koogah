@@ -7,7 +7,6 @@ import { config } from 'dotenv';
 import WebSocketFunctions from './functions';
 import jwt from '../api/v1/helpers/jwt';
 import eventEmitter from '../EventEmitter';
-import client from '../redis/redis.client';
 
 const cluster = require('cluster');
 const port = process.env.PORT || 8080;

@@ -540,7 +540,7 @@ class UserController {
 
     const SMS_MESSAGE = `Your verification code is: \n${MOBILE_VERIFY_CODE}`;
 
-    const MOBILE_REDIRECT_LINK = `https://mobile_redirect_link?key=${key}&live=${!!key}`;
+    const MOBILE_REDIRECT_LINK = `https://${process.env.SERVER_APP_URL}/customer/verify/email?key=${key}&live=${!!key}`;
 
     // this function should redirect the user to the Mobile App page
     // That contains the form so they can insert the code sent to their mobile phones

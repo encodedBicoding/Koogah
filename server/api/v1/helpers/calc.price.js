@@ -16,8 +16,22 @@ function calc_delivery_price(type, weight, distance) {
     base_price = process.env.KOOGAH_INTERNATIONAL_DISPATCH_BASE_FEE;
   }
   const weight_value = weight_range[weight];
+  const price_slash_list = ['0-5', '6-10','11-15']
   if (!weight_range) return false;
-  const net_price = (weight_value * distance) + Number(base_price);
+  var net_price = (weight_value * distance) + Number(base_price);
+  if (Number(distance) > 50) {
+    if (type === 'intra-state') {
+      if (net_price >= 15000 && price_slash_list.includes(weight)) {
+          net_price = net_price * 0.7
+      }
+    }
+  } else {
+    if (type === 'intra-state') {
+      if (net_price >= 9000 && price_slash_list.includes(weight)) {
+          net_price = net_price * 0.6
+      }
+    }
+  }
   return net_price;
 }
 

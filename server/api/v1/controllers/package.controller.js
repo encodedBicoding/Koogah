@@ -1980,6 +1980,12 @@ class Package {
           error: 'Invalid operation, cannot edit a delivered package'
         })
       }
+      if (_package.status === 'tracking') {
+        return res.status(400).json({
+          status: 400,
+          error: 'Invalid operation, cannot edit a tracking package'
+        })
+      }
 
       let type = data.type_of_dispatch;
       // same state

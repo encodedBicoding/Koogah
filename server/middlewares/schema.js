@@ -98,6 +98,7 @@ class Schema {
       image_urls: Joi.array(),
       nearest_busstop: Joi.string(),
       landmark: Joi.string(),
+      pickup_landmark: Joi.string(),
       contact_name: Joi.string(),
       contact_phone: Joi.string(),
       type_of_dispatch: Joi.string()

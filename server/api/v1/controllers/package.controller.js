@@ -1896,7 +1896,7 @@ class Package {
       if (benchmark.includes(_package.status)) {
         return res.status(400).json({
           status: 400,
-          error: 'Cannot delete a package that is currenty tracking or picked'
+          error: 'Cannot delete a package that is currenty tracking or picked up'
         })
       }
 

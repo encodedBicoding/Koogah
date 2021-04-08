@@ -1,4 +1,4 @@
-import { Customers, Couriers } from '../database/models';
+import { Customers, Couriers, PackagesTrackings } from '../database/models';
 import app from '../server';
 import WebSocket from 'ws';
 import isValidUT8 from 'utf-8-validate';
@@ -177,6 +177,31 @@ if (cluster.isMaster) {
           }
         })
         ws.send(firstMsg);
+        // check if customer has tracking packages;
+        if (userType == 'customer') {
+          const all_trackings = await PackagesTrackings.findAll({
+            where: {
+              customer_id: user.id
+            }
+          });
+          
+          if (all_trackings.length > 0) {
+            const customer_updated_trackings_message = JSON.stringify({
+              event: 'tracking_update',
+              payload: all_trackings,
+            });
+
+            WsServer.clients.forEach((client) => {
+              if (
+                client.readyState === WebSocket.OPEN
+                && client.connectionId === `customer:${user.email}:${user.id}`
+              ) {
+                client.send(customer_updated_trackings_message);
+              }
+            });
+          }
+      
+        }
         ws.on('message', async function(message) {
           let msg = JSON.parse(message);
           // subscribe to channel
@@ -192,7 +217,7 @@ if (cluster.isMaster) {
           }
           if (msg.event === 'tracking') {
             try {
-              const updated_customer_trackings = await socketFunction.getCustomerTrackings(msg);
+              const updated_customer_trackings = await socketFunction.updateAndGetCustomerTrackings(msg);
               const customer_updated_trackings_message = JSON.stringify({
                 event: 'tracking_update',
                 payload: updated_customer_trackings,
@@ -205,8 +230,8 @@ if (cluster.isMaster) {
                   && client.readyState === WebSocket.OPEN
                 ) {
                   client.send(customer_updated_trackings_message);
-                  }
-              })
+                }
+              });
             } catch (error) {
               ws.close();
               return false;

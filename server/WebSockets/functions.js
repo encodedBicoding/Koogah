@@ -112,7 +112,7 @@ class WebSocketFunctions {
     }
   }
 
-  async getCustomerTrackings(msg) {
+  async updateAndGetCustomerTrackings(msg) {
     try {
       const currentTracking = await PackagesTrackings.findOne({
         where: {

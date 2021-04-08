@@ -101,9 +101,9 @@ export const createVerificationMail = function createVerificationMail(user_email
           <p>to ensure you get the most out of this platform</p>
 
           <p>
-            Click button below to verify your email.
+            Click the link below to verify your email.
             <br/>
-            <button onclick="window.open('${verify_link}')">VERIFY</button>
+            <p style="cursor: 'pointer'" onclick="window.open('${verify_link}', '_blank')">VERIFY</p>
           </p>
 
         </section>

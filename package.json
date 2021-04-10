@@ -27,6 +27,7 @@
     "@hapi/hoek": "^9.1.0",
     "@hapi/joi": "^16.1.7",
     "@sendgrid/mail": "^6.4.0",
+    "africastalking": "^0.5.3",
     "babel-polyfill": "^6.26.0",
     "bcrypt": "^5.0.0",
     "body-parser": "^1.19.0",

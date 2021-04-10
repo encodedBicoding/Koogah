@@ -7,10 +7,11 @@ import payoutRoutes from './payouts.route';
 import notifyRoutes from './notify.route';
 import profileRoutes from './profile.route';
 import historyRoutes from './history.route';
+import sendSMS from '../helpers/sms';
 
 const route = express();
 
-route.get('/', (req, res) => {
+route.get('/', async (req, res) => {
   return res.status(200).json({
     status: 200,
     message: 'Welcome to Koogah Nigeria',

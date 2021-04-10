@@ -61,7 +61,7 @@ class UserController {
         town,
         address,
       } = req.body;
-      const { ref } = req.query;
+      const { ref, fromApp } = req.query;
 
       const VERIFY_TOKEN = await jwt.sign({
         email,
@@ -72,7 +72,12 @@ class UserController {
       // link hint: https://api.koogah.com
       // this should be the frontend link based on the registering user
       // not the SERVER_APP_URL
-      const VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${req.headers.host}/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER`;
+      let VERIFY_LINK = '';
+      if (fromApp && fromApp === 'web') {
+        VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${LANDING_PAGE_APP_HOST}/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER`;
+      } else {
+        VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${DISPATCHER_MOBILE_APP_HOST}/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER`;
+      }
   
       const USR_OBJ = {
         first_name,
@@ -424,7 +429,7 @@ class UserController {
       password,
     } = req.body;
 
-    const { ref } = req.query;
+    const { ref, fromApp } = req.query;
 
     const isFound = await Customers.findOne({
       where: {
@@ -438,22 +443,19 @@ class UserController {
         message: 'A user with the given email already exists',
       });
     }
-    let leading_digit = String(mobile_number_one[0]);
-    if (leading_digit !== '0') {
-      mobile_number_one = `0${mobile_number_one}`;
-    }
-
     const VERIFY_TOKEN = await jwt.sign({
       email,
       first_name,
-      mobile_number_one,
+      mobile_number_one: `${country_code}${mobile_number_one}`,
       last_name,
       is_courier: false,
     });
-  
-
-    const VERIFY_LINK = `https://${process.env.CUSTOMER_MOBILE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
-
+    let VERIFY_LINK = '';
+    if (fromApp && fromApp === 'web') {
+      VERIFY_LINK = `https://${process.env.LANDING_PAGE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
+    } else {
+      VERIFY_LINK = `https://${process.env.CUSTOMER_MOBILE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
+    }
     const USR_OBJ = {
       first_name,
       last_name,
@@ -544,6 +546,7 @@ class UserController {
 
     // this function should redirect the user to the Mobile App page
     // That contains the form so they can insert the code sent to their mobile phones
+      
     await sendSMS(payload.mobile_number_one, SMS_MESSAGE);
     await Customers.update(
       {
@@ -1121,7 +1124,7 @@ class UserController {
 
         // based on the account type, 
         // determine what frontend application to send the user to.
-        const PASSWORD_RESET_LINK = `${isProduction ? 'https' : 'http'}://${req.headers.host}/v1/user/pR?token=${PASSWORD_RESET_TOKEN}&code=COURIER`;
+        const PASSWORD_RESET_LINK = `${isProduction ? 'https' : 'http'}://${process.env.DISPATCHER_MOBILE_APP_HOST}/password_reset?token=${PASSWORD_RESET_TOKEN}&code=COURIER`;
 
         const user_msg_obj = {
           first_name: isFound.first_name,
@@ -1155,14 +1158,14 @@ class UserController {
         };
         const PASSWORD_RESET_TOKEN = await jwt.sign({
           email,
-          bvn: isFound.bvn,
+          bvn: isFound.mobile_number_one,
           first_name: isFound.first_name,
           last_name: isFound.last_name,
           account_type,
         });
         // based on the account type, 
         // determine what frontend application to send the user to.
-        const PASSWORD_RESET_LINK = `${isProduction ? 'https' : 'http'}://${req.headers.host}/v1/user/pR?token=${PASSWORD_RESET_TOKEN}&code=CUSTOMER`;
+        const PASSWORD_RESET_LINK = `${isProduction ? 'https' : 'http'}://${process.env.CUSTOMER_MOBILE_APP_HOST}/password_reset?token=${PASSWORD_RESET_TOKEN}&code=CUSTOMER`;
         const user_msg_obj = {
           first_name: isFound.first_name,
           last_name: isFound.last_name,

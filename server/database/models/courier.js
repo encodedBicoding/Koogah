@@ -53,6 +53,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       unique: true,
     },
+    identification_number: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+    },
     profile_image: {
       type: DataTypes.TEXT,
       allowNull: true,

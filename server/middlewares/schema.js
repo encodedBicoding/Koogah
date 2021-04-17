@@ -24,6 +24,7 @@ class Schema {
       password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
       repeat_password: Joi.ref('password'),
       mobile_number: Joi.string().min(10).max(11).required(),
+      identification_number: Joi.string().required(),
       sex: Joi.string().valid('M', 'F').required(),
       bvn: Joi.number().integer().required(),
       nationality: Joi.string().required(),

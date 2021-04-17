@@ -57,6 +57,7 @@ class UserController {
         sex,
         bvn,
         nationality,
+        identification_number,
         state,
         town,
         address,
@@ -99,6 +100,7 @@ class UserController {
         state,
         town,
         address,
+        identification_number,
         referal_id: REFERAL_ID,
         refered_by: ref ? ref : null,
       };
@@ -430,6 +432,13 @@ class UserController {
     } = req.body;
 
     const { ref, fromApp } = req.query;
+
+    if (country_code === "+234") {
+      var firstDigit = mobile_number_one[0].toString();
+      if (firstDigit === '0') {
+        mobile_number_one = mobile_number_one.substring(1, mobile_number_one.length);
+       }
+    }
 
     const isFound = await Customers.findOne({
       where: {

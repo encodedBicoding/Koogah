@@ -38,8 +38,8 @@ if (cluster.isMaster) {
     console.log(`worker ${process.pid} is upgrading...`);
   const accepted_hosts = [];
   const accepted_path = ['/geotracking'];
-    const { __koogah_ws_session_secret } = request.headers;
-    const { authorization } = request.headers;
+  const { __koogah_ws_session_secret } = request.headers;
+  const { authorization } = request.headers;
   try {
     if (!isValidUT8(head)) {
       socket.destroy();
@@ -130,7 +130,8 @@ if (cluster.isMaster) {
   });
   // GEOTRACKING SOCKET SERVER;
   WsServer.on('connection', async function (ws, req, client) {
-    try { 
+    try {
+      console.log('server says connected to wss');
       let user;
       let ws_connected_channels;
       let connectionId;

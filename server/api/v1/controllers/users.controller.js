@@ -774,6 +774,12 @@ class UserController {
           error: 'Email and/or Password do not match',
         });
       }
+      if (!isFound.is_verified) {
+        return res.status(404).json({
+          status: 401,
+          error: 'Cannot login until you have verified your account. Please check your email for a verification link sent to you',
+        });
+      }
 
       isFound = isFound.getSafeDataValues();
 

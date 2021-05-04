@@ -109,7 +109,7 @@ if (cluster.isMaster) {
 
   eventEmitter.on('tracking', async function (msg) { 
     try {
-      const updated_customer_trackings = await socketFunction.getCustomerTrackings(msg);
+      const updated_customer_trackings = await socketFunction.updateAndGetCustomerTrackings(msg);
       const customer_updated_trackings_message = JSON.stringify({
         event: 'tracking_update',
         payload: updated_customer_trackings,
@@ -128,6 +128,7 @@ if (cluster.isMaster) {
       return false;
     }
   });
+
   // GEOTRACKING SOCKET SERVER;
   WsServer.on('connection', async function (ws, req, client) {
     try {
@@ -211,6 +212,7 @@ if (cluster.isMaster) {
               let response = await socketFunction.subscribe(msg);
               if (!response) ws.close();
               ws.subscribed_channels = response;
+              return true;
             } catch (err) {
               ws.close();
               return false;

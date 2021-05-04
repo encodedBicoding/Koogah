@@ -127,7 +127,6 @@ class Package {
          delivery_key,
          ...data,
        });
-
        // TODO: this should create a new package creation notification
        // and/or send a push notification to all couriers registered in the package location area.
       

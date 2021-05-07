@@ -7,6 +7,7 @@ import { config } from 'dotenv';
 import sgMail from '@sendgrid/mail';
 import app from '../../../server';
 
+
 config();
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -59,7 +60,7 @@ export const createVerificationMail = function createVerificationMail(user_email
           <h3>Steps to getting approved</h3>
 
           <ul>
-              <li>First you need to <a href='${verify_link}'>verify your email</a></li>
+              <li>First you need to <a href=${verify_link}>verify your email</a></li>
               <li>We would take a few days (usually within 24 hours) to verify your identity</li>
               <li>Once verified, we would place a call to you, inviting you for a chat with us (please come with every means of Identification you have: e.g Driver's License, National Identity Card, Voter's Card, PHCN bill)</li>
               <li>If we deem you certified, you will receive an email from us</li>
@@ -103,7 +104,7 @@ export const createVerificationMail = function createVerificationMail(user_email
        
           <div>
             <p>Click the link below to verify your email</p>
-            <a href='${verify_link}'>verify your email</a>
+            <a href=${verify_link}>verify your email</a>
           </div>
 
       <p>

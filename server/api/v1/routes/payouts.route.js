@@ -9,6 +9,7 @@ const payoutRoutes = express();
 
 const {
   request_payout,
+  payout_summary
 } = Payout;
 
 const {
@@ -23,5 +24,12 @@ payoutRoutes.put(
   check_payout_amount,
   request_payout,
 );
+payoutRoutes.get(
+  '/payout_summary',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCourierLoggedIn,
+  payout_summary,
+)
 
 export default payoutRoutes;

@@ -106,26 +106,53 @@ if (cluster.isMaster) {
       }
     })
   });
-
-  eventEmitter.on('tracking', async function (msg) { 
+  eventEmitter.on('package_approval', async function (msg) {
     try {
-      const updated_customer_trackings = await socketFunction.updateAndGetCustomerTrackings(msg);
-      const customer_updated_trackings_message = JSON.stringify({
-        event: 'tracking_update',
-        payload: updated_customer_trackings,
-      });
-
+      const m = JSON.stringify(msg);
       WsServer.clients.forEach((client) => {
         if (
-          client.subscribed_channels.includes(msg.channel)
-          && client.connectionId === msg.receiverId
-          && client.readyState === WebSocket.OPEN
+          client.connectionId === msg.dispatcherWSId
+          && client.readyState == WebSocket.OPEN
         ) {
-          client.send(customer_updated_trackings_message);
-          }
+          client.send(m);
+        }
       })
-    } catch (error) {
-      return false;
+    } catch (err) {
+      console.log(err);
+      return;
+    }
+  });
+  eventEmitter.on('package_after_pickup_decline', async function (msg) {
+    try {
+      const m = JSON.stringify(msg);
+      WsServer.clients.forEach((client) => {
+        if (
+          client.connectionId === msg.dispatcherWSId
+          && client.readyState == WebSocket.OPEN
+        ) {
+          client.send(m);
+        }
+      })
+    } catch (err) {
+      console.log(err);
+      return;
+    }
+  });
+  eventEmitter.on('unsubscribe', async function (msg) {
+    try {
+      const m = JSON.stringify(msg);
+      WsServer.clients.forEach((client) => {
+        if (
+          client.connectionId === msg.connectionId
+          && client.readyState == WebSocket.OPEN
+        ) {
+          client.send(m);
+        }
+      })
+
+    } catch (err) {
+      console.log(err);
+      return;
     }
   });
 
@@ -210,11 +237,44 @@ if (cluster.isMaster) {
           if (msg.event === 'subscribe') {
             try { 
               let response = await socketFunction.subscribe(msg);
-              if (!response) ws.close();
+              if (!response) return false;
               ws.subscribed_channels = response;
               return true;
             } catch (err) {
-              ws.close();
+              return false;
+            }
+          }
+          if (msg.event === 'unsubscribe') {
+            try {
+              let response = await socketFunction.unsubscribe(msg);
+              if (!response) return false;
+              ws.subscribed_channels = response;
+            } catch (err) {
+              return false;
+            }
+          }
+          if (msg.event === 'subscribe_and_send_tracking_data') {
+            console.log('called here fam');
+            try {
+              let response = await socketFunction.subscribe(msg);
+              if (!response) return false;
+              ws.subscribed_channels = response;
+              const updated_customer_trackings = await socketFunction.updateAndGetCustomerTrackings(msg);
+              const customer_updated_trackings_message = JSON.stringify({
+                event: 'tracking_update',
+                payload: updated_customer_trackings,
+              });
+              WsServer.clients.forEach((client) => {
+                if (
+                  client.subscribed_channels.includes(msg.channel)
+                  && client.connectionId === msg.receiverId
+                  && client.readyState === WebSocket.OPEN
+                ) {
+                  client.send(customer_updated_trackings_message);
+                  }
+              })
+
+            } catch (err) {
               return false;
             }
           }
@@ -236,7 +296,6 @@ if (cluster.isMaster) {
                 }
               });
             } catch (error) {
-              ws.close();
               return false;
             }
           }

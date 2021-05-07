@@ -82,5 +82,43 @@ class Payout {
       });
     });
   }
+  static payout_summary(req, res) {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      const all_payouts = await Payouts.findAll({ where: { dispatcher_email: user.email, status: 'paid' } });
+      let total_payouts = null;
+      let total_paydate = null;
+      let last_payout = null;
+      let last_paydate = null;
+
+      if (all_payouts && all_payouts.length > 0) {
+        total_payouts = all_payouts.reduce((acc, curr) => {
+          acc = acc + Number(curr.amount_requested);
+          return cc;
+        }, 0);
+        total_paydate = all_payouts[0].updated_at;
+        last_payout = all_payouts[all_payouts.length - 1].amount_requested;
+        last_paydate = all_payouts[all_payouts.length - 1].updated_at
+      }
+      return res.status(200).json({
+        status: 200,
+        message: 'payout summary retrieved successfully',
+        data: {
+          all_payouts,
+          has_payouts: all_payouts && all_payouts.length > 0 ? true : false,
+          total_payouts,
+          total_paydate,
+          last_payout,
+          last_paydate
+        }
+      });
+     }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    })
+  }
 }
 export default Payout;

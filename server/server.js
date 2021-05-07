@@ -54,7 +54,7 @@ const apiLimiter = new RateLimit({
     client,
   }),
   windowMs: 15 * 60 * 1000,
-  max: 50,
+  max: 150,
   delayMs: 0,
 });
 

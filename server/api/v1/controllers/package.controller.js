@@ -358,6 +358,11 @@ class Package {
         NEW_NOTIFICATION.message = 'A customer has approved you to dispatch their package. \n Please ensure you meet them at a rather safe zone or outside their doors and/or gate';
         NEW_NOTIFICATION.title = 'New Dispatch Approval';
         NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
+        eventEmitter.emit('package_approval', {
+          dispatcherWSId: `dispatcher:${dispatcher.email}:${dispatcher.id}`,
+          packageId: package_id,
+          event: 'package_dispatch_approval'
+        });
       }
       if (response === 'decline') {
         if (_package.status === 'picked-up') {
@@ -390,6 +395,11 @@ class Package {
                 package_id,
             }
           })
+          eventEmitter.emit('package_after_pickup_decline', {
+            dispatcherWSId: `dispatcher:${dispatcher.email}:${dispatcher.id}`,
+            packageId: package_id,
+            event: 'package_after_pickup_decline'
+          });
         } else {
           // remove the dispatcher from the list of pending dispatchers;
           let pending_dispatchers = _package.pending_dispatchers;
@@ -1038,6 +1048,20 @@ class Package {
         dispatcher_device_notify_obj,
         _deliveryNotification
       );
+      eventEmitter.emit('unsubscribe', {
+        userType: 'customer',
+        userId: customer.id,
+        channel: `customer:${package_id}:${customer.email}`,
+        connectionId: `customer:${customer.email}:${customer.id}`,
+        event: 'unsubscribe_from_package'
+      });
+      eventEmitter.emit('unsubscribe', {
+        userType: 'dispatcher',
+        userId: user.id,
+        channel: `customer:${package_id}:${customer.email}`,
+        connectionId: `dispatcher:${user.email}:${user.id}`,
+        event: 'unsubscribe_from_package'
+      });
       return res.status(200).json({
         status: 200,
         message: 'Package delivered successfully',
@@ -1101,8 +1125,8 @@ class Package {
         });
       }
       if (_package.dispatcher_id !== user.id) {
-        return res.status(404).json({
-          status: 404,
+        return res.status(401).json({
+          status: 401,
           error: 'You are not authorized to view this package details',
         });
       }
@@ -1251,7 +1275,7 @@ class Package {
     const { status } = req.query;
     return Promise.try(async () => {
       let all_packages;
-      if (status == 'all') {
+      if (status === undefined  || status == 'all') {
         all_packages = await Packages.findAll({
           where: {
             customer_id: user.id,
@@ -1365,9 +1389,12 @@ class Package {
   static courier_view_packages_in_marketplace(req, res) {
      return Promise.try( async () => {
        const { user } = req.session;
-       let { from, state, to, dispatch_type } = req.query;
+       let { from, state, to, dispatch_type, offset } = req.query;
        if (!state) {
         state = user.state
+       }
+       if(!offset) {
+         offset = 0;
        }
        if (!from) {
          from = user.town
@@ -1381,6 +1408,8 @@ class Package {
        if (dispatch_type === 'intra-state') {
         if (!to) { 
           all_package_in_marketplace = await Packages.findAll({
+            limit: 5,
+            offset,
             where: {
               [Op.or]: [
                   { from_state: state }, 
@@ -1395,11 +1424,35 @@ class Package {
             },
             attributes: {
               exclude: ['delivery_key']
-            }
+            },
+            include: [
+              {
+                model: Customers,
+                as: 'customer',
+                attributes: [
+                  "id",
+                  'first_name',
+                  'last_name',
+                  'has_business',
+                  'business_name',
+                  'rating',
+                  'profile_image',
+                  'mobile_number_one',
+                  'mobile_number_two',
+                  'address',
+                  'nationality',
+                  'email',
+                  'state',
+                  'town'
+                ]
+              },
+            ],
           })
          }
         else {
           all_package_in_marketplace = await Packages.findAll({
+            limit: 5,
+            offset,
             where: {
               [Op.and]: [
                   { from_state: state }, 
@@ -1415,7 +1468,29 @@ class Package {
             },
             attributes: {
               exclude: ['delivery_key']
-            }
+            },
+            include: [
+              {
+                model: Customers,
+                as: 'customer',
+                attributes: [
+                  "id",
+                  'first_name',
+                  'last_name',
+                  'has_business',
+                  'business_name',
+                  'rating',
+                  'profile_image',
+                  'mobile_number_one',
+                  'mobile_number_two',
+                  'address',
+                  'nationality',
+                  'email',
+                  'state',
+                  'town'
+                ]
+              },
+            ],
           })
         }
        }
@@ -1423,6 +1498,8 @@ class Package {
        if (dispatch_type === 'inter-state') {
          if (!to) {
             all_package_in_marketplace = await Packages.findAll({
+              limit: 5,
+              offset,
               where: {
                 [Op.and]: [
                     { from_state: from }, 
@@ -1435,10 +1512,34 @@ class Package {
               },
               attributes: {
                 exclude: ['delivery_key']
-              }
+              },
+              include: [
+                {
+                  model: Customers,
+                  as: 'customer',
+                  attributes: [
+                    "id",
+                    'first_name',
+                    'last_name',
+                    'has_business',
+                    'business_name',
+                    'rating',
+                    'profile_image',
+                    'mobile_number_one',
+                    'mobile_number_two',
+                    'address',
+                    'nationality',
+                    'email',
+                    'state',
+                    'town'
+                  ]
+                },
+              ],
             })
          } else {
           all_package_in_marketplace = await Packages.findAll({
+            limit: 5,
+            offset,
             where: {
               [Op.and]: [
                   { from_state: from }, 
@@ -1452,7 +1553,29 @@ class Package {
             },
             attributes: {
               exclude: ['delivery_key']
-            }
+            },
+            include: [
+              {
+                model: Customers,
+                as: 'customer',
+                attributes: [
+                  "id",
+                  'first_name',
+                  'last_name',
+                  'has_business',
+                  'business_name',
+                  'rating',
+                  'profile_image',
+                  'mobile_number_one',
+                  'mobile_number_two',
+                  'address',
+                  'nationality',
+                  'email',
+                  'state',
+                  'town'
+                ]
+              },
+            ],
           })
          }
        }
@@ -1460,6 +1583,8 @@ class Package {
        if (dispatch_type === 'international') {
          if(!to) {
            all_package_in_marketplace = await Packages.findAll({
+            limit: 5,
+            offset,
              where: {
               [Op.and]: [
                   { from_country: from }, 
@@ -1472,10 +1597,34 @@ class Package {
              },
              attributes: {
               exclude: ['delivery_key']
-            }
+             },
+             include: [
+              {
+                model: Customers,
+                as: 'customer',
+                attributes: [
+                  "id",
+                  'first_name',
+                  'last_name',
+                  'has_business',
+                  'business_name',
+                  'rating',
+                  'profile_image',
+                  'mobile_number_one',
+                  'mobile_number_two',
+                  'address',
+                  'nationality',
+                  'email',
+                  'state',
+                  'town'
+                ]
+              },
+            ],
            })
          } else {
           all_package_in_marketplace = await Packages.findAll({
+            limit: 5,
+            offset,
             where: {
               [Op.and]: [
                   { from_country: from }, 
@@ -1489,7 +1638,29 @@ class Package {
             },
             attributes: {
               exclude: ['delivery_key']
-            }
+            },
+            include: [
+              {
+                model: Customers,
+                as: 'customer',
+                attributes: [
+                  "id",
+                  'first_name',
+                  'last_name',
+                  'has_business',
+                  'business_name',
+                  'rating',
+                  'profile_image',
+                  'mobile_number_one',
+                  'mobile_number_two',
+                  'address',
+                  'nationality',
+                  'email',
+                  'state',
+                  'town'
+                ]
+              },
+            ],
           })
          }
        }
@@ -1737,7 +1908,7 @@ class Package {
       NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
 
       // create push notifications.
-
+      
       // create packages tracking.
       const new_package_tracking = {};
       new_package_tracking.package_id = package_id;
@@ -1798,15 +1969,6 @@ class Package {
         dispatcher_lng,
         customer_id: _package.customer_id,
       }
-      eventEmitter.emit('tracking', {
-        dispatcher_lat: dispatcher_lat,
-        dispatcher_lng: dispatcher_lng,
-        package_id: package_id,
-        customer_id: _package.customer_id,
-        dispatcher_id: _package.dispatcher_id,
-        channel: `customer:${_package.package_id}:${customer.email}`,
-        receiverId: `customer:${customer.email}:${customer.id}`,
-      });
 
       return res.status(200).json({
         status: 200,

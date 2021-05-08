@@ -46,7 +46,12 @@ export default async function Notifier(
           notification_id: notification.id
         }
       );
-      PushNotify.sendMessage(notification_message, device_token);
+      if (type === 'customer') {
+        PushNotify.sendMessageCustomer(notification_message, device_token);
+      } else {
+        PushNotify.sendMessageDispatcher(notification_message, device_token);
+      }
+     
     }
 
   } catch (error) { 

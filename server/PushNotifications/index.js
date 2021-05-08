@@ -6,10 +6,14 @@ config();
 
 class PushNotification {
   constructor() {
-    this._sender = new gcm.Sender(process.env.FCM_SERVER_KEY);
+    this._senderCustomer = new gcm.Sender(process.env.FCM_SERVER_KEY_CUSTOMER);
+    this._senderDispatcher = new gcm.Sender(process.env.FCM_SERVER_KEY_DISPATCHER)
   }
-  get sender() {
-    return this._sender;
+  get senderCustomer() {
+    return this._senderCustomer;
+  }
+  get _senderDispatcher() {
+    return this._senderDispatcher;
   }
   createMessage(msg, data) {
     const message = new gcm.Message({
@@ -20,8 +24,17 @@ class PushNotification {
     return message;
   }
 
-  sendMessage(msg, tokens) {
-    this.sender.send(msg, { registrationTokens: [tokens] }, function (err, result) { 
+  sendMessageCustomer(msg, tokens) {
+    this.senderCustomer.send(msg, { registrationTokens: [tokens] }, function (err, result) { 
+      if (err) {
+        throw new Error(err);
+      } else {
+        return result
+      }
+    });
+  }
+  sendMessageDispatcher(msg, tokens) {
+    this._senderDispatcher.send(msg, { registrationTokens: [tokens] }, function (err, result) { 
       if (err) {
         throw new Error(err);
       } else {

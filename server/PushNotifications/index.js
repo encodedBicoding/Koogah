@@ -12,7 +12,7 @@ class PushNotification {
   get senderCustomer() {
     return this._senderCustomer;
   }
-  get _senderDispatcher() {
+  get senderDispatcher() {
     return this._senderDispatcher;
   }
   createMessage(msg, data) {
@@ -34,7 +34,7 @@ class PushNotification {
     });
   }
   sendMessageDispatcher(msg, tokens) {
-    this._senderDispatcher.send(msg, { registrationTokens: [tokens] }, function (err, result) { 
+    this.senderDispatcher.send(msg, { registrationTokens: [tokens] }, function (err, result) { 
       if (err) {
         throw new Error(err);
       } else {

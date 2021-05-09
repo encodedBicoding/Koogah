@@ -645,7 +645,7 @@ class Package {
               error: 'Please top-up your account to approve this new weight change'
             })
           }
-          // remove the previous delivery cost from the allocated virual balance
+          // remove the previous delivery cost from the allocated virtual balance
           // then compare with the user current virtual balance against the new delivery price
           let updated_V_A_B = 0;
           if (user.virtual_allocated_balance > 0) {
@@ -891,8 +891,8 @@ class Package {
         let customer_remaining_kc_balance = Math.floor(Number(customer_koogah_coin_balance) - Number(_package.delivery_price));
         customer_remaining_kc_balance = Math.floor(customer_remaining_kc_balance / KOOGAH_COIN_WORTH);
 
-        let customer_remaining_alloc_kc_balance = Math.floor(Number(customer_allocated_kc_balance) - Number(_package.delivery_price));
-        customer_remaining_alloc_kc_balance = Math.floor(customer_remaining_alloc_kc_balance / KOOGAH_COIN_WORTH);
+        let customer_remaining_alloc_kc_balance = Number(customer_allocated_kc_balance) - Number(_package.delivery_price);
+        customer_remaining_alloc_kc_balance = Number(customer_remaining_alloc_kc_balance) / KOOGAH_COIN_WORTH;
 
         await Customers.update({
           koogah_coin: customer_remaining_kc_balance,

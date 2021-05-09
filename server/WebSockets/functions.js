@@ -114,12 +114,11 @@ class WebSocketFunctions {
 
   async updateAndGetCustomerTrackings(msg) {
     try {
+      console.log(msg);
       const currentTracking = await PackagesTrackings.findOne({
         where: {
-          [Op.and]: [
-            { package_id: msg.package_id },
-            { customer_id: msg.customer_id },
-            { dispatcher_id: msg.dispatcher_id }]
+          package_id: msg.package_id,
+          customer_id: msg.customer_id
         }
       });
       if (!currentTracking) {
@@ -129,13 +128,7 @@ class WebSocketFunctions {
         dispatcher_lat: msg.dispatcher_lat,
         dispatcher_lng: msg.dispatcher_lng
       }, {
-        where: {
-          [Op.and]: [
-            { package_id: msg.package_id },
-            { customer_id: msg.customer_id },
-            { dispatcher_id: msg.dispatcher_id }
-          ]
-        }
+        where: { package_id: msg.package_id, customer_id: msg.customer_id }
       });
 
       const all_trackings = await PackagesTrackings.findAll({

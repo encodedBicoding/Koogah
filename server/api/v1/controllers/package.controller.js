@@ -1362,6 +1362,31 @@ class Package {
             dispatcher_id: user.id,
             status,
           },
+          attributes: {
+            exclude: ['delivery_key']
+          },
+          include: [
+            {
+              model: Customers,
+              as: 'customer',
+              attributes: [
+                "id",
+                'first_name',
+                'last_name',
+                'has_business',
+                'business_name',
+                'rating',
+                'profile_image',
+                'mobile_number_one',
+                'mobile_number_two',
+                'address',
+                'nationality',
+                'email',
+                'state',
+                'town'
+              ]
+            },
+          ],
         });
       }
       return res.status(200).json({

@@ -114,7 +114,6 @@ class WebSocketFunctions {
 
   async updateAndGetCustomerTrackings(msg) {
     try {
-      console.log(msg);
       const currentTracking = await PackagesTrackings.findOne({
         where: {
           package_id: msg.package_id,

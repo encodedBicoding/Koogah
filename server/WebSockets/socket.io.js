@@ -254,7 +254,6 @@ if (cluster.isMaster) {
             }
           }
           if (msg.event === 'subscribe_and_send_tracking_data') {
-            console.log('called here fam');
             try {
               let response = await socketFunction.subscribe(msg);
               if (!response) return false;

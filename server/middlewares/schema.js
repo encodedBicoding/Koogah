@@ -57,8 +57,8 @@ class Schema {
 
   static customerSignupSchema() {
     return Joi.object({
-      first_name: Joi.string().min(3).max(30).required(),
-      last_name: Joi.string().min(3).max(30).required(),
+      first_name: Joi.string().min(2).max(30).required(),
+      last_name: Joi.string().min(2).max(30).required(),
       country_code: Joi.string().required(),
       email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
       password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),

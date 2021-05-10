@@ -2086,12 +2086,24 @@ class Package {
         })
       }
 
+      // if package can be deleted...
+      // ensure it's removal from ws connected channel;
+
+      // package channel id;
+      let user_ws_channels = user.ws_connected_channels;
+      const channel_id = `customer:${_package.package_id}:${user.email}`;
+      const p_idx = user_ws_channels.findIndex((c) => c === channel_id);
+      if (p_idx !== -1) {
+        user_ws_channels.splice(p_idx, 1);
+      }
+
       if (_package.status === 'not-picked') {
         const delivery_price = _package.delivery_price;
         if (_package.payment_mode === 'virtual_balance') {
           const updated_V_A_B = Number(user.virtual_allocated_balance) - Number(delivery_price);
           await Customers.update({
-            virtual_allocated_balance: updated_V_A_B
+            virtual_allocated_balance: updated_V_A_B,
+            ws_connected_channels: user_ws_channels
           }, {
             where: {
               id: user.id
@@ -2105,7 +2117,8 @@ class Package {
           updated_V_A_KC_B = updated_V_A_KC_B / KOOGAH_COIN_WORTH;
 
           await Customers.update({
-            virtual_allocated_kc_balance: updated_V_A_KC_B
+            virtual_allocated_kc_balance: updated_V_A_KC_B,
+            ws_connected_channels: user_ws_channels
           }, {
               where: {
               id: user.id

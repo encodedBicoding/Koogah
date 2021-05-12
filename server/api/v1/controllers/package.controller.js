@@ -542,7 +542,7 @@ class Package {
           is_viewable: true,
           type: 'customer',
           desc: 'CD006',
-          message: `The approved dispatcher for package with id: ${package_id} has requwated a change of weight for this package`,
+          message: `The approved dispatcher for package with id: ${package_id} has requested a change of weight for this package`,
           title: 'New weight change',
           action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/package/owner/view/${package_id}` : `http://localhost:4000/v1/package/owner/view/${package_id}`, // ensure customer is logged in
         };

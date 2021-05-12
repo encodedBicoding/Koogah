@@ -653,6 +653,7 @@ class UserController {
           verify_token: null,
           is_verified: true,
           is_active: true,
+          koogah_coin: 10,
         },
         {
           where: {

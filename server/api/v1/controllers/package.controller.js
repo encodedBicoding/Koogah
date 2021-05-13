@@ -499,7 +499,7 @@ class Package {
       if (_package.dispatcher_id !== user.id) {
         return res.status(401).json({
           status: 401,
-          message: 'You are not allowed to perform this action',
+          error: 'You are not allowed to perform this action',
         });
       }
       const new_delivery_price = calc_delivery_price(
@@ -1835,7 +1835,7 @@ class Package {
       });
       if (!_package) return res.status(404).json({
         status: 404,
-        message: 'Oops, seems this package doesn\'t exist anymore'
+        error: 'Oops, seems this package doesn\'t exist anymore'
       });
 
       const pending_dispatchers = [];
@@ -1897,13 +1897,13 @@ class Package {
 
       if(!_package) return res.status(400).json({
         status: 400,
-        message: 'Oops, seems package doesn\'t exist anymore'
+        error: 'Oops, seems package doesn\'t exist anymore'
       });
 
       if (_package.dispatcher_id !== user.id) {
         return res.status(400).json({
           status: 400,
-          message: 'Sorry, cannot dispatch package you didn\'t pick up'
+          error: 'Sorry, cannot dispatch package you didn\'t pick up'
         })
       }
 
@@ -1916,7 +1916,7 @@ class Package {
       if (!customer) {
         return res.status(400).json({
           status: 400,
-          message: 'Oops, seems the customer doesn\'t exist anymore'
+          error: 'Oops, seems the customer doesn\'t exist anymore'
         })
       }
       const result = await geoPackageDestination(_package);

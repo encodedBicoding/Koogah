@@ -449,7 +449,7 @@ class UserController {
     if (isFound) {
       return res.status(400).json({
         status: 400,
-        message: 'A user with the given email already exists',
+        error: 'A user with the given email already exists',
       });
     }
     const VERIFY_TOKEN = await jwt.sign({
@@ -1335,8 +1335,7 @@ class UserController {
       const bcrypt = require('bcrypt');
       const { user } = req.session;
       const { old_password, new_password } = req.body;
-      console.log('got hre');
-      console.log(req.body);
+  
       // confirm the old password
       let main_user;
       if (user.is_courier) { 

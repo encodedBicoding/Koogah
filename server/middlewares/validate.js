@@ -36,6 +36,7 @@ const {
   edit_package_schema,
   start_dispatch_schema,
   change_password_schema,
+  courierApprovalSchema,
 } = Schema;
 
 /**
@@ -62,6 +63,24 @@ class Validate {
     return next();
   }
 
+  /**
+   * @method courierApproveAccount
+   * @description This method validates the input from a Courier on account approval
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+   static courierApproveAccount(req, res, next) {
+    const isvalid = courierApprovalSchema().validate(req.body);
+    if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      });
+    }
+    return next();
+  }
 
   /**
    * @method validateCourierMobileCode

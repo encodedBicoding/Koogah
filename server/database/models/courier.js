@@ -165,9 +165,10 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: true,
   });
 
-  Courier.beforeCreate(async (courier) => {
-    // eslint-disable-next-line require-atomic-updates
-    courier.password = await courier.encryptPassword();
+  Courier.beforeUpdate(async (courier) => {
+    if (courier.password) {
+      courier.password = await courier.encryptPassword();
+    }
   });
 
   Courier.prototype.encryptPassword = async function encryptPassword() {

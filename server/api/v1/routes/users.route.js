@@ -31,6 +31,7 @@ const {
 
 const {
   courierSignup,
+  courierApproveAccount,
   validateMobileCode,
   customerSignup,
   check_sign_in,
@@ -42,7 +43,7 @@ const {
   check_password_reset_request,
   check_reset_password,
   check_refresh_token,
-  check_change_password
+  check_change_password,
 } = Validate;
 
 const userRoute = express();
@@ -85,6 +86,7 @@ userRoute.post(
 
 userRoute.post(
   '/approved/welcome',
+  courierApproveAccount,
   signUpCourier_StepFour,
 );
 

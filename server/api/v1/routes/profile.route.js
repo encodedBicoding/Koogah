@@ -81,7 +81,6 @@ profileRoutes.put(
 );
 profileRoutes.put(
   '/courier/upload/single',
-  passport.authenticate('bearer', { session: false }),
   singleMulter,
   single_upload,
 );

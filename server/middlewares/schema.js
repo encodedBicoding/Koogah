@@ -21,19 +21,34 @@ class Schema {
       last_name: Joi.string().trim().min(2).max(30)
         .required(),
       email: Joi.string().trim().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-      password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
-      repeat_password: Joi.ref('password'),
       mobile_number: Joi.string().min(10).max(11).required(),
       identification_number: Joi.string().required(),
       sex: Joi.string().valid('M', 'F').required(),
       bvn: Joi.number().integer().required(),
       nationality: Joi.string().required(),
+      country_code: Joi.string().required(),
       state: Joi.string().required(),
       town: Joi.string().required(),
       address: Joi.string().required(),
       profile_image: Joi.string(),
     });
   }
+
+  /**
+   * @method courierApprovalSchema
+   * @description This method return Joi object which delivers a schema when a courier tries to approve their account
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static courierApprovalSchema() {
+    return Joi.object({
+      password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
+      bank_name: Joi.string().required(),
+      account_number: Joi.string().required(),
+    });
+  }
+
 
   /**
    * @method courierMobileCodeSchema

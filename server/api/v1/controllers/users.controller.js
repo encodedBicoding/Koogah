@@ -48,36 +48,43 @@ class UserController {
    */
   static async signUpCourier_StepOne(req, res) {
     return Promise.try(async () => {
-      const {
+      let {
         first_name,
         last_name,
         email,
-        password,
         mobile_number,
         sex,
         bvn,
         nationality,
         identification_number,
+        country_code,
         state,
         town,
         address,
       } = req.body;
       const { ref, fromApp } = req.query;
 
+      if (country_code === "+234") {
+        var firstDigit = mobile_number[0].toString();
+        if (firstDigit === '0') {
+          mobile_number = mobile_number.substring(1, mobile_number_one.length);
+         }
+      }
+
       const VERIFY_TOKEN = await jwt.sign({
         email,
         bvn,
         first_name,
-        mobile_number,
+        mobile_number: `${country_code}${mobile_number}`,
       });
       // link hint: https://api.koogah.com
       // this should be the frontend link based on the registering user
       // not the SERVER_APP_URL
       let VERIFY_LINK = '';
       if (fromApp && fromApp === 'web') {
-        VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${LANDING_PAGE_APP_HOST}/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER`;
+        VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${LANDING_PAGE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=COURIER`;
       } else {
-        VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${DISPATCHER_MOBILE_APP_HOST}/v1/user/verify/email?key=${VERIFY_TOKEN}&code=COURIER`;
+        VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${DISPATCHER_MOBILE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=COURIER`;
       }
   
       const USR_OBJ = {
@@ -91,7 +98,6 @@ class UserController {
         first_name,
         last_name,
         email,
-        password,
         mobile_number,
         sex,
         bvn,
@@ -176,7 +182,7 @@ class UserController {
 
       const SMS_MESSAGE = `Your verification code is: \n${MOBILE_VERIFY_CODE}`;
   
-      const MOBILE_REDIRECT_LINK = `https://mobile_redirect_link?key=${key}&live=${!!key}`;
+      const MOBILE_REDIRECT_LINK = `https://${process.env.SERVER_APP_URL}/verify/email?key=${key}&live=${!!key}`;
   
       // this function should redirect the user to the Mobile App page for Couriers
       // That contains the form so they can insert the code sent to their mobile phones
@@ -262,7 +268,7 @@ class UserController {
       return res.status(400).json({
         status: 400,
         error: 'The code you supplied do not match the code you received. Please try again or resend code',
-        resend_link:`${isProduction ? 'https' : 'http'}://${req.headers.host}/v1/user/verify/email?key=${key}&code=COURIER`,
+        resend_link:`${isProduction ? 'https' : 'http'}://${process.env.SERVER_APP_URL}/verify/email?key=${key}&code=COURIER`,
       });
     }
 
@@ -277,7 +283,7 @@ class UserController {
     };
 
     const APPROVAL_TOKEN = await jwt.sign(payload, '9000h');
-    const APPROVAL_LINK = (isProduction) ? `${proces.env.SERVER_APP_URL}/user/approved/welcome?key=${APPROVAL_TOKEN}&code=APPROVED` : `http://localhost:4000/v1/user/approved/welcome?key=${APPROVAL_TOKEN}&code=APPROVED`;
+    const APPROVAL_LINK = (isProduction) ? `https://${proces.env.DISPATCHER_MOBILE_APP_HOST}/approval?key=${APPROVAL_TOKEN}&code=APPROVED` : `http://localhost:4000/approval?key=${APPROVAL_TOKEN}&code=APPROVED`;
 
     const AWAITING_USER_OBJ = {
       first_name: payload.first_name,
@@ -332,6 +338,7 @@ class UserController {
    */
 
   static async signUpCourier_StepFour(req, res) {
+    const { password, bank_name, account_number } = req.body;
     const { key } = req.query;
     // make a cleanup of this scenerio
     const payload = await jwt.verify(key);
@@ -369,7 +376,9 @@ class UserController {
           is_approved: true,
           approval_code: null,
           is_active: true,
-
+          password,
+          account_number,
+          bank_name
         },
         {
           where: {

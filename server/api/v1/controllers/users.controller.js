@@ -82,9 +82,9 @@ class UserController {
       // not the SERVER_APP_URL
       let VERIFY_LINK = '';
       if (fromApp && fromApp === 'web') {
-        VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${LANDING_PAGE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=COURIER`;
+        VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${process.env.LANDING_PAGE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=COURIER`;
       } else {
-        VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${DISPATCHER_MOBILE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=COURIER`;
+        VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${process.env.DISPATCHER_MOBILE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=COURIER`;
       }
   
       const USR_OBJ = {
@@ -283,7 +283,7 @@ class UserController {
     };
 
     const APPROVAL_TOKEN = await jwt.sign(payload, '9000h');
-    const APPROVAL_LINK = (isProduction) ? `https://${proces.env.DISPATCHER_MOBILE_APP_HOST}/approval?key=${APPROVAL_TOKEN}&code=APPROVED` : `http://localhost:4000/approval?key=${APPROVAL_TOKEN}&code=APPROVED`;
+    const APPROVAL_LINK = (isProduction) ? `https://${process.env.DISPATCHER_MOBILE_APP_HOST}/approval?key=${APPROVAL_TOKEN}&code=APPROVED` : `http://localhost:4000/approval?key=${APPROVAL_TOKEN}&code=APPROVED`;
 
     const AWAITING_USER_OBJ = {
       first_name: payload.first_name,

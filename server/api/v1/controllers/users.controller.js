@@ -67,7 +67,7 @@ class UserController {
       if (country_code === "+234") {
         var firstDigit = mobile_number[0].toString();
         if (firstDigit === '0') {
-          mobile_number = mobile_number.substring(1, mobile_number_one.length);
+          mobile_number = mobile_number.substring(1, mobile_number.length);
          }
       }
 

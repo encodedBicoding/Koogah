@@ -16,9 +16,9 @@ class Schema {
    */
   static courierSignupSchema() {
     return Joi.object({
-      first_name: Joi.string().trim().min(3).max(30)
+      first_name: Joi.string().trim().min(2).max(30)
         .required(),
-      last_name: Joi.string().trim().min(3).max(30)
+      last_name: Joi.string().trim().min(2).max(30)
         .required(),
       email: Joi.string().trim().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
       password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),

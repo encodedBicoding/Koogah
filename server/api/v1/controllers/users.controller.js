@@ -56,6 +56,7 @@ class UserController {
         bvn,
         nationality,
         identification_number,
+        profile_image,
         country_code,
         state,
         town,
@@ -106,6 +107,9 @@ class UserController {
         town,
         address,
         identification_number,
+        rating: 1.0,
+        no_of_raters: 1,
+        profile_image,
         referal_id: REFERAL_ID,
         refered_by: ref ? ref : null,
       };

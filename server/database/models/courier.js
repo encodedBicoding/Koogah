@@ -166,9 +166,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Courier.beforeUpdate(async (courier) => {
-    if (courier.password) {
-      courier.password = await courier.encryptPassword();
-    }
+    courier.password = await courier.encryptPassword();
   });
 
   Courier.prototype.encryptPassword = async function encryptPassword() {

@@ -417,7 +417,7 @@ class Package {
           });
         }
         NEW_NOTIFICATION.email = dispatcher.email;
-        NEW_NOTIFICATION.desc='CD005';
+        NEW_NOTIFICATION.desc='CD011';
         NEW_NOTIFICATION.message = `A customer has declined your request to dispatch their package with id: ${package_id}.`;
         NEW_NOTIFICATION.title = 'New Dispatch Decline';
         NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in

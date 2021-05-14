@@ -18,7 +18,7 @@ class PushNotification {
   createMessage(msg, data) {
     const message = new gcm.Message({
       priority: 'high',
-      data: {...data }
+      data: { ...data },
     });
     message.addNotification(msg);
     return message;

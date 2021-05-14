@@ -202,7 +202,7 @@ export const createApprovalMailToCourier = function sendApprovalMailToCourier(us
                 <td>
                   <div>
                       <h2>Congratulations ${first_name} ${last_name}</h2>
-                      <p>You have been approved as a dispatcher on the Koogah platform. You may now login to your account to begin dispatching goods and/or services for customers within the application.</p>
+                      <p>You have been approved as a dispatcher on the Koogah platform. You may now login to your account to begin dispatching goods and/or packages for customers within the Koogah platform.</p>
                       <p>Always remember, the better ratings you get, the higher your chances of getting approval by customers to dispatch for them. We honestly hope you get the most from this platform. Welcome once more.</p>
                   </div>
                   <section style='margin-top: 10%'>

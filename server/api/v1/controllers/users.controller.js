@@ -28,9 +28,6 @@ import sendMail, {
 import client from '../../../redis/redis.client';
 import generate_ref from '../helpers/ref.id';
 
-const bcrypt = require('bcrypt');
-
-
 const { Op } = Sequelize;
 
 config();
@@ -1344,7 +1341,6 @@ class UserController {
 
   static change_password(req, res) { 
     return Promise.try(async () => {
-      const bcrypt = require('bcrypt');
       const { user } = req.session;
       const { old_password, new_password } = req.body;
   

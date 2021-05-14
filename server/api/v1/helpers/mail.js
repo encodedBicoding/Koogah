@@ -44,7 +44,7 @@ export const createVerificationMail = function createVerificationMail(user_email
         </section>
         <section class='email_body'>
           <p style='font-size: 15px;'>Hi ${first_name} ${last_name},</p>
-          <p>Thank you for joining our community, we hope you achieve your aim, which we believe is to earn while you dispatch goods and/or packages for customer within the Koogah community</p>
+          <p>Thank you for joining our community, we hope you achieve your aim, which we believe is to earn while you dispatch goods and/or packages for customers within the Koogah community</p>
           <p>We are working on making this community as trustworthy as possible and we encourage you (our Dispatcher) to make this goal achievable,</p>
           <p>as we look forward to helping you earn on this platform</p>
 

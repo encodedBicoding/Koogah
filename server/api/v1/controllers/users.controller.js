@@ -28,6 +28,8 @@ import sendMail, {
 import client from '../../../redis/redis.client';
 import generate_ref from '../helpers/ref.id';
 
+const bcrypt = require('bcrypt');
+
 
 const { Op } = Sequelize;
 
@@ -371,12 +373,13 @@ class UserController {
     }
 
     return Promise.try(async () => {
+      const hashed_password = await bcrypt.hash(password, 8);
       await Couriers.update(
         {
           is_approved: true,
           approval_code: null,
           is_active: true,
-          password,
+          password: hashed_password,
           account_number,
           bank_name
         },

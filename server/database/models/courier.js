@@ -165,10 +165,6 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: true,
   });
 
-  Courier.beforeUpdate(async (courier) => {
-    courier.password = await courier.encryptPassword();
-  });
-
   Courier.prototype.encryptPassword = async function encryptPassword() {
     const saltRounds = 8;
     return bcrypt.hash(this.password, saltRounds);

@@ -208,7 +208,7 @@ class UserController {
         
       return res.status(200).json({
         status: 200,
-        message: 'Please insert the verification code sent to the mobile number you provided on registeration',
+        message: 'Please insert the verification code sent to the mobile number you provided on registration',
         data: {
           mobile_link: MOBILE_REDIRECT_LINK
         },
@@ -579,7 +579,7 @@ class UserController {
 
     return res.status(200).json({
       status: 200,
-      message: 'Please insert the verification code sent to the mobile number you provided on registeration',
+      message: 'Please insert the verification code sent to the mobile number you provided on registration',
       data: {
         mobile_link:  MOBILE_REDIRECT_LINK
       },

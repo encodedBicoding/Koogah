@@ -44,7 +44,7 @@ export const createVerificationMail = function createVerificationMail(user_email
         </section>
         <section class='email_body'>
           <p style='font-size: 15px;'>Hi ${first_name} ${last_name},</p>
-          <p>Thank you for joining our community, we hope you achieve your aim, which we believe is to earn while you dispatch goods and/or services for people within the community</p>
+          <p>Thank you for joining our community, we hope you achieve your aim, which we believe is to earn while you dispatch goods and/or packages for customers within the Koogah community</p>
           <p>We are working on making this community as trustworthy as possible and we encourage you (our Dispatcher) to make this goal achievable,</p>
           <p>as we look forward to helping you earn on this platform</p>
 
@@ -52,8 +52,8 @@ export const createVerificationMail = function createVerificationMail(user_email
             <span id='note_head'>
               Note: 
             </span>
-            <span id='note_body'>
-                You would not be able to access your account until you are approved by our team.
+            <span id='note_body' style="color: black;">
+                You would not be able to access your account until you are approved by our team
             </span> 
           </p>
 
@@ -202,7 +202,7 @@ export const createApprovalMailToCourier = function sendApprovalMailToCourier(us
                 <td>
                   <div>
                       <h2>Congratulations ${first_name} ${last_name}</h2>
-                      <p>You have been approved as a dispatcher on the Koogah platform. You may now login to your account to begin dispatching goods and/or services for customers within the application.</p>
+                      <p>You have been approved as a dispatcher on the Koogah platform. You may now login to your account to begin dispatching goods and/or packages for customers within the Koogah platform.</p>
                       <p>Always remember, the better ratings you get, the higher your chances of getting approval by customers to dispatch for them. We honestly hope you get the most from this platform. Welcome once more.</p>
                   </div>
                   <section style='margin-top: 10%'>

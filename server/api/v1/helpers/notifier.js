@@ -43,7 +43,8 @@ export default async function Notifier(
       const notification_message = PushNotify.createMessage(
         device_notify_obj,
         {
-          notification_id: notification.id
+          notification_id: notification.id,
+          desc: notification.desc,
         }
       );
       if (type === 'customer') {

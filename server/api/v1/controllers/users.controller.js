@@ -56,6 +56,7 @@ class UserController {
         bvn,
         nationality,
         identification_number,
+        profile_image,
         country_code,
         state,
         town,
@@ -106,6 +107,7 @@ class UserController {
         town,
         address,
         identification_number,
+        profile_image,
         referal_id: REFERAL_ID,
         refered_by: ref ? ref : null,
       };
@@ -339,7 +341,7 @@ class UserController {
   static async signUpCourier_StepFour(req, res) {
     const { password, bank_name, account_number } = req.body;
     const { key } = req.query;
-    // make a cleanup of this scenerio
+    // make a cleanup of this scenario
     const payload = await jwt.verify(key);
 
     if (!payload) {
@@ -378,7 +380,9 @@ class UserController {
           is_active: true,
           password: hashed_password,
           account_number,
-          bank_name
+          bank_name,
+          rating: 1.0,
+          no_of_raters: 1,
         },
         {
           where: {

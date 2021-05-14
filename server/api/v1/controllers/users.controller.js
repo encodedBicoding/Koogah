@@ -414,7 +414,7 @@ class UserController {
 
       return res.status(200).json({
         status: 200,
-        message: 'Account approved successfully',
+        message: 'Account approved successfully, Proceed to login',
         data: user,
       });
     }).catch((err) => {

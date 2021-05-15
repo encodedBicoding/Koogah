@@ -1757,12 +1757,18 @@ class Package {
         }
       })
 
+      // remove user from the package pending dispatchers.
+      let pending_dispatchers = isFound.pending_dispatchers;
+      const idx = pending_dispatchers.findIndex((d) => d === user.id);
+      pending_dispatchers.splice(idx, 1);
+
       await Packages.update({
         dispatcher_id: null,
         status: 'not-picked',
         pickup_time: null,
         pickup_decline_cause: decline_cause,
-        pending_delivery_price: null
+        pending_delivery_price: null,
+        pending_dispatchers,
       }, {
         where: {
         package_id

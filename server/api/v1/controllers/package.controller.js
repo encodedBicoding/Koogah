@@ -998,7 +998,7 @@ class Package {
         desc: 'CD003',
         entity_id: null,
         is_viewable: true,
-        message: `You have been credited with ${_package.delivery_price} for delivering a package with id: ${package_id}. \nService charge of ${fees} was deducted, \nYour total payable fee is ${total_amount_payable}`,
+        message: `You have successfully delivered package with ID: ${package_id}, and you have been credited.`,
         title: 'New payment for delivery',
         action_link: (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`,
       };

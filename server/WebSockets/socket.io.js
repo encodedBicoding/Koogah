@@ -244,7 +244,7 @@ if (cluster.isMaster) {
               return false;
             }
           }
-          if (msg.event === 'unsubscribe') {
+          if (msg.event === 'unsubscribe_from_package') {
             try {
               let response = await socketFunction.unsubscribe(msg);
               if (!response) return false;

@@ -130,6 +130,7 @@ app.on('error', (error) => {
 });
 
 
+
 process.on('uncaughtException', (error) => {
   log.error('uncaughtException ', error.message);
   log.error(error.stack);

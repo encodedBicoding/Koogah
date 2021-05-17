@@ -1,6 +1,6 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable camelcase */
-import Sequelize from 'sequelize';
+import Sequelize, { QueryTypes } from 'sequelize';
 import distanceApi from 'google-distance-matrix';
 import log from 'fancy-log';
 import uuid from 'uuid/v4';
@@ -16,7 +16,8 @@ import {
   Customers,
   PackagesTrackings,
   Transactions,
-  HistoryTransactions
+  HistoryTransactions,
+  sequelize
 } from '../../../database/models';
 
 import geoPackageDestination from '../helpers/geo-package-destination';
@@ -1429,24 +1430,33 @@ class Package {
        if (!dispatch_type) {
          dispatch_type = 'intra-state'
        }
-
        if (dispatch_type === 'intra-state') {
         if (!to) { 
           all_package_in_marketplace = await Packages.findAll({
             limit: 5,
             offset,
-            where: {
-              [Op.or]: [
-                  { from_state: state }, 
-                  { to_state: state },
-                  { from_town: from },
+            order: [
+              [sequelize.fn('strpos', sequelize.fn('lower', sequelize.col('from_town')), from), 'DESC'],
+              ['createdAt', 'DESC'],
+              
+            ],
+            where:  {
+                [Op.and]: [
+                  {
+                    from_state: {
+                      [Op.iLike]: `%${state}%`,
+                    },
+                    to_state: {
+                      [Op.iLike]: `%${state}%`,
+                    },
+                  },
                   { type_of_dispatch: dispatch_type },
-                  { dispatcher_id: null}
-              ],
-              status: {
-                [Op.eq]: 'not-picked'
-              }
-            },
+                   { dispatcher_id: null}
+                ],
+                status: {
+                  [Op.eq]: 'not-picked'
+                }
+              },
             attributes: {
               exclude: ['delivery_key']
             },
@@ -1478,12 +1488,31 @@ class Package {
           all_package_in_marketplace = await Packages.findAll({
             limit: 5,
             offset,
+            order: [
+              ['createdAt', 'DESC']
+            ],
             where: {
               [Op.and]: [
-                  { from_state: state }, 
-                  { to_state: state },
-                  { from_town: from },
-                  { to_town: to},
+                  { 
+                    from_state: {
+                    [Op.iLike]: `%${state}%`
+                  } 
+                  }, 
+                   {
+                     to_state: {
+                      [Op.iLike]: `%${state}%`,
+                    },
+                   },
+                  { 
+                    from_town: {
+                      [Op.iLike]: `%${from}%`
+                    }
+                  },
+                  { 
+                    to_town: {
+                      [Op.iLike]: `%${to}%`
+                    }
+                  },
                   { type_of_dispatch: dispatch_type },
                   { dispatcher_id: null}
               ],
@@ -1525,9 +1554,16 @@ class Package {
             all_package_in_marketplace = await Packages.findAll({
               limit: 5,
               offset,
+              order: [
+                ['createdAt', 'DESC']
+              ],
               where: {
                 [Op.and]: [
-                    { from_state: from }, 
+                  { 
+                    from_state: {
+                    [Op.iLike]: `%${from}%`
+                    } 
+                  }, 
                     { type_of_dispatch: dispatch_type },
                     { dispatcher_id: null}
                 ],
@@ -1565,10 +1601,21 @@ class Package {
           all_package_in_marketplace = await Packages.findAll({
             limit: 5,
             offset,
+            order: [
+              ['createdAt', 'DESC']
+            ],
             where: {
               [Op.and]: [
-                  { from_state: from }, 
-                  { to_state: to },
+                  { 
+                    from_state: {
+                    [Op.iLike]: `%${state}%`
+                  } 
+                  },  
+                  { 
+                    to_state: {
+                      [Op.iLike]: `%${to}%`
+                    }
+                  },
                   { type_of_dispatch: dispatch_type },
                   { dispatcher_id: null}
               ],
@@ -1609,7 +1656,10 @@ class Package {
          if(!to) {
            all_package_in_marketplace = await Packages.findAll({
             limit: 5,
-            offset,
+             offset,
+             order: [
+              ['createdAt', 'DESC']
+            ],
              where: {
               [Op.and]: [
                   { from_country: from }, 
@@ -1650,6 +1700,9 @@ class Package {
           all_package_in_marketplace = await Packages.findAll({
             limit: 5,
             offset,
+            order: [
+              ['createdAt', 'DESC']
+            ],
             where: {
               [Op.and]: [
                   { from_country: from }, 
@@ -1693,7 +1746,7 @@ class Package {
        return res.status(200).json({
          status: 200,
          message: 'packages retrieved successfully',
-         data: all_package_in_marketplace
+         data: all_package_in_marketplace,
        })
      }).catch((error) => {
       log(error);

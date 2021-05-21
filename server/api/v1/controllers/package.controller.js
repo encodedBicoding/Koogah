@@ -1965,6 +1965,12 @@ class Package {
           error: 'Sorry, cannot dispatch package you didn\'t pick up'
         })
       }
+      if (_package.status === 'delivered') {
+        return res.status(400).json({
+          status: 400,
+          error: 'Sorry, this package has already been delivered'
+        })
+      }
 
       const customer = await Customers.findOne({
         where: {

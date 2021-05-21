@@ -12,10 +12,11 @@ class WebSocketFunctions {
         if (!USER) return false;
         // get the list of channels
         // compare to ensure no duplicates;
-        let connected_channels = USER.ws_connected_channels;
+        let connected_channels = new Array(...USER.ws_connected_channels);
         if (!connected_channels.includes(channel)) {
+          connected_channels.push(channel);
             await Couriers.update({
-              ws_connected_channels: USER.ws_connected_channels.concat(channel)
+              ws_connected_channels: connected_channels,
             }, {
               where: {
                 id: userId
@@ -32,10 +33,11 @@ class WebSocketFunctions {
       } else if (userType === 'customer') {
         USER = await Customers.findOne({ where: { id: userId } });
         if (!USER) return false;
-        let connected_channels = USER.ws_connected_channels;
+        let connected_channels = new Array(...USER.ws_connected_channels);
         if (!connected_channels.includes(channel)) {
+          connected_channels.push(channel);
           await Customers.update({
-            ws_connected_channels: USER.ws_connected_channels.concat(channel)
+            ws_connected_channels: connected_channels,
           }, {
             where: {
               id: userId

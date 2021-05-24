@@ -931,6 +931,11 @@ class Package {
           package_id,
         },
         });
+      await PackagesTrackings.destroy({
+        where: {
+          package_id,
+        }
+      })
       
       const new_transaction = await Transactions.create({ ...transaction_details });
       const history_customer = {

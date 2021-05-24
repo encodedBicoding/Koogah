@@ -142,6 +142,19 @@ class WebSocketFunctions {
       return false;
     }
   }
+
+  async getCustomerTrackings(msg) {
+    try {
+      const all_trackings = await PackagesTrackings.findAll({
+        where: {
+          customer_id: msg.customer_id
+        }
+      });
+      return all_trackings;
+    } catch (err) {
+      return false;
+    }
+  }
 }
 
 export default WebSocketFunctions;

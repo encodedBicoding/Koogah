@@ -298,6 +298,25 @@ if (cluster.isMaster) {
               return false;
             }
           }
+          if (msg.event === 'ws_get_all_tracking') {
+            try {
+              const updated_customer_trackings = await socketFunction.getCustomerTrackings(msg);
+              const customer_updated_trackings_message = JSON.stringify({
+                event: 'tracking_update',
+                payload: updated_customer_trackings,
+              });
+              WsServer.clients.forEach((client) => {
+                if (
+                   client.connectionId === msg.receiver_id
+                  && client.readyState === WebSocket.OPEN
+                ) {
+                  client.send(customer_updated_trackings_message);
+                }
+              });
+            } catch (err) {
+              return false;
+            }
+          }
           // if (msg.event === 'publish') {
           //   WsServer.clients.forEach((client) => {
           //     if (client.subscribed_channels.includes(msg.channel)

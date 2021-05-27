@@ -155,9 +155,9 @@ class Payout {
           acc = acc + Number(curr.amount_requested);
           return acc;
         }, 0);
-        total_paydate = all_payouts[0].updated_at;
+        total_paydate = all_payouts[0].updatedAt;
         last_payout = all_payouts[all_payouts.length - 1].amount_requested;
-        last_paydate = all_payouts[all_payouts.length - 1].updated_at
+        last_paydate = all_payouts[all_payouts.length - 1].updatedAt
       }
       return res.status(200).json({
         status: 200,

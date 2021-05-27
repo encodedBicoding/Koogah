@@ -3,6 +3,7 @@ import log from 'fancy-log';
 import { config } from 'dotenv';
 import generate_ref from '../helpers/ref.id';
 import { Payouts, Couriers } from '../../../database/models';
+import fetch from 'node-fetch';
 
 config();
 
@@ -24,6 +25,7 @@ class Payout {
   static request_payout(req, res) {
     const { user } = req.session;
     const { amount } = req.query;
+    const { bank_code } = req.body;
     return Promise.try(async () => {
       const user_current_balance = user.virtual_balance;
       if (Number(amount) < 5000.00) {
@@ -38,6 +40,68 @@ class Payout {
           error: 'Amount requested is more than what you have. Please reduce the requested amount',
         });
       }
+
+      let response = await fetch(
+        'https://api.paystack.co/transferrecipient',
+        {
+          method: 'POST',
+          body: JSON.stringify(
+            {
+              type: 'nuban',
+              name: `${user.first_name} ${user.last_name}`,
+              account_number: user.account_number,
+              bank_code: bank_code,
+              currency: 'NGN'
+            }
+          ),
+          headers: {
+            'Authorization': `Bearer ${process.env['PAYSTACK_TEST_SECRET_KEY']}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.status !== 201 && response.status !== 200) {
+        return res.status(response.status).json({
+          status: response.status,
+          error: 'An error occured, Please retry'
+        });
+      }
+
+      response = await response.json();
+
+      const recipient_code = response.data.recipient_code;
+
+      let t_res = await fetch(
+        'https://api.paystack.co/transfer',
+        {
+          method: 'POST',
+          body: JSON.stringify(
+            {
+              source: 'balance',
+              amount: (parseInt(amount, 10) * 100),
+              recipient: recipient_code,
+              reason: 'Payout for package delivery'
+            }
+          ),
+          headers: {
+            'Authorization': `Bearer ${process.env['PAYSTACK_TEST_SECRET_KEY']}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+      
+      if (t_res.status !== 200 && t_res.status !== 201) {
+        return res.status(400).json({
+          status: 400,
+          error: 'An error occured, Please retry'
+        })
+      }
+
+      t_res = await t_res.json();
+
+      const transfer_code = t_res.data.transfer_code;
+      
       const dispatcher_new_balance = Number(user_current_balance) - Number(amount);
 
       const payout_details = {
@@ -47,8 +111,8 @@ class Payout {
         amount_requested: amount,
         dispatcher_account_number: user.account_number,
         dispatcher_bank_name: user.bank_name,
-        status: 'unpaid',
-        reference_id: generate_ref(),
+        status: 'paid',
+        reference_id: transfer_code,
       };
       const new_payout = await Payouts.create({ ...payout_details });
       const new_total_payouts = Number(amount) + Number(user.total_payouts);
@@ -63,15 +127,9 @@ class Payout {
           email: user.email,
         },
       });
-      const payout_link = (isProduction) ? `${process.env.SERVER_APP_URL}/payout/pay/${new_payout.reference_id}` : `http://localhost:4000/v1/payout/pay/${new_payout.reference_id}`;
-      // send a mail to the company informing them
-      // of such payout.
-      // the mail should contain the payout details and payout link
-      // pay the user directly using the company payment merchant
-      log(payout_link);
       return res.status(200).json({
         status: 200,
-        message: 'Payout requested successfully',
+        message: 'Payout successful, you will be credited shortly',
         data: new_payout,
       });
     }).catch((err) => {
@@ -82,6 +140,7 @@ class Payout {
       });
     });
   }
+
   static payout_summary(req, res) {
     return Promise.try(async () => {
       const { user } = req.session;
@@ -94,7 +153,7 @@ class Payout {
       if (all_payouts && all_payouts.length > 0) {
         total_payouts = all_payouts.reduce((acc, curr) => {
           acc = acc + Number(curr.amount_requested);
-          return cc;
+          return acc;
         }, 0);
         total_paydate = all_payouts[0].updated_at;
         last_payout = all_payouts[all_payouts.length - 1].amount_requested;

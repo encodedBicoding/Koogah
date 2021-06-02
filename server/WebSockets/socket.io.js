@@ -156,6 +156,27 @@ if (cluster.isMaster) {
     }
   });
 
+  eventEmitter.on('notify_new_package_creation', async function (msg) {
+    try {
+      const m = JSON.stringify({
+        detail: msg.detail,
+        package_id: msg.package_id,
+        event: 'notify_new_package_creation'
+      });
+      WsServer.clients.forEach((client) => {
+        if (
+          client.subscribed_channels.includes(msg.channel)
+          && client.readyState == WebSocket.OPEN
+        ) {
+          client.send(m);
+        }
+      });
+    } catch (err) {
+      console.log(err);
+      return;
+    }
+  });
+
   // GEOTRACKING SOCKET SERVER;
   WsServer.on('connection', async function (ws, req, client) {
     try {
@@ -313,6 +334,22 @@ if (cluster.isMaster) {
                   client.send(customer_updated_trackings_message);
                 }
               });
+            } catch (err) {
+              return false;
+            }
+          }
+          if (msg.event === 'subscribe_to_location') {
+            try {
+              // channel: location:state:city /or/ location:state:town.
+              
+              // check if client has been subscribed to another location;
+              const id = ws.subscribed_channels.findIndex((c) => c.split(':')[0] === 'location');
+              if (id === -1) {
+                ws.subscribed_channels = ws.subscribed_channels.concat(msg.channel);
+              } else {
+                ws.subscribed_channels.splice(idx, 1);
+                ws.subscribed_channels = ws.subscribed_channels.concat(msg.channel);
+              }
             } catch (err) {
               return false;
             }

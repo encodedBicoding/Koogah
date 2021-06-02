@@ -158,7 +158,6 @@ if (cluster.isMaster) {
 
   eventEmitter.on('notify_new_package_creation', async function (msg) {
     try {
-      console.log(msg);
       const m = JSON.stringify({
         detail: msg.detail,
         package_id: msg.package_id,

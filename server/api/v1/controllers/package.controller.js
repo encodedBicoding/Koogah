@@ -130,6 +130,14 @@ class Package {
        });
        // TODO: this should create a new package creation notification
        // and/or send a push notification to all couriers registered in the package location area.
+      const proposed_state = data.from_state.split(',')[0].split(' ')[0].trim().toLowerCase();
+      const propose_city = data.from_town.split(',')[0].split(' ')[0].trim().toLowerCase();
+      const proposed_channel = `location:${proposed_state}:${propose_city}`;
+      eventEmitter.emit('notify_new_package_creation', {
+        channel: proposed_channel,
+        detail: `A new package has been created at ${data.from_town} area of ${data.from_state}. \nYou may want to deliver this package, check it out`,
+        package_id: package_detail.package_id,
+      });
       
        return res.status(200).json({
          status: 200,
@@ -356,7 +364,7 @@ class Package {
 
         NEW_NOTIFICATION.email = dispatcher.email;
         NEW_NOTIFICATION.desc='CD005';
-        NEW_NOTIFICATION.message = 'A customer has approved you to dispatch their package. \n Please ensure you meet them at a rather safe zone or outside their doors and/or gate';
+        NEW_NOTIFICATION.message = 'A customer has approved you to dispatch their package. \nPlease ensure you meet them at a rather safe zone or outside their doors and/or gate';
         NEW_NOTIFICATION.title = 'New Dispatch Approval';
         NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
         eventEmitter.emit('package_approval', {

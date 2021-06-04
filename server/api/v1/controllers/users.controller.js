@@ -61,6 +61,10 @@ class UserController {
         state,
         town,
         address,
+        emergency_contact_one_name,
+        emergency_contact_one_phone,
+        emergency_contact_two_name,
+        emergency_contact_two_phone,
       } = req.body;
       const { ref, fromApp } = req.query;
 
@@ -108,6 +112,10 @@ class UserController {
         address,
         identification_number,
         profile_image,
+        emergency_contact_one_name,
+        emergency_contact_one_phone,
+        emergency_contact_two_name,
+        emergency_contact_two_phone,
         referal_id: REFERAL_ID,
         refered_by: ref ? ref : null,
       };

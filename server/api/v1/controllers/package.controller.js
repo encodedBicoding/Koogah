@@ -137,6 +137,7 @@ class Package {
         channel: proposed_channel,
         detail: `A new package has been created at ${data.from_town} area of ${data.from_state}. \nYou may want to deliver this package, check it out`,
         package_id: package_detail.package_id,
+        notification_id: package_detail.id,
       });
       
        return res.status(200).json({

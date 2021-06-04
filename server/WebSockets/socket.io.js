@@ -161,7 +161,8 @@ if (cluster.isMaster) {
       const m = JSON.stringify({
         detail: msg.detail,
         package_id: msg.package_id,
-        event: 'notify_new_package_creation'
+        event: 'notify_new_package_creation',
+        notification_id: msg.notification_id,
       });
       WsServer.clients.forEach((client) => {
         if (

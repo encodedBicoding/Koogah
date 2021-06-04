@@ -30,6 +30,10 @@ class Schema {
       state: Joi.string().required(),
       town: Joi.string().required(),
       address: Joi.string().required(),
+      emergency_contact_one_name: Joi.string().required(),
+      emergency_contact_one_phone: Joi.string().required(),
+      emergency_contact_two_name: Joi.string().required(),
+      emergency_contact_two_phone: Joi.string().required(),
       profile_image: Joi.string(),
     });
   }

@@ -63,7 +63,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: ''
     },
-    emergency_contact_one_phon: {
+    emergency_contact_one_phone: {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: ''

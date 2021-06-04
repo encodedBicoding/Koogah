@@ -39,7 +39,7 @@ module.exports = {
       ),
       queryInterface.addColumn(
         'Couriers',
-        'emergency_contact_two_name',
+        'emergency_contact_two_phone',
         {
           type: Sequelize.STRING,
           allowNull: false,

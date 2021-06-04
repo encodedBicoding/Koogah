@@ -58,6 +58,26 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       unique: true,
     },
+    emergency_contact_one_name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: ''
+    },
+    emergency_contact_one_phon: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: ''
+    },
+    emergency_contact_two_name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: ''
+    },
+    emergency_contact_two_phone: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: ''
+    },
     profile_image: {
       type: DataTypes.TEXT,
       allowNull: true,

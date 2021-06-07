@@ -14,11 +14,10 @@ const AfricasTalking = require('africastalking')(credentials);
 const sms = AfricasTalking.SMS;
 
 async function sendSMS(mobile_number, message) {
-  // const smsToken = process.env.BULK_SMS_API_TOKEN;
-  // return fetch(`https://www.bulksmsnigeria.com/api/v1/sms/create?api_token=${smsToken}&from=Koogah&to=${mobile_number}&body=${message}&dnd=2`);
   const options = {
     to: [mobile_number],
-    message
+    message,
+    from: 'Koogah'
   };
   sms.send(options)
     .then( response => {

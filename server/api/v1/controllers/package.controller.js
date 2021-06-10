@@ -1,6 +1,6 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable camelcase */
-import Sequelize, { QueryTypes } from 'sequelize';
+import Sequelize from 'sequelize';
 import distanceApi from 'google-distance-matrix';
 import log from 'fancy-log';
 import uuid from 'uuid/v4';

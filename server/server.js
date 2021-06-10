@@ -18,7 +18,18 @@ import morgan from 'morgan';
 import client from './redis/redis.client';
 import RouteV1 from './api/v1/routes';
 import Auth from './middlewares/auth';
+import * as Sentry from '@sentry/node';
+import * as Tracing from '@sentry/tracing';
 
+Sentry.init({
+  dsn: "https://8a2cb24ac17c481db14713ae1649a627@o816982.ingest.sentry.io/5810631",
+  tracesSampleRate: 1.0,
+});
+
+Sentry.startTransaction({
+  op: "production",
+  name: "production transaction",
+});
 
 const accepted_urls = [
   'https://koogah.com/*',
@@ -127,6 +138,7 @@ app.use((err, req, res, next) => res.status(err.status || 500).json({
 
 app.on('error', (error) => {
   log.error(error);
+  Sentry.captureException(error);
 });
 
 
@@ -134,6 +146,7 @@ app.on('error', (error) => {
 process.on('uncaughtException', (error) => {
   log.error('uncaughtException ', error.message);
   log.error(error.stack);
+  Sentry.captureException(error);
 
   // More work to be done here
   // you should send DevOps the stack error via mail and/or sms

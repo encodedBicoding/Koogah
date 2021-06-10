@@ -8,6 +8,9 @@ import WebSocketFunctions from './functions';
 import jwt from '../api/v1/helpers/jwt';
 import eventEmitter from '../EventEmitter';
 import Notifier from '../api/v1/helpers/notifier';
+import Sequelize from 'sequelize';
+
+const { Op } = Sequelize;
 
 const cluster = require('cluster');
 const port = process.env.PORT || 8080;

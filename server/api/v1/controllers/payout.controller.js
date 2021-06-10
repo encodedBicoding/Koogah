@@ -55,7 +55,7 @@ class Payout {
             }
           ),
           headers: {
-            'Authorization': `Bearer ${process.env['PAYSTACK_TEST_SECRET_KEY']}`,
+            'Authorization': `Bearer ${process.env['PAYSTACK_LIVE_SECRET_KEY']}`,
             'Content-Type': 'application/json'
           }
         }
@@ -85,7 +85,7 @@ class Payout {
             }
           ),
           headers: {
-            'Authorization': `Bearer ${process.env['PAYSTACK_TEST_SECRET_KEY']}`,
+            'Authorization': `Bearer ${process.env['PAYSTACK_LIVE_SECRET_KEY']}`,
             'Content-Type': 'application/json'
           }
         }

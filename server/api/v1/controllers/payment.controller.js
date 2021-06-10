@@ -57,7 +57,7 @@ class Payment {
       fetch('https://api.paystack.co/transaction/initialize/', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_TEST_SECRET_KEY}`,
+          Authorization: `Bearer ${process.env.PAYSTACK_LIVE_SECRET_KEY}`,
           'Content-type': 'application/json',
         },
         body: JSON.stringify(data),

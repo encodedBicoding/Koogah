@@ -1,4 +1,4 @@
-import { Customers, Couriers, PackagesTrackings } from '../database/models';
+import { Customers, Couriers, PackagesTrackings, Notifications } from '../database/models';
 import app from '../server';
 import WebSocket from 'ws';
 import isValidUT8 from 'utf-8-validate';

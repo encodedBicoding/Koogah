@@ -7,6 +7,7 @@ import { config } from 'dotenv';
 import WebSocketFunctions from './functions';
 import jwt from '../api/v1/helpers/jwt';
 import eventEmitter from '../EventEmitter';
+import Notifier from '../api/v1/helpers/notifier';
 
 const cluster = require('cluster');
 const port = process.env.PORT || 8080;
@@ -164,11 +165,47 @@ if (cluster.isMaster) {
         event: 'notify_new_package_creation',
         notification_id: msg.notification_id,
       });
-      WsServer.clients.forEach((client) => {
+      WsServer.clients.forEach(async(client) => {
         if (
           client.subscribed_channels.includes(msg.channel)
           && client.readyState == WebSocket.OPEN
         ) {
+          var client_id = client.connectionId.split(':')[2];
+          let timestamp_benchmark = moment().subtract(5, 'months').format();
+          const dispatcher = await Couriers.findOne({
+            where: {
+              id: client_id,
+            },
+          })
+          let all_notifications = await Notifications.findAll({
+            where: {
+              [Op.and]: [{ email: dispatcher.email }, { type: 'courier' }],
+              created_at: {
+                [Op.gte]:timestamp_benchmark
+              }
+            }
+          });
+          const device_notify_obj = {
+            title: 'New Package Creation',
+            body: msg.detail,
+            click_action: 'FLUTTER_NOTIFICATION_CLICK',
+            icon: 'ic_launcher'
+          };
+          const _notification = {
+            email: dispatcher.email,
+            desc: 'CD012',
+            message: msg.detail,
+            title: 'New Package Creation',
+            action_link: ''
+          };
+          await Notifier(
+            all_notifications,
+            dispatcher,
+            'dispatcher',
+            device_notify_obj,
+            _notification
+          );
+          // get the client device id;
           client.send(m);
         }
       });

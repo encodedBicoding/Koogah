@@ -747,7 +747,7 @@ class UserController {
         is_admin: isFound.is_admin,
       };
 
-      SESSION_TOKEN = await jwt.sign(SESSION_USER, '24h');
+      SESSION_TOKEN = await jwt.sign(SESSION_USER, '168h');
       const REFRESH_TOKEN = j_w_t.sign(SESSION_USER, process.env.SECRET_KEY);
       const user = isFound;
       user.token = SESSION_TOKEN;
@@ -814,7 +814,7 @@ class UserController {
         is_admin: isFound.is_admin,
       };
 
-      SESSION_TOKEN = await jwt.sign(SESSION_USER, '24h');
+      SESSION_TOKEN = await jwt.sign(SESSION_USER, '168h');
       const REFRESH_TOKEN = j_w_t.sign(SESSION_USER, process.env.SECRET_KEY);
       const user = isFound;
       user.token = SESSION_TOKEN;
@@ -852,7 +852,7 @@ class UserController {
       if (user) {
         let { iat, ...data } = user;
         // create a new token;
-        const SESSION_TOKEN = await jwt.sign(data, '24h');
+        const SESSION_TOKEN = await jwt.sign(data, '168h');
         if (user.is_courier) {
           user_type = 'COURIER';
           isFound = await Couriers.findOne({

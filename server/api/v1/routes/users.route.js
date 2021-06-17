@@ -51,14 +51,14 @@ const userRoute = express();
 userRoute.post(
   '/courier/signup',
   courierSignup,
-  validateEmail,
+  // validateEmail,
   signUpCourier_StepOne,
 );
 
 userRoute.post(
   '/customer/signup',
   customerSignup,
-  validateEmail,
+  // validateEmail,
   signupCustomer_StepOne,
 );
 

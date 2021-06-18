@@ -130,8 +130,8 @@ class Package {
        });
        // TODO: this should create a new package creation notification
        // and/or send a push notification to all couriers registered in the package location area.
-      const proposed_state = data.from_state.split(',')[0].split(' ')[0].trim().toLowerCase();
-      const propose_city = data.from_town.split(',')[0].split(' ')[0].trim().toLowerCase();
+      const proposed_state = data.from_state.split(',')[0].split('/')[0].split(' ')[0].trim().toLowerCase();
+      const propose_city = data.from_town.split(',')[0].split('/')[0].split(' ')[0].trim().toLowerCase();
       const proposed_channel = `location:${proposed_state}:${propose_city}`;
       eventEmitter.emit('notify_new_package_creation', {
         channel: proposed_channel,

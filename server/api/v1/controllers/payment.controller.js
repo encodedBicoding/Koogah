@@ -109,6 +109,13 @@ class Payment {
           error: 'No transaction started with that reference',
         });
       }
+      // const payment_status = await verifyPaystackPayment(reference);
+      // if (payment_status.status !== true) {
+      //   return res.status(404).json({
+      //     status: 404,
+      //     error: 'Invalid payment reference.',
+      //   });
+      //  }
       const amount = result;
       const top_up_data = {
         customer_id: user.id,

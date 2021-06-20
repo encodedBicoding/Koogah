@@ -131,7 +131,10 @@ class Notify {
           token
         }, {
           where: {
-            user_id: userId
+            [Op.and]: {
+              user_id: userId,
+              user_type: userType,
+            }
           }
         });
       }

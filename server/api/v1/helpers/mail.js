@@ -37,7 +37,7 @@ export const createVerificationMail = function createVerificationMail(user_email
     <body>
       <div class='container'>
         <section class='email_header'>
-          <div id='logo_header' style='background-color: #4ab; border-radius: 4px; padding: 15px; display: flex; flex-direction: row; align-items: center; justify-contents: center'>
+          <div id='logo_header' style='background-color: #4ab; border-radius: 4px; padding: 15px; display: flex; flex-direction: row; align-items: center; justify-content: center'>
               <img src='https://www.koogah.com/img/app_logo.858abc44.svg' alt='${app.get('title')} logo' style='width: 50px; height: 50px; border-radius: 50%'/>
               <h1 style='color: #fff; letter-spacing: 2px; display: inline; margin-left: 15px; font-family: sans-serif;'>${app.get('title')}</h1>
           </div>
@@ -91,7 +91,7 @@ export const createVerificationMail = function createVerificationMail(user_email
       <body>
       <div class='container'>
         <section class='email_header'>
-          <div id='logo_header' style='background-color: #4ab; border-radius: 4px; padding: 15px; display: flex; flex-direction: row; align-items: center; justify-contents: center'>
+          <div id='logo_header' style='background-color: #4ab; border-radius: 4px; padding: 15px; display: flex; flex-direction: row; align-items: center; justify-content: center'>
               <img src='https://www.koogah.com/img/app_logo.858abc44.svg' alt='${app.get('title')} logo' style='width: 50px; height: 50px; border-radius: 50%'/>
               <h1 style='color: #fff; letter-spacing: 2px; display: inline; margin-left: 15px; font-family: sans-serif;'>${app.get('title')}</h1>
           </div>

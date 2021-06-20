@@ -65,9 +65,8 @@ export const createVerificationMail = function createVerificationMail(user_email
               <li>Once verified, we would place a call to you.</li>
               <li>If we deem you certified, you will receive an email from us</li>
           </ul>
-          <a href=${verify_link}>VERIFY EMAIL</a>
           <p>
-            or click the link below to verify email.
+            Click the link below to verify email.
             <p>
               ${verify_link}
             </p>
@@ -101,14 +100,12 @@ export const createVerificationMail = function createVerificationMail(user_email
           <p>Thank you for joining our community. We make our dispatchers go through lots of procedures, and also taken lots of precautions</p>
           <p>to ensure you get the most out of this platform</p>
         </section>
-        <a href=${verify_link}>VERIFY EMAIL</a>
-      <p>
-        or click the link below to proceed.
         <p>
-          ${verify_link}
+          Click the link below to proceed.
+          <p>
+            ${verify_link}
+          </p>
         </p>
-      </p>
-
         </section>
         <section class='email_footer' style='margin-top: 40px;'>
           <p style='font-size: 50%; text-align: center;'>

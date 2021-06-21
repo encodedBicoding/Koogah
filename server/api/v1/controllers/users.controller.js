@@ -664,7 +664,7 @@ class UserController {
       email: verifying_user.email,
       type: 'customer',
       desc: 'CD001',
-      message: 'Hi, we at Koogah are glad to have you with us \nRemember to top-up your account and refer other users. \nReferring other users can earn you upto N200',
+      message: 'We are glad to have you onboard\nRemember to top-up your account and refer other users.\nReferring other users can earn you upto N200',
       title: 'Welcome to Koogah',
     };
     return Promise.try(async () => {

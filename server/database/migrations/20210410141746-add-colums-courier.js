@@ -1,75 +1,21 @@
 'use strict';
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return Promise.all([
-      queryInterface.addColumn(
-        'Couriers',
-        'identification_number',
-        {
-          type: Sequelize.STRING,
-          allowNull: true,
-        }
-      ),
-      queryInterface.addColumn(
-        'Couriers',
-        'emergency_contact_one_name',
-        {
-          type: Sequelize.STRING,
-          allowNull: false,
-          defaultValue: ''
-        }
-      ),
-      queryInterface.addColumn(
-        'Couriers',
-        'emergency_contact_one_phone',
-        {
-          type: Sequelize.STRING,
-          allowNull: false,
-          defaultValue: ''
-        }
-      ),
-      queryInterface.addColumn(
-        'Couriers',
-        'emergency_contact_two_name',
-        {
-          type: Sequelize.STRING,
-          allowNull: false,
-          defaultValue: ''
-        }
-      ),
-      queryInterface.addColumn(
-        'Couriers',
-        'emergency_contact_two_phone',
-        {
-          type: Sequelize.STRING,
-          allowNull: false,
-          defaultValue: ''
-        }
-      )
-    ])
+    return queryInterface.describeTable('Couriers').then(tableDefinition => {
+      if (!tableDefinition['identification_number']){
+          return queryInterface.addColumn('Couriers', 'identification_number', {
+            type: Sequelize.STRING,
+            allowNull: true,
+          });
+      } else {
+          return Promise.resolve(true);
+      }
+  });
   },
   down: (queryInterface, Sequelize) => {
-    return Promise.all([
-      queryInterface.removeColumn(
-        'Couriers',
-        'identification_number',
-      ),
-      queryInterface.removeColumn(
-        'Couriers',
-        'emergency_contact_one_name',
-      ),
-      queryInterface.removeColumn(
-        'Couriers',
-        'emergency_contact_one_phone',
-      ),
-      queryInterface.removeColumn(
-        'Couriers',
-        'emergency_contact_two_name',
-      ),
-      queryInterface.removeColumn(
-        'Couriers',
-        'emergency_contact_two_phone',
-      )
-    ]);
+    return queryInterface.removeColumn(
+      'Couriers',
+      'identification_number',
+    );
   }
 };

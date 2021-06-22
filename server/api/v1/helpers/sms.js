@@ -31,7 +31,7 @@ async function sendSMS(mobile_number, message) {
       });
   }
   if (whichSMSAPI === 'BULKSMS') {
-    const url = new URL('http://bulksmsnigeria.test/api/v2/sms/create');
+    const url = new URL('https://www.bulksmsnigeria.com/api/v1/sms/create');
     let params = {
       "api_token": process.env.BULK_SMS_API_TOKEN,
       "to": `${mobile_number}`,

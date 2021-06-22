@@ -11,7 +11,7 @@
     "test:package": "export NODE_ENV=test && nyc mocha --timeout 10000 --require @babel/register server/api/v1/tests/package.test.js --exit",
     "pretest": "export NODE_ENV=test && npm run migrate:undo && npm run migrate && npm run seed:undo && npm run seed",
     "start:dev": "export NODE_ENV=development && nodemon --exec babel-node ./server/WebSockets/socket.io.js",
-    "build": "npm run clean && npm run migrate && babel -d ./build ./server",
+    "build": "npm run clean && npm run migrate:undo && npm run migrate && babel -d ./build ./server",
     "clean": "rm -rf build && mkdir build",
     "prestart": "npm run migrate:undo && npm run migrate",
     "start": "export NODE_ENV=production && node ./build/WebSockets/socket.io.js",

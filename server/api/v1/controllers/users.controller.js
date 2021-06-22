@@ -730,6 +730,12 @@ class UserController {
           error: 'Found no dispatcher with the given email address',
         });
       }
+      if (isFound.is_active == false) {
+        return res.status(404).json({
+          status: 401,
+          error: 'Your account is not approved to proceed.',
+        });
+      }
       const do_password_match = await isFound.decryptPassword(password);
       if (!do_password_match) {
         return res.status(409).json({

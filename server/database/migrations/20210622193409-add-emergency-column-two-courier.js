@@ -2,8 +2,8 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.describeTable('Couriers').then(tableDefinition => {
-      if (!tableDefinition['emergency_contact_one_name']){
-          return queryInterface.addColumn('Couriers', 'emergency_contact_one_name', {
+      if (!tableDefinition['emergency_contact_one_phone']){
+          return queryInterface.addColumn('Couriers', 'emergency_contact_one_phone', {
             type: Sequelize.STRING,
             allowNull: false,
             defaultValue: ''
@@ -16,7 +16,7 @@ module.exports = {
   down: (queryInterface, Sequelize) => {
     return queryInterface.removeColumn(
       'Couriers',
-      'emergency_contact_one_name',
+      'emergency_contact_one_phone',
     );
   }
 };

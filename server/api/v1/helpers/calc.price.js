@@ -16,9 +16,10 @@ function calc_delivery_price(type, weight, distance) {
     base_price = process.env.KOOGAH_INTERNATIONAL_DISPATCH_BASE_FEE;
   }
   const weight_value = weight_range[weight];
+  const sms_charge = 50;
   const price_slash_list = ['0-5', '6-10','11-15']
   if (!weight_range) return false;
-  var net_price = (weight_value * distance) + Number(base_price);
+  var net_price = (weight_value * distance) + Number(base_price) + sms_charge;
   if (Number(distance) > 50) {
     if (type === 'intra-state') {
       if (net_price >= 15000 && price_slash_list.includes(weight)) {

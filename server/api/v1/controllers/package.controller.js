@@ -23,6 +23,7 @@ import {
 import geoPackageDestination from '../helpers/geo-package-destination';
 import Notifier from '../helpers/notifier';
 import eventEmitter from '../../../EventEmitter';
+import sendDeliverySMS from '../helpers/delivery_sms';
 
 config();
 distanceApi.key(process.env.GOOGLE_API_KEY);
@@ -2576,6 +2577,35 @@ class Package {
         status: 200,
         data: allTrackings,
         message: 'Packages retrieved successfully'
+      })
+    }).catch((err) => { 
+      log(err);
+      return res.status(400).json({
+       status: 400,
+        error: err,
+     });
+    });
+  }
+
+  /**
+   * @method sendDeliverySMSAction
+   * @memberof Package
+   * @params req, res
+   * @description Customers send delivry key to dispatcher.
+   * @return JSON object
+   */
+
+  static async sendDeliverySMSAction(req, res) {
+    return Promise.try(async () => {
+      const {
+        delivery_key,
+        mobile_number,
+      } = req.body;
+      const message = `New package delivery key:\n${delivery_key}`;
+      await sendDeliverySMS(mobile_number, message);
+      return res.status(200).json({
+        status: 200,
+        message: 'Delivery key has been sent to dispatcher'
       })
     }).catch((err) => { 
       log(err);

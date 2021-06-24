@@ -13,7 +13,6 @@
     "start:dev": "export NODE_ENV=development && nodemon --exec babel-node ./server/WebSockets/socket.io.js",
     "build": "npm run clean && npm run migrate && babel -d ./build ./server",
     "clean": "rm -rf build && mkdir build",
-    "prestart": "npm run migrate:undo && npm run migrate",
     "start": "export NODE_ENV=production && node ./build/WebSockets/socket.io.js",
     "migrate": "npx sequelize-cli db:migrate",
     "migrate:undo": "npx sequelize-cli db:migrate:undo",

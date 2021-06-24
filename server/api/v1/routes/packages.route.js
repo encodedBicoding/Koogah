@@ -8,6 +8,7 @@ import {
   multiple_upload,
   multipleMulter,
 } from '../helpers/upload.image';
+import sendDeliverySMS from '../helpers/delivery_sms';
 
 const {
   request_dispatch,
@@ -30,7 +31,8 @@ const {
   editPackage,
   getEstimate,
   singleTracking,
-  allTrackingPackages
+  allTrackingPackages,
+  sendDeliverySMSAction
 } = Package;
 
 const {
@@ -240,5 +242,12 @@ packageRoute.get(
   allTrackingPackages
 )
 
+packageRoute.post(
+  '/delivery/key',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  sendDeliverySMSAction
 
+)
 export default packageRoute;

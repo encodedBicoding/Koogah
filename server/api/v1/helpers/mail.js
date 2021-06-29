@@ -171,7 +171,7 @@ export const createCourierApprovalMail = function createCourierApprovalMail(user
 
   const msg_obj = {
     to: company_email,
-    from: `${app.get('title')}_server_mail@server.com`,
+    from: 'thekoogahbrand@gmail.com',
     subject: 'New Awaiting Approval',
     html,
   };

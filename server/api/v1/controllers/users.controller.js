@@ -141,7 +141,7 @@ class UserController {
 
       return res.status(200).json({
         status: 200,
-        message: 'A verificaton link has been sent to your email address',
+        message: 'You will receive a verification link in your provided email shortly.',
         verify_token: VERIFY_TOKEN,
       })
   
@@ -520,8 +520,8 @@ class UserController {
       await Customers.create(NEW_USER);
       return res.status(200).json({
         status: 200,
-        message: 'A verification link has been sent to your email address',
-      });
+        message: 'You will receive a verification link in your provided email shortly.',
+      });s
     }).catch((err) => {
       log(err);
       return res.status(400).json({

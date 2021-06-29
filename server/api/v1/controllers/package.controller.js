@@ -1448,7 +1448,7 @@ class Package {
        if (dispatch_type === 'intra-state') {
         if (!to) { 
           all_package_in_marketplace = await Packages.findAll({
-            limit: 5,
+            limit: 20,
             offset,
             order: [
               [sequelize.fn('strpos', sequelize.fn('lower', sequelize.col('from_town')), from), 'DESC'],

@@ -37,6 +37,7 @@ const accepted_urls = [
   'https://koogah.com',
   'http://koogah.com',
   'http://localhost:8081',
+  'http://localhost:8080',
   'http://10.0.2.2:8081',
 ];
 

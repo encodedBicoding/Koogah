@@ -168,48 +168,47 @@ if (cluster.isMaster) {
         event: 'notify_new_package_creation',
         notification_id: msg.notification_id,
       });
-      WsServer.clients.forEach(async(client) => {
-        if (
-          client.subscribed_channels.includes(msg.channel)
-          && client.readyState == WebSocket.OPEN
-        ) {
-          var client_id = client.connectionId.split(':')[2];
-          let timestamp_benchmark = moment().subtract(5, 'months').format();
-          const dispatcher = await Couriers.findOne({
-            where: {
-              id: client_id,
-            },
-          })
-          let all_notifications = await Notifications.findAll({
-            where: {
-              [Op.and]: [{ email: dispatcher.email }, { type: 'courier' }],
-              created_at: {
-                [Op.gte]:timestamp_benchmark
+      WsServer.clients.forEach(async (client) => {
+        if (msg.channel.match(client.current_location) !== null) {
+          if (client.readyState === WebSocket.OPEN) {
+            var client_id = client.connectionId.split(':')[2];
+            let timestamp_benchmark = moment().subtract(5, 'months').format();
+            const dispatcher = await Couriers.findOne({
+              where: {
+                id: client_id,
+              },
+            })
+            let all_notifications = await Notifications.findAll({
+              where: {
+                [Op.and]: [{ email: dispatcher.email }, { type: 'courier' }],
+                created_at: {
+                  [Op.gte]:timestamp_benchmark
+                }
               }
-            }
-          });
-          const device_notify_obj = {
-            title: 'New Package Creation',
-            body: msg.detail,
-            click_action: 'FLUTTER_NOTIFICATION_CLICK',
-            icon: 'ic_launcher'
-          };
-          const _notification = {
-            email: dispatcher.email,
-            desc: 'CD012',
-            message: msg.detail,
-            title: 'New Package Creation',
-            action_link: ''
-          };
-          await Notifier(
-            all_notifications,
-            dispatcher,
-            'dispatcher',
-            device_notify_obj,
-            _notification
-          );
-          // get the client device id;
-          client.send(m);
+            });
+            const device_notify_obj = {
+              title: `New Package Creation @ ${client.current_location.toUpperCase()}`,
+              body: msg.detail,
+              click_action: 'FLUTTER_NOTIFICATION_CLICK',
+              icon: 'ic_launcher'
+            };
+            const _notification = {
+              email: dispatcher.email,
+              desc: 'CD012',
+              message: msg.detail,
+              title: `New Package Creation @ ${client.current_location.toUpperCase()}`,
+              action_link: ''
+            };
+            await Notifier(
+              all_notifications,
+              dispatcher,
+              'dispatcher',
+              device_notify_obj,
+              _notification
+            );
+            // get the client device id;
+            client.send(m);
+          }
         }
       });
     } catch (err) {
@@ -381,30 +380,11 @@ if (cluster.isMaster) {
           }
           if (msg.event === 'subscribe_to_location') {
             try {
-              // channel: location:state:city /or/ location:state:town.
-              
-              // check if client has been subscribed to another location;
-              const id = ws.subscribed_channels.findIndex((c) => c.split(':')[0] === 'location');
-              if (id === -1) {
-                ws.subscribed_channels = ws.subscribed_channels.concat(msg.channel);
-              } else {
-                ws.subscribed_channels.splice(idx, 1);
-                ws.subscribed_channels = ws.subscribed_channels.concat(msg.channel);
-              }
+              ws.current_location = msg.channel;
             } catch (err) {
               return false;
             }
           }
-          // if (msg.event === 'publish') {
-          //   WsServer.clients.forEach((client) => {
-          //     if (client.subscribed_channels.includes(msg.channel)
-          //       && client.connectionId !== msg.senderId
-          //       && client.readyState === WebSocket.OPEN) {
-          //       client.send(msg.message);
-          //     }
-          //   });
-          // }
-  
         })
       }
 

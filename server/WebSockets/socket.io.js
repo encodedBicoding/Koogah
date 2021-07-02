@@ -380,7 +380,8 @@ if (cluster.isMaster) {
           }
           if (msg.event === 'subscribe_to_location') {
             try {
-              ws.current_location = msg.channel;
+              ws.current_location = msg.channel.split(' ')[0].split('/')[0].join('');
+              console.log(ws.current_location);
             } catch (err) {
               return false;
             }

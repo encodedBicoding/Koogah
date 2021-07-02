@@ -962,7 +962,7 @@ class UserController {
 
       return res.status(200).json({
         status: 200,
-        message: `You successfully rated ${customer.first_name} ${customer.last_name}:, ${rating}`,
+        message: 'Thank you for rating this customer',
       });
 
     }).catch((err) => {
@@ -1034,7 +1034,7 @@ class UserController {
       
       return res.status(200).json({
         status: 200,
-        message: `You successfully rated ${dispatcher.first_name} ${dispatcher.last_name}: ${rating}`,
+        message: 'Thank you for rating this dispatcher.',
       });
     }).catch((err) => {
       log(err);

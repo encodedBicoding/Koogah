@@ -866,7 +866,7 @@ class Package {
 
       const user_new_delivery_count = parseInt(user.deliveries, 10) + 1;
       const user_new_pending_count = parseInt(user.pending, 10) - 1;
-      const fees = Number(_package.delivery_price) * Number(proces.env.PACKAGE_DELIVERY_FEE);
+      const fees = Number(_package.delivery_price) * Number(process.env.PACKAGE_DELIVERY_FEE);
       const total_amount_payable = Number(_package.delivery_price) - fees;
       const dispatcher_new_balance = Number(user.virtual_balance) + total_amount_payable;
 

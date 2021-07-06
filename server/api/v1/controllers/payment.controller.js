@@ -140,10 +140,17 @@ class Payment {
       let virtual_balance;
       const total_user_balance = Number(user.virtual_balance) + Number(amount);
 
+
+      //FOR BETA_LAUNCH, DO NOT ADD COIN to current Koogah Coin balance.
+
       // update user koogah coin
       // koogah coin worth process.env.KOOGAH_COIN_WORTH
-      const coin = Math.floor(Number(amount) * 0.001);
-      const customer_coin_balance = Number(user.koogah_coin) + Number(coin);
+      // UNCOMMENT THIS CODE WHEN APP IS IS FULL PHASE
+      // const coin = Math.floor(Number(amount) * 0.001);
+      // const customer_coin_balance = Number(user.koogah_coin) + Number(coin);
+
+      // COMMENT THIS CODE WHEN APP IS IN FULL PHASE
+      const customer_coin_balance = Number(user.koogah_coin) + 0.00;
       // if the customer was referred by another user
       // first check if the user is a customer
       // if not, check if the user is a courier

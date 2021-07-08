@@ -60,7 +60,6 @@ class Payout {
           }
         }
       );
-
       if (response.status !== 201 && response.status !== 200) {
         return res.status(response.status).json({
           status: response.status,
@@ -89,11 +88,12 @@ class Payout {
             'Content-Type': 'application/json'
           }
         }
-      )
+      );
+      console.log(t_res);
       
       if (t_res.status !== 200 && t_res.status !== 201) {
-        return res.status(400).json({
-          status: 400,
+        return res.status(t_res.status).json({
+          status: t_res.status,
           error: 'An error occured, Please retry'
         })
       }

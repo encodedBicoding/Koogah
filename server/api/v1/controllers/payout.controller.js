@@ -28,10 +28,10 @@ class Payout {
     const { bank_code } = req.body;
     return Promise.try(async () => {
       const user_current_balance = user.virtual_balance;
-      if (Number(amount) < 1000.00) {
+      if (Number(amount) < 500.00) {
         return res.status(400).json({
           status: 400,
-          error: 'Cannot request payout for amount less than N 1000.00',
+          error: 'Cannot request payout for amount less than N 500.00',
         });
       }
       if (Number(amount) > Number(user_current_balance)) {
@@ -63,7 +63,7 @@ class Payout {
       if (response.status !== 201 && response.status !== 200) {
         return res.status(response.status).json({
           status: response.status,
-          error: 'An error occured, Please retry'
+          error: 'An error occurred, please retry. If error persists, send mail to support@koogah.com'
         });
       }
 
@@ -80,7 +80,7 @@ class Payout {
               source: 'balance',
               amount: (parseInt(amount, 10) * 100),
               recipient: recipient_code,
-              reason: 'Payout for package delivery'
+              reason: 'Payout for delivery on '
             }
           ),
           headers: {
@@ -89,12 +89,11 @@ class Payout {
           }
         }
       );
-      console.log(t_res);
       
       if (t_res.status !== 200 && t_res.status !== 201) {
         return res.status(t_res.status).json({
           status: t_res.status,
-          error: 'An error occured, Please retry'
+          error: 'An error occurred, please retry. If error persists, send mail to support@koogah.com'
         })
       }
 

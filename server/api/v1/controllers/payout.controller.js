@@ -28,10 +28,10 @@ class Payout {
     const { bank_code } = req.body;
     return Promise.try(async () => {
       const user_current_balance = user.virtual_balance;
-      if (Number(amount) < 5000.00) {
+      if (Number(amount) < 1000.00) {
         return res.status(400).json({
           status: 400,
-          error: 'Cannot request payout for amount less than N5000.00',
+          error: 'Cannot request payout for amount less than N 1000.00',
         });
       }
       if (Number(amount) > Number(user_current_balance)) {

@@ -69,7 +69,7 @@ class Package {
         if ((Number(user.virtual_balance) - Number(user.virtual_allocated_balance)) < Number(delivery_price)) {
           return res.status(400).json({
             status: 400,
-            error: 'Sorry you have reached your package balance threshold, \nplease top-up your account or delete a package that has not been picked-up'
+            error: 'Package limit exceeded for the amount in your wallet, \nTop-up your wallet or delete a package that has not been picked-up'
           })
         }
         const updated_V_A_B = Number(user.virtual_allocated_balance) + Number(delivery_price)

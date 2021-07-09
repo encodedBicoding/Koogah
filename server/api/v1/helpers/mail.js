@@ -129,7 +129,7 @@ export const createVerificationMail = function createVerificationMail(user_email
 };
 
 export const createCourierApprovalMail = function createCourierApprovalMail(userObj) {
-  const company_email = 'dispatcher_awaiting_approval@koogah.com'; //change to dispatcher_awaiting_approval@koogah.com
+  const company_email = 'thekoogahbrand@gmail.com'; //change to dispatcher_awaiting_approval@koogah.com
   let {
     first_name, last_name, approval_link, user_email, mobile_number, sex, bvn
   } = userObj;
@@ -171,7 +171,7 @@ export const createCourierApprovalMail = function createCourierApprovalMail(user
 
   const msg_obj = {
     to: company_email,
-    from: 'thekoogahbrand@gmail.com',
+    from: 'awaitings@koogah.com',
     subject: 'New Awaiting Approval',
     html,
   };

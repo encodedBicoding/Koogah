@@ -1451,7 +1451,7 @@ class Package {
             offset,
             order: [
               [sequelize.fn('strpos', sequelize.fn('lower', sequelize.col('from_town')), from), 'DESC'],
-              ['createdAt', 'DESC'],
+              // ['createdAt', 'DESC'],
               
             ],
             where:  {

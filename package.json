@@ -38,6 +38,7 @@
     "cors": "^2.8.5",
     "crypto-js": "^4.0.0",
     "datauri": "^2.0.0",
+    "deep-email-validator": "^0.1.18",
     "dotenv": "^8.2.0",
     "email-deep-validator": "^3.3.0",
     "errorhandler": "^1.5.1",

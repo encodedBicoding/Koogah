@@ -56,6 +56,10 @@ export const createVerificationMail = function createVerificationMail(user_email
                 You would not be able to access your account until you are approved by our team
             </span> 
           </p>
+          <h2>Did you register through our website?</h2>
+          <p>Please ensure you install the Koogah Dispatcher application on your phone before clicking the link below.</p>
+          <br/>
+          <h3>Please open this email with the phone you installed the Koogah Dispatcher app on</h2>
 
           <h3>Steps to getting approved</h3>
 
@@ -100,6 +104,10 @@ export const createVerificationMail = function createVerificationMail(user_email
           <p>Thank you for joining our community. We make our dispatchers go through lots of procedures, and also taken lots of precautions</p>
           <p>to ensure you get the most out of this platform</p>
         </section>
+        <h2>Did you register through our website?</h2>
+        <p>Please ensure you install the Koogah Customer application on your phone before clicking the link below.</p>
+        <br/>
+        <h3>Please open this email with the phone you installed the Koogah Customer app on</h2>
         <p>
           Click the link below to proceed.
           <p>

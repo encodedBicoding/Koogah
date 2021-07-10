@@ -23,7 +23,8 @@ import sendMail, {
     createVerificationMail, 
     createCourierApprovalMail,
     createApprovalMailToCourier,
-    createPasswordResetEmail
+    createPasswordResetEmail,
+    createKoogahWelcomeMailToCourier
 } from '../helpers/mail';
 import client from '../../../redis/redis.client';
 import generate_ref from '../helpers/ref.id';
@@ -417,7 +418,7 @@ class UserController {
         user_email: user.email,
         last_name: user.last_name
       }
-      const msg_obj = createApprovalMailToCourier(APPROVED_USER_OBJ);
+      const msg_obj = createKoogahWelcomeMailToCourier(APPROVED_USER_OBJ);
       await sendMail(msg_obj);
 
       return res.status(200).json({
@@ -1485,6 +1486,41 @@ class UserController {
     });
   }
 
+  /**
+   * @method send_approval_mail_to_courier
+   * @memberof UserController
+   * @description This method sends approval mail to courier
+   * @params req, res
+   * @return JSON object
+   */
+
+  static send_approval_mail_to_courier(req, res) {
+    return Promise.try(async () => {
+      const {
+        first_name,
+        user_email,
+        last_name,
+        approval_link,
+      } = req.body;
+      const message = createApprovalMailToCourier({
+        first_name,
+        user_email,
+        last_name,
+        approval_link,
+      });
+      await sendMail(message);
+      return res.status(200).json({
+        status: 200,
+        message: 'Approval mail sent successfully',
+      });
+    }).catch((error) => {
+      log(error);
+      return res.status(400).json({
+        status: 400,
+        error
+      });
+    })
+  }
 }
 
 export default UserController;

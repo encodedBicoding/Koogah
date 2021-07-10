@@ -37,10 +37,10 @@ export const createVerificationMail = function createVerificationMail(user_email
     <body>
       <div class='container'>
         <section class='email_header'>
-          <div id='logo_header' style='background-color: #4ab; border-radius: 4px; padding: 15px; display: flex; flex-direction: row; align-items: center; justify-content: center'>
-              <img src='https://www.koogah.com/img/app_logo.858abc44.svg' alt='${app.get('title')} logo' style='width: 50px; height: 50px; border-radius: 50%'/>
-              <h1 style='color: #fff; letter-spacing: 2px; display: inline; margin-left: 15px; font-family: sans-serif;'>${app.get('title')}</h1>
-          </div>
+        <div>
+        <a href="https://koogah.com"><img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:10% !important; width:10%; height:auto !important;" width="58" alt="Koogah Logo" data-proportionally-constrained="true" data-responsive="true" src="http://cdn.mcauto-images-production.sendgrid.net/7e40b7ed2842548c/f01429ea-615c-4fbd-bbc8-9b72dd7140b3/500x500.png"></a>
+        </div>
+        <div style="font-family: inherit; text-align: inherit"><span style="font-size: 18px"><strong>Koogah Logistics</strong></span></div>
         </section>
         <section class='email_body'>
           <p style='font-size: 15px;'>Hi ${first_name} ${last_name},</p>
@@ -94,10 +94,10 @@ export const createVerificationMail = function createVerificationMail(user_email
       <body>
       <div class='container'>
         <section class='email_header'>
-          <div id='logo_header' style='background-color: #4ab; border-radius: 4px; padding: 15px; display: flex; flex-direction: row; align-items: center; justify-content: center'>
-              <img src='https://www.koogah.com/img/app_logo.858abc44.svg' alt='${app.get('title')} logo' style='width: 50px; height: 50px; border-radius: 50%'/>
-              <h1 style='color: #fff; letter-spacing: 2px; display: inline; margin-left: 15px; font-family: sans-serif;'>${app.get('title')}</h1>
-          </div>
+        <div>
+        <a href="https://koogah.com"><img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:10% !important; width:10%; height:auto !important;" width="58" alt="Koogah Logo" data-proportionally-constrained="true" data-responsive="true" src="http://cdn.mcauto-images-production.sendgrid.net/7e40b7ed2842548c/f01429ea-615c-4fbd-bbc8-9b72dd7140b3/500x500.png"></a>
+        </div>
+        <div style="font-family: inherit; text-align: inherit"><span style="font-size: 18px"><strong>Koogah Logistics</strong></span></div>
         </section>
         <section class='email_body'>
           <p style='font-size: 12px;'>Hi ${first_name} ${last_name},</p>
@@ -135,6 +135,7 @@ export const createVerificationMail = function createVerificationMail(user_email
   };
   return msg_obj;
 };
+
 
 export const createCourierApprovalMail = function createCourierApprovalMail(userObj) {
   const company_email = 'thekoogahbrand@gmail.com'; //change to dispatcher_awaiting_approval@koogah.com
@@ -186,8 +187,7 @@ export const createCourierApprovalMail = function createCourierApprovalMail(user
 
   return msg_obj;
 };
-
-export const createApprovalMailToCourier = function sendApprovalMailToCourier(userObj) {
+export const createKoogahWelcomeMailToCourier = function sendWelcomMailToCourier(userObj) {
   let { first_name, user_email, last_name } = userObj;
   first_name = toSentenceCase.call(null, first_name);
   last_name = toSentenceCase.call(null, last_name);
@@ -201,14 +201,30 @@ export const createApprovalMailToCourier = function sendApprovalMailToCourier(us
               <tr>
                 <td>
                   <div>
-                      <h2>Congratulations ${first_name} ${last_name}</h2>
-                      <p>You have been approved as a dispatcher on the Koogah platform. You may now login to your account to begin dispatching goods and/or packages for customers within the Koogah platform.</p>
-                      <p>Always remember, the better ratings you get, the higher your chances of getting approval by customers to dispatch for them. We honestly hope you get the most from this platform. Welcome once more.</p>
+                  <a href="https://koogah.com"><img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:10% !important; width:10%; height:auto !important;" width="58" alt="Koogah Logo" data-proportionally-constrained="true" data-responsive="true" src="http://cdn.mcauto-images-production.sendgrid.net/7e40b7ed2842548c/f01429ea-615c-4fbd-bbc8-9b72dd7140b3/500x500.png"></a>
+                  </div>
+                  <div style="font-family: inherit; text-align: inherit"><span style="font-size: 18px"><strong>Koogah Logistics</strong></span></div>
+                  <div>
+                      <h2>Welcome To Koogah</h2>
+                      <p>We are filled with so much joy in our hearts, as we foresee a good future working with you to make Koogah Logistics the perfect logistics/delivery service for all.</p>
+                      <p>Earning with Koogah is easy, all you have to do is;</p>
+                      <ul>
+                        <li>Check the market-place often</li>
+                        <li>Request to dispatch a package</li>
+                        <li>Once approved, meet with the customer</li>
+                        <li>Receive and deliver the package</li>
+                        <li>Once package is delivered successfuly,funds are transfered to your wallet for you to withdraw.</li>
+                      </ul>
+                      <br/>
+                      <br/>
+                      <p>
+                        Cheers,
+                        The Koogah Logistics Team.
+                      </p>
                   </div>
                   <section style='margin-top: 10%'>
                     <p style='font-size: 50%; text-align: center;'>
                     This message was sent to ${first_name} ${last_name} (${user_email}) regarding your request to join ${app.get('title')} as a Dispatcher<br />
-
                     </p>
                    </section>
                 </td>
@@ -229,6 +245,84 @@ export const createApprovalMailToCourier = function sendApprovalMailToCourier(us
   return msgObj
 }
 
+export const createApprovalMailToCourier = function sendApprovalMailToCourier(userObj) {
+  let {
+    first_name,
+    user_email,
+    last_name,
+    approval_link,
+  } = userObj;
+  first_name = toSentenceCase.call(null, first_name);
+  last_name = toSentenceCase.call(null, last_name);
+  let html;
+
+  html = `
+      <table width='100%' cellspacing='0' cellpadding='0'>
+        <tr>
+          <td>
+            <table>
+              <tr>
+                <td>
+                  <div>
+                    <a href="https://koogah.com"><img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:10% !important; width:10%; height:auto !important;" width="58" alt="Koogah Logo" data-proportionally-constrained="true" data-responsive="true" src="http://cdn.mcauto-images-production.sendgrid.net/7e40b7ed2842548c/f01429ea-615c-4fbd-bbc8-9b72dd7140b3/500x500.png"></a>
+                  </div>
+                  <div style="font-family: inherit; text-align: inherit"><span style="font-size: 18px"><strong>Koogah Logistics</strong></span></div>
+                  <div>
+                    <p>Hello ${first_name}</p
+                  </div>
+                  <div style="font-family: inherit; text-align: left"><br></div>
+                  <div style="font-family: inherit; text-align: inherit; margin-left: 0px"><span style="box-sizing: border-box; padding-top: 0px; padding-right: 0px; padding-bottom: 0px; padding-left: 0px; margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; font-style: inherit; font-variant-ligatures: inherit; font-variant-caps: inherit; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-weight: bold; font-stretch: inherit; line-height: inherit; font-family: inherit; font-size: 15px; vertical-align: baseline; border-top-width: 0px; border-right-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-top-style: initial; border-right-style: initial; border-bottom-style: initial; border-left-style: initial; border-top-color: initial; border-right-color: initial; border-bottom-color: initial; border-left-color: initial; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; text-align: left; color: #000000; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: pre-wrap; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial">Congratulations</span><span style="box-sizing: border-box; padding-top: 0px; padding-right: 0px; padding-bottom: 0px; padding-left: 0px; margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; font-style: inherit; font-variant-ligatures: inherit; font-variant-caps: inherit; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-family: inherit; font-size: 15px; vertical-align: baseline; border-top-width: 0px; border-right-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-top-style: initial; border-right-style: initial; border-bottom-style: initial; border-left-style: initial; border-top-color: initial; border-right-color: initial; border-bottom-color: initial; border-left-color: initial; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; text-align: left; color: #000000; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: pre-wrap; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial">!. We are pleased to let you know that we have approved you to become a Koogah Dispatcher.</span></div>
+                  <div style="font-family: inherit; text-align: left"><br></div>
+                  <div style="font-family: inherit; text-align: inherit; margin-left: 0px"><span style="box-sizing: border-box; padding-top: 0px; padding-right: 0px; padding-bottom: 0px; padding-left: 0px; margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; font-style: inherit; font-variant-ligatures: inherit; font-variant-caps: inherit; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-family: inherit; font-size: 15px; vertical-align: baseline; border-top-width: 0px; border-right-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-top-style: initial; border-right-style: initial; border-bottom-style: initial; border-left-style: initial; border-top-color: initial; border-right-color: initial; border-bottom-color: initial; border-left-color: initial; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; text-align: left; color: #000000; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: pre-wrap; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial">We are working hard to build a trustworthy community and our success relies on you.&nbsp;</span></div>
+                  <div style="font-family: inherit; text-align: left"><br></div>
+                  <div style="font-family: inherit; text-align: inherit; margin-left: 0px"><br>
+                  </div>
+                  <div style="font-family: inherit; text-align: left"><br></div>
+                  <div style="font-family: inherit; text-align: inherit; margin-left: 0px"><span style="box-sizing: border-box; padding-top: 0px; padding-right: 0px; padding-bottom: 0px; padding-left: 0px; margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; font-style: inherit; font-variant-ligatures: inherit; font-variant-caps: inherit; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-weight: bold; font-stretch: inherit; line-height: inherit; font-family: inherit; font-size: 18px; vertical-align: baseline; border-top-width: 0px; border-right-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-top-style: initial; border-right-style: initial; border-bottom-style: initial; border-left-style: initial; border-top-color: initial; border-right-color: initial; border-bottom-color: initial; border-left-color: initial; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; text-align: left; color: #000000; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: pre-wrap; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial">Tips to note.</span></div>
+                  <div style="font-family: inherit; text-align: left"><br></div>
+                  <div style="font-family: inherit; text-align: inherit; margin-left: 0px"><span style="box-sizing: border-box; padding-top: 0px; padding-right: 0px; padding-bottom: 0px; padding-left: 0px; margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; font-style: inherit; font-variant-ligatures: inherit; font-variant-caps: inherit; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-family: inherit; font-size: 15px; vertical-align: baseline; border-top-width: 0px; border-right-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-top-style: initial; border-right-style: initial; border-bottom-style: initial; border-left-style: initial; border-top-color: initial; border-right-color: initial; border-bottom-color: initial; border-left-color: initial; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; text-align: left; color: #000000; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: pre-wrap; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial">1. Koogah Dispatcher Application uses a rating system, this rating system is used to measure your conduct, how you treat Koogah Customers and how you handle their deliveries.</span></div>
+                  <div style="font-family: inherit; text-align: left"><br></div>
+                  <div style="font-family: inherit; text-align: inherit; margin-left: 0px"><span style="box-sizing: border-box; padding-top: 0px; padding-right: 0px; padding-bottom: 0px; padding-left: 0px; margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; font-style: inherit; font-variant-ligatures: inherit; font-variant-caps: inherit; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-family: inherit; font-size: 15px; vertical-align: baseline; border-top-width: 0px; border-right-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-top-style: initial; border-right-style: initial; border-bottom-style: initial; border-left-style: initial; border-top-color: initial; border-right-color: initial; border-bottom-color: initial; border-left-color: initial; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; text-align: left; color: #000000; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: pre-wrap; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial">2. Poor ratings may prevent Koogah Customers from approving you to deliver for them.</span></div>
+                  <div style="font-family: inherit; text-align: left"><br></div>
+                  <div style="font-family: inherit; text-align: inherit; margin-left: 0px"><span style="box-sizing: border-box; padding-top: 0px; padding-right: 0px; padding-bottom: 0px; padding-left: 0px; margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; font-style: inherit; font-variant-ligatures: inherit; font-variant-caps: inherit; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-family: inherit; font-size: 15px; vertical-align: baseline; border-top-width: 0px; border-right-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-top-style: initial; border-right-style: initial; border-bottom-style: initial; border-left-style: initial; border-top-color: initial; border-right-color: initial; border-bottom-color: initial; border-left-color: initial; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; text-align: left; color: #000000; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: pre-wrap; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial">3. While delivering a package for a Koogah Customer, ensure your internet connection is on, and you do not close the Koogah Dispatcher application.</span></div>
+                  <div style="font-family: inherit; text-align: left"><br></div>
+                  <div style="font-family: inherit; text-align: inherit; margin-left: 0px"><span style="box-sizing: border-box; padding-top: 0px; padding-right: 0px; padding-bottom: 0px; padding-left: 0px; margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; font-style: inherit; font-variant-ligatures: inherit; font-variant-caps: inherit; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-family: inherit; font-size: 15px; vertical-align: baseline; border-top-width: 0px; border-right-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-top-style: initial; border-right-style: initial; border-bottom-style: initial; border-left-style: initial; border-top-color: initial; border-right-color: initial; border-bottom-color: initial; border-left-color: initial; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; text-align: left; color: #000000; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: pre-wrap; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial">4. Before you click the link below, ensure you have the Koogah Dispatcher application installed on your mobile phone.</span></div>
+                  <div style="font-family: inherit; text-align: left"><br></div>
+                  <div style="font-family: inherit; text-align: inherit; margin-left: 0px"><span style="box-sizing: border-box; padding-top: 0px; padding-right: 0px; padding-bottom: 0px; padding-left: 0px; margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; font-style: inherit; font-variant-ligatures: inherit; font-variant-caps: inherit; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-family: inherit; font-size: 15px; vertical-align: baseline; border-top-width: 0px; border-right-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-top-style: initial; border-right-style: initial; border-bottom-style: initial; border-left-style: initial; border-top-color: initial; border-right-color: initial; border-bottom-color: initial; border-left-color: initial; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; text-align: left; color: #000000; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: pre-wrap; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial">5. On clicking the link below, it should open up a page for you to set your bank account details and password.</span></div>
+                  <div style="font-family: inherit; text-align: left"><br></div>
+                  <div style="font-family: inherit; text-align: inherit; margin-left: 0px"><span style="box-sizing: border-box; padding-top: 0px; padding-right: 0px; padding-bottom: 0px; padding-left: 0px; margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; font-style: inherit; font-variant-ligatures: inherit; font-variant-caps: inherit; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-family: inherit; font-size: 15px; vertical-align: baseline; border-top-width: 0px; border-right-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-top-style: initial; border-right-style: initial; border-bottom-style: initial; border-left-style: initial; border-top-color: initial; border-right-color: initial; border-bottom-color: initial; border-left-color: initial; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; text-align: left; color: #000000; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: pre-wrap; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial">6. If Number 5 doesn't happen as written above, come back here and re-click the link without closing the Koogah Dispatcher app.</span></div>
+                  <div style="font-family: inherit; text-align: left"><br></div>
+
+                  <div style="font-family: inherit; text-align: center"><span style="color: #000000; font-family: arial, helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: pre-wrap; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; float: none; display: inline">${approval_link}</span></div>
+                  <br/>
+                  <br/>
+                  <div style="font-family: inherit; text-align: inherit"><span style="box-sizing: border-box; padding-top: 0px; padding-right: 0px; padding-bottom: 0px; padding-left: 0px; margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; font-style: inherit; font-variant-ligatures: inherit; font-variant-caps: inherit; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-family: inherit; font-size: 15px; vertical-align: baseline; border-top-width: 0px; border-right-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-top-style: initial; border-right-style: initial; border-bottom-style: initial; border-left-style: initial; border-top-color: initial; border-right-color: initial; border-bottom-color: initial; border-left-color: initial; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; color: #000000; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: pre-wrap; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial">Best Regards.</span></div>
+                  <div style="font-family: inherit; text-align: inherit; margin-left: 0px"><span style="box-sizing: border-box; padding-top: 0px; padding-right: 0px; padding-bottom: 0px; padding-left: 0px; margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; font-style: inherit; font-variant-ligatures: inherit; font-variant-caps: inherit; font-variant-numeric: inherit; font-variant-east-asian: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-family: inherit; font-size: 15px; vertical-align: baseline; border-top-width: 0px; border-right-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-top-style: initial; border-right-style: initial; border-bottom-style: initial; border-left-style: initial; border-top-color: initial; border-right-color: initial; border-bottom-color: initial; border-left-color: initial; border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; color: #000000; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: pre-wrap; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial">The Koogah Logistics Team.</span></div>
+                  
+                  <section style='margin-top: 10%'>
+                    <p style='font-size: 50%; text-align: center;'>
+                    This message was sent to ${first_name} ${last_name} (${user_email}) regarding your request to join ${app.get('title')} as a Dispatcher<br />
+
+                    </p>
+                   </section>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+  `
+
+  let msgObj = {
+    to: user_email,
+    from: 'noreply@koogah.com',
+    subject: 'Approved to deliver on Koogah',
+    html,
+  }
+
+  return msgObj
+}
+
 export const createPasswordResetEmail = function createPasswordResetEmail(userObj) {
   let { first_name, last_name, password_reset_link, account_type, user_email } = userObj;
   first_name = toSentenceCase.call(null, first_name);
@@ -241,6 +335,10 @@ export const createPasswordResetEmail = function createPasswordResetEmail(userOb
             <tr>
               <td>
                 <div>
+                <div>
+                <a href="https://koogah.com"><img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:10% !important; width:10%; height:auto !important;" width="58" alt="Koogah Logo" data-proportionally-constrained="true" data-responsive="true" src="http://cdn.mcauto-images-production.sendgrid.net/7e40b7ed2842548c/f01429ea-615c-4fbd-bbc8-9b72dd7140b3/500x500.png"></a>
+                </div>
+                <div style="font-family: inherit; text-align: inherit"><span style="font-size: 18px"><strong>Koogah Logistics</strong></span></div>
                   <div>
                     <p>Hi ${first_name} ${last_name},</p>
                     <div>

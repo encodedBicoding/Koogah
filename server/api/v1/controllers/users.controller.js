@@ -81,7 +81,7 @@ class UserController {
         bvn,
         first_name,
         mobile_number: `${country_code}${mobile_number}`,
-      });
+      }, '168h');
       // link hint: https://api.koogah.com
       // this should be the frontend link based on the registering user
       // not the SERVER_APP_URL
@@ -480,7 +480,7 @@ class UserController {
       mobile_number_one: `${country_code}${mobile_number_one}`,
       last_name,
       is_courier: false,
-    });
+    }, '168h');
     let VERIFY_LINK = '';
     if (fromApp && fromApp === 'web') {
       VERIFY_LINK = `https://${process.env.LANDING_PAGE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=CUSTOMER`;

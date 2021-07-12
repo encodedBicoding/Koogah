@@ -365,7 +365,7 @@ class Package {
 
         NEW_NOTIFICATION.email = dispatcher.email;
         NEW_NOTIFICATION.desc='CD005';
-        NEW_NOTIFICATION.message = 'A customer has approved you to dispatch their package. \nPlease ensure you meet them at a rather safe zone or outside their doors and/or gate';
+        NEW_NOTIFICATION.message = 'A customer has approved you to dispatch their package. \nPlease ensure you meet them at a safe zone or outside their doors and/or gate';
         NEW_NOTIFICATION.title = 'New Dispatch Approval';
         NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
         eventEmitter.emit('package_approval', {

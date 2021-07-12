@@ -62,7 +62,6 @@ export const createVerificationMail = function createVerificationMail(user_email
           <h3>Please open this email with the phone you installed the Koogah Dispatcher app on</h2>
 
           <h3>Steps to getting approved</h3>
-
           <ul>
               <li>First you need to verify your email</li>
               <li>We would take a few days (usually within 24 hours) to verify your identity</li>

@@ -60,7 +60,7 @@ class Payout {
           }
         }
       );
-      if (response.status !== 201 && response.status !== 200) {
+      if (response.status !== 201 || response.status !== 200) {
         return res.status(response.status).json({
           status: response.status,
           error: 'An error occurred, please retry. If error persists, send mail to support@koogah.com'
@@ -90,7 +90,7 @@ class Payout {
         }
       );
       
-      if (t_res.status !== 200 && t_res.status !== 201) {
+      if (t_res.status !== 200 || t_res.status !== 201) {
         return res.status(t_res.status).json({
           status: t_res.status,
           error: 'An error occurred, please retry. If error persists, send mail to support@koogah.com'

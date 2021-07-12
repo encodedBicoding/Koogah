@@ -5,6 +5,8 @@ import fetch from 'node-fetch';
 config();
 
 const whichSMSAPI = process.env.WHICH_SMS_API;
+var accountSid = process.env.TWILIO_ACCOUNT_SID; // Your Account SID from www.twilio.com/console
+var authToken = process.env.TWILIO_ACCOUNT_AUTH_TOKEN;  
 
 const credentials = {
   apiKey: process.env.AFRICAS_TALKING_API_KEY,
@@ -52,6 +54,21 @@ async function sendSMS(mobile_number, message) {
         }
       }
     ).then(response => response.json())
+  }
+  if (whichSMSAPI === 'TWILIO') {
+    try {
+      var twilioClient = require('twilio')(accountSid, authToken);
+      twilioClient.messages.create({
+        body: message,
+        from: '+19282385401',
+        to: mobile_number,
+      }).then(message => console.log(message.sid)).done();
+    } catch (err) {
+      console.log(err);
+    }
+
+
+
   }
 }
 export default sendSMS;

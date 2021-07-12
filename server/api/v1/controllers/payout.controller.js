@@ -60,7 +60,7 @@ class Payout {
           }
         }
       );
-      if (response.status !== 201 || response.status !== 200) {
+      if (response.status !== 201 && response.status !== 200) {
         return res.status(response.status).json({
           status: response.status,
           error: 'An error occurred, please retry. If error persists, send mail to support@koogah.com'
@@ -70,7 +70,7 @@ class Payout {
       response = await response.json();
 
       const recipient_code = response.data.recipient_code;
-
+    
       let t_res = await fetch(
         'https://api.paystack.co/transfer',
         {
@@ -80,7 +80,7 @@ class Payout {
               source: 'balance',
               amount: (parseInt(amount, 10) * 100),
               recipient: recipient_code,
-              reason: 'Payout for delivery on '
+              reason: "Payout for delivery on "
             }
           ),
           headers: {
@@ -90,7 +90,7 @@ class Payout {
         }
       );
       
-      if (t_res.status !== 200 || t_res.status !== 201) {
+      if (t_res.status !== 200 && t_res.status !== 201) {
         return res.status(t_res.status).json({
           status: t_res.status,
           error: 'An error occurred, please retry. If error persists, send mail to support@koogah.com'

@@ -190,7 +190,7 @@ class UserController {
       }
       const MOBILE_VERIFY_CODE = gen_verify_code();
 
-      const SMS_MESSAGE = `Your verification code is: \n${MOBILE_VERIFY_CODE}`;
+      const SMS_MESSAGE = `Your Koogah verification code is: \n${MOBILE_VERIFY_CODE}`;
   
       const MOBILE_REDIRECT_LINK = `https://${process.env.SERVER_APP_URL}/verify/email?key=${key}&live=${!!key}`;
   
@@ -571,7 +571,7 @@ class UserController {
     }
     const MOBILE_VERIFY_CODE = gen_verify_code();
 
-    const SMS_MESSAGE = `Your verification code is: \n${MOBILE_VERIFY_CODE}`;
+    const SMS_MESSAGE = `Your Koogah verification code is: \n${MOBILE_VERIFY_CODE}`;
 
     const MOBILE_REDIRECT_LINK = `https://${process.env.SERVER_APP_URL}/customer/verify/email?key=${key}&live=${!!key}`;
 

@@ -205,7 +205,7 @@ class UserController {
         });
       }
 
-      await sendSMS(payload.mobile_number, SMS_MESSAGE);
+      await sendSMS(verifying_user.mobile_number, SMS_MESSAGE);
       await Couriers.update(
         {
           verification_code: MOBILE_VERIFY_CODE,

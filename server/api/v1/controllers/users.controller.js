@@ -581,7 +581,7 @@ class UserController {
     // this function should redirect the user to the Mobile App page
     // That contains the form so they can insert the code sent to their mobile phones
       
-    await sendSMS(payload.mobile_number_one, SMS_MESSAGE);
+    await sendSMS(verifying_user.mobile_number_one, SMS_MESSAGE);
     await Customers.update(
       {
         verification_code: MOBILE_VERIFY_CODE,

@@ -26,6 +26,8 @@ import sendMail, {
     createPasswordResetEmail,
     createKoogahWelcomeMailToCourier
 } from '../helpers/mail';
+
+import { sendNewCustomerNotification, sendUnApprovedDispatcherNotification } from '../helpers/slack';
 import client from '../../../redis/redis.client';
 import generate_ref from '../helpers/ref.id';
 
@@ -325,6 +327,7 @@ class UserController {
       );
       await Awaitings.create(AWAITING_USER_OBJ);
       await sendMail(MSG_OBJ);
+      sendUnApprovedDispatcherNotification(AWAITING_USER_OBJ)
       return res.status(200).json({
         status:200,
         message: 'Registration complete, your account is now awaiting approval.',
@@ -695,6 +698,7 @@ class UserController {
         refresh_token: REFRESH_TOKEN,
         ...approved_user.getSafeDataValues(),
       };
+      sendNewCustomerNotification(approved_user)
       res.status(200).json({
         status: 200,
         message: 'Account created successfully',

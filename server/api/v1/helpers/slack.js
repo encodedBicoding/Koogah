@@ -62,14 +62,14 @@ export const sendNewCustomerNotification = function sendNewCustomerNotification(
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "• Name: `" + user.first_name + " " + user.last_name + "` \n• Phone: `" + user.mobile_number_one + ", " + user.mobile_number_two + "`\n• Email: `" + user.email + "`"
+        "text": "• Name: `" + user.first_name + " " + user.last_name + "` \n• Phone: `" + concatenateCustomerNumbers(user.mobile_number_one, user.mobile_number_two) + "`\n• Email: `" + user.email + "`"
       }
     }
   ])
 }
 
 export const sendUnApprovedDispatcherNotification = function sendUnApprovedDispatcherNotification(user) {
-  sendSlackNotification(process.env.SLACK_ONBOARDING_CHANNEL_HOOK, 'New Dispather', [
+  sendSlackNotification(process.env.SLACK_ONBOARDING_CHANNEL_HOOK, 'New Dispatcher', [
     {
       "type": "section",
       "text": {
@@ -88,5 +88,184 @@ export const sendUnApprovedDispatcherNotification = function sendUnApprovedDispa
       }
     }
   ])
+}
+
+export const sendNewPackageNotification = function sendNewPackageNotification(package_detail, user, other) {
+  sendSlackNotification(process.env.SLACK_DISPATCH_CHANNEL_HOOK, '', [
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "Event: `New Dispatch Request` :package:"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "• Name: `" + user.first_name + " " + user.last_name + "` \n• Phone: `" + concatenateCustomerNumbers(user.mobile_number_one, user.mobile_number_two) + "`\n• Email: `" + user.email + "`"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "• Package Id: `" + package_detail.package_id + "` \n• Description: `" + package_detail.description + "`\n• Weight: `" + package_detail.weight + "`"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "• From: `" + other.from_town + ", " + other.from_state + "` \n• To: `" + other.to_town + ", " + other.to_state + "`"
+      }
+    }
+  ])
+}
+
+export const sendNewInterestInPackageNotification = function sendNewInterestInPackageNotification(packageId, dispatcher, customer) {
+  sendSlackNotification(process.env.SLACK_DISPATCH_CHANNEL_HOOK, '', [
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "Event: `Interest in Package` :raised_hand:\nPackage Id: `" + packageId + "`"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "• Dispatcher Name: `" + dispatcher.first_name + " " + dispatcher.last_name + "` \n• Dispatcher Phone: `" + dispatcher.mobile_number + "`\n• Dispatcher Email: `" + dispatcher.email + "`"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "• Customer Name: `" + customer.first_name + " " + customer.last_name + "` \n• Customer Phone: `" + concatenateCustomerNumbers(customer.mobile_number_one, customer.mobile_number_two) + "`\n• Customer Email: `" + customer.email + "`"
+      }
+    },
+  ])
+}
+
+export const sendInterestApprovedOrDeclinedNotification = function sendInterestApprovedOrDeclinedNotification(isApproved, packageId, dispatcher) {
+  let message;
+  if(isApproved)
+    message = "Event: `Dispatcher Interest Approved` :green_heart:\nPackage Id: `" + packageId + "`"
+  else
+    message = "Event: `Dispatcher Interest Declined` :broken_heart:\nPackage Id: `" + packageId + "`"
+  sendSlackNotification(process.env.SLACK_DISPATCH_CHANNEL_HOOK, '', [
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": message
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "• Dispatcher Name: `" + dispatcher.first_name + " " + dispatcher.last_name + "` \n• Dispatcher Phone: `" + dispatcher.mobile_number + "`\n• Dispatcher Email: `" + dispatcher.email + "`"
+      }
+    }
+  ])
+}
+
+export const sendDispatcherDeclinedPickupNotification = function sendDispatcherDeclinedPickupNotification(packageId, reason, dispatcher) {
+  sendSlackNotification(process.env.SLACK_DISPATCH_CHANNEL_HOOK, '', [
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "Event: `Dispatcher Declined Pickup for Package` :x:\nPackage Id: `" + packageId + "`\nReason for Decline: \n```" + reason + "```"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "• Dispatcher Name: `" + dispatcher.first_name + " " + dispatcher.last_name + "` \n• Dispatcher Phone: `" + dispatcher.mobile_number + "`\n• Dispatcher Email: `" + dispatcher.email + "`"
+      }
+    }
+  ])
+}
+
+export const sendDispatcherStartsDispatchNotification = function sendDispatcherStartsDispatchNotification(packageId, dispatcher, other) {
+  sendSlackNotification(process.env.SLACK_DISPATCH_CHANNEL_HOOK, '', [
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "Event: `Dispatch Started` :truck:\nPackage Id: `" + packageId + "`"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "• From: `" + other.from_town + ", " + other.from_state + "` \n• To: `" + other.to_town + ", " + other.to_state + "`"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "• Dispatcher Name: `" + dispatcher.first_name + " " + dispatcher.last_name + "` \n• Dispatcher Phone: `" + dispatcher.mobile_number + "`\n• Dispatcher Email: `" + dispatcher.email + "`"
+      }
+    }
+  ])
+}
+
+export const sendPackageDeliveredNotification = function sendPackageDeliveredNotification(packageId, dispatcher, customer) {
+  sendSlackNotification(process.env.SLACK_DISPATCH_CHANNEL_HOOK, '', [
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "Event: `Package Delivered` :tada:\nPackage Id: `" + packageId + "`"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "• Dispatcher Name: `" + dispatcher.first_name + " " + dispatcher.last_name + "` \n• Dispatcher Phone: `" + dispatcher.mobile_number + "`\n• Dispatcher Email: `" + dispatcher.email + "`"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "• Customer Name: `" + customer.first_name + " " + customer.last_name + "` \n• Customer Phone: `" + concatenateCustomerNumbers(customer.mobile_number_one, customer.mobile_number_two) + "`\n• Customer Email: `" + customer.email + "`"
+      }
+    },
+  ])
+}
+
+function concatenateCustomerNumbers(phone1, phone2){
+  if(!phone2)
+    return phone1
+  else
+    return `${phone1}, ${phone2}`
 }
 

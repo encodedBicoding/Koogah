@@ -24,6 +24,14 @@ import geoPackageDestination from '../helpers/geo-package-destination';
 import Notifier from '../helpers/notifier';
 import eventEmitter from '../../../EventEmitter';
 import sendDeliverySMS from '../helpers/delivery_sms';
+import { 
+  sendNewPackageNotification,
+  sendNewInterestInPackageNotification,
+  sendInterestApprovedOrDeclinedNotification,
+  sendDispatcherDeclinedPickupNotification,
+  sendDispatcherStartsDispatchNotification,
+  sendPackageDeliveredNotification
+} from '../helpers/slack';
 
 config();
 distanceApi.key(process.env.GOOGLE_API_KEY);
@@ -139,12 +147,12 @@ class Package {
         package_id: package_detail.package_id,
         notification_id: package_detail.id,
       });
-      
-       return res.status(200).json({
-         status: 200,
-         message: 'Package created successfully. Please wait, dispatchers will reach out to you soon',
-         data: package_detail,
-       });
+      sendNewPackageNotification(package_detail, user, data);
+      return res.status(200).json({
+        status: 200,
+        message: 'Package created successfully. Please wait, dispatchers will reach out to you soon',
+        data: package_detail,
+      });
     }).catch((error) => {
       log(error);
       return res.status(400).json({
@@ -256,7 +264,7 @@ class Package {
           device_notify_obj,
           _notification
         );
-
+        sendNewInterestInPackageNotification(package_id, user, customer)
         return res.status(200).json({
           status: 200,
           message: 'Your interest is acknowledged. The owner of the package will be notified shortly',
@@ -468,6 +476,7 @@ class Package {
         _notification
       );
       const res_message = `Successfully ${response === 'approve' ? 'approved' : 'declined'} dispatcher request`;
+      sendInterestApprovedOrDeclinedNotification(response === 'approve', package_id, dispatcher)
       return res.status(200).json({
         status: 200,
         message: res_message,
@@ -1077,6 +1086,7 @@ class Package {
         connectionId: `dispatcher:${user.email}:${user.id}`,
         event: 'unsubscribe_from_package'
       });
+      sendPackageDeliveredNotification(package_id, user, customer)
       return res.status(200).json({
         status: 200,
         message: 'Package delivered successfully',
@@ -1874,7 +1884,7 @@ class Package {
         device_notify_obj,
         _notification
       );
-
+      sendDispatcherDeclinedPickupNotification(package_id, decline_cause, user)
       return res.status(200).json({
         status: 200,
         message: 'You have successfully declined this pick-up'
@@ -2073,7 +2083,7 @@ class Package {
         dispatcher_lng,
         customer_id: _package.customer_id,
       }
-
+      sendDispatcherStartsDispatchNotification(package_id, user, _package)
       return res.status(200).json({
         status: 200,
         message: 'You have successfully started this dispatch.',

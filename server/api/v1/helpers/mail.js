@@ -100,8 +100,8 @@ export const createVerificationMail = function createVerificationMail(user_email
         </section>
         <section class='email_body'>
           <p style='font-size: 12px;'>Hi ${first_name} ${last_name},</p>
-          <p>Thank you for joining our community. We make our dispatchers go through lots of procedures, and also taken lots of precautions</p>
-          <p>to ensure you get the most out of this platform</p>
+          <p>Thank you for joining our community. We make our dispatchers go through lots of procedures, and also taken lots of precautions,</p>
+          <span> to ensure you get the most out of this platform</span>
         </section>
         <h2>Did you register through our website?</h2>
         <p>Please ensure you install the Koogah Customer application on your phone before clicking the link below.</p>

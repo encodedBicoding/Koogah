@@ -83,6 +83,7 @@ class UserController {
         bvn,
         first_name,
         mobile_number: `${country_code}${mobile_number}`,
+        country_code: country_code
       }, '168h');
       // link hint: https://api.koogah.com
       // this should be the frontend link based on the registering user
@@ -205,7 +206,7 @@ class UserController {
         });
       }
 
-      await sendSMS(payload.mobile_number, SMS_MESSAGE);
+      await sendSMS(`${payload.country_code ? payload.country_code : '+234'}${verifying_user.mobile_number}`, SMS_MESSAGE);
       await Couriers.update(
         {
           verification_code: MOBILE_VERIFY_CODE,
@@ -481,6 +482,7 @@ class UserController {
       email,
       first_name,
       mobile_number_one: `${country_code}${mobile_number_one}`,
+      country_code: country_code,
       last_name,
       is_courier: false,
     }, '168h');
@@ -581,7 +583,7 @@ class UserController {
     // this function should redirect the user to the Mobile App page
     // That contains the form so they can insert the code sent to their mobile phones
       
-    await sendSMS(payload.mobile_number_one, SMS_MESSAGE);
+    await sendSMS(`${payload.country_code ? payload.country_code : '+234'}${verifying_user.mobile_number_one}`, SMS_MESSAGE);
     await Customers.update(
       {
         verification_code: MOBILE_VERIFY_CODE,
@@ -668,7 +670,7 @@ class UserController {
       email: verifying_user.email,
       type: 'customer',
       desc: 'CD001',
-      message: 'We are glad to have you onboard\nRemember to top-up your account and refer other users.\nReferring other users can earn you upto N200',
+      message: 'We are glad to have you onboard\nRemember to top-up your account and refer other users.\nReferring other users can earn you up to N200',
       title: 'Welcome to Koogah',
     };
     return Promise.try(async () => {

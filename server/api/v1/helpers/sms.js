@@ -66,9 +66,6 @@ async function sendSMS(mobile_number, message) {
     } catch (err) {
       console.log(err);
     }
-
-
-
   }
 }
 export default sendSMS;

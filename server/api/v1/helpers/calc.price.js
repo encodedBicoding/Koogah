@@ -16,6 +16,9 @@ function calc_delivery_price(type, weight, distance, value) {
   if (type === 'international') {
     base_price = process.env.KOOGAH_INTERNATIONAL_DISPATCH_BASE_FEE;
   }
+  if (!value) {
+    value = '0-999';
+  }
   const weight_value = weight_range[weight];
   const package_value = value_range[value];
   const sms_charge = 50;

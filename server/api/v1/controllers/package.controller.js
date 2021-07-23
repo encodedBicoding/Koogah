@@ -64,6 +64,9 @@ class Package {
     if (!data.payment_mode) {
       data.payment_mode = 'virtual_balance';
     }
+    if (!value) {
+      value = '0-999';
+    }
     // calculate the distance between package pickup location
     // and package dropoff location
     return Promise.try(async () => {

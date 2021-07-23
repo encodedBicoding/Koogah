@@ -53,7 +53,7 @@ class Package {
   static async request_dispatch(req, res) {
     const { user } = req.session;
     let { type } = req.params;
-    const { weight, delivery_price, distance, ...data } = req.body;
+    const { weight, delivery_price, distance, value, ...data } = req.body;
     if (type.length <= 5) {
       type = `${type}-state`;
     }
@@ -131,6 +131,7 @@ class Package {
          type_of_dispatch: type,
          customer_id: user.id,
          weight,
+         value,
          distance,
          delivery_price,
          package_id,
@@ -525,6 +526,7 @@ class Package {
         _package.type_of_dispatch,
         new_weight,
         _package.distance,
+        _package.value
       );
       if (!new_delivery_price) {
         return res.status(400).json({
@@ -2290,7 +2292,7 @@ class Package {
             try {
               const distance_in_km = result.rows[0].elements[0].distance.text;
               const distance = Math.ceil(Number(distance_in_km.split(' ')[0].replace(',', '')));
-              const delivery_price = calc_delivery_price(type, data.weight, distance);
+              const delivery_price = calc_delivery_price(type, data.weight, distance, data.value);
               if (!delivery_price) {
                 return res.status(400).json({
                   status: 400,
@@ -2467,7 +2469,7 @@ class Package {
             try { 
               const distance_in_km = result.rows[0].elements[0].distance.text;
               const distance = Math.ceil(Number(distance_in_km.split(' ')[0].replace(',', '')));
-              const delivery_price = calc_delivery_price(type, data.weight, distance);
+              const delivery_price = calc_delivery_price(type, data.weight, distance, data.value);
               if (!delivery_price) {
                 return res.status(400).json({
                   status: 400,

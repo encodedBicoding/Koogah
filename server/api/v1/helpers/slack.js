@@ -113,7 +113,7 @@ export const sendNewPackageNotification = function sendNewPackageNotification(pa
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "• Package Id: `" + package_detail.package_id + "` \n• Description: `" + package_detail.description + "`\n• Weight: `" + package_detail.weight + "`"
+        "text": "• Package Id: `" + package_detail.package_id + "` \n• Description: `" + package_detail.description + "`\n• Weight: `" + package_detail.weight + "`\n• Value: `" + package_detail.value + "`\n• Price: `" + package_detail.delivery_price + "`"
       }
     },
     {

@@ -122,6 +122,8 @@ class Schema {
       pickup_landmark: Joi.string(),
       contact_name: Joi.string(),
       contact_phone: Joi.string(),
+      receiver_contact_fullname: Joi.string(),
+      receiver_contact_phone: Joi.string(),
       type_of_dispatch: Joi.string()
     });
   }
@@ -149,6 +151,8 @@ class Schema {
       pickup_landmark: Joi.string(),
       contact_name: Joi.string().required(),
       contact_phone: Joi.string().required(),
+      receiver_contact_fullname: Joi.string().required(),
+      receiver_contact_phone: Joi.string().required(),
       delivery_price: Joi.string().required(),
       distance: Joi.string().required(),
     });
@@ -177,6 +181,8 @@ class Schema {
       landmark: Joi.string(),
       contact_name: Joi.string().required(),
       contact_phone: Joi.string().required(),
+      receiver_contact_fullname: Joi.string().required(),
+      receiver_contact_phone: Joi.string().required(),
       delivery_price: Joi.string().required(),
     });
   }
@@ -206,6 +212,8 @@ class Schema {
       landmark: Joi.string(),
       contact_name: Joi.string().required(),
       contact_phone: Joi.string().required(),
+      receiver_contact_fullname: Joi.string().required(),
+      receiver_contact_phone: Joi.string().required(),
       delivery_price: Joi.string().required(),
     });
   }

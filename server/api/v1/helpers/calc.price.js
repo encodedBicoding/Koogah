@@ -39,9 +39,12 @@ function calc_delivery_price(type, weight, distance, value) {
           net_price = net_price * 0.7
         }
       } else {
+        if (net_price >= 2500 && price_slash_list.includes(weight)) {
+          net_price = net_price * 0.8
+        }
         if (net_price >= 9000 && price_slash_list.includes(weight)) {
           net_price = net_price * 0.8
-      }
+        }
       }
 
     }

@@ -34,9 +34,16 @@ function calc_delivery_price(type, weight, distance, value) {
     }
   } else {
     if (type === 'intra-state') {
-      if (net_price >= 9000 && price_slash_list.includes(weight)) {
-          net_price = net_price * 0.6
+      if (package_value > 1) {
+        if (net_price >= 3300 && price_slash_list.includes(weight)) {
+          net_price = net_price * 0.8
+        }
+      } else {
+        if (net_price >= 9000 && price_slash_list.includes(weight)) {
+          net_price = net_price * 0.8
       }
+      }
+
     }
   }
   return net_price;

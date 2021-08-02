@@ -21,11 +21,9 @@ function calc_delivery_price(type, weight, distance, value) {
   }
   const weight_value = weight_range[weight];
   const package_value = value_range[value];
-  const sms_charge = 50;
-  const transfer_charge = 10;
   const price_slash_list = ['0-5', '6-10','11-15']
   if (!weight_range) return false;
-  var net_price = Math.ceil(((weight_value * distance) + Number(base_price) + sms_charge + transfer_charge) * package_value);
+  var net_price = Math.ceil(((weight_value * distance) + Number(base_price)) * package_value);
   if (Number(distance) > 50) {
     if (type === 'intra-state') {
       if (net_price >= 15000 && price_slash_list.includes(weight)) {

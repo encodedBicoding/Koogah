@@ -345,7 +345,9 @@ class Payment {
             error: 'Oops, seems this dispatcher doesn\'t exists anymore...',
           });
         }
-        const fees = Number(is_package_valid.delivery_price) * 0.30;
+        const sms_charge = 50;
+        const transfer_charge = 10;
+        const fees = (Number(is_package_valid.delivery_price) * process.env.PACKAGE_DELIVERY_FEE) + sms_charge + transfer_charge;
         const total_amount_payable = Number(is_package_valid.delivery_price) - fees;
         const dispatcher_new_balance = Number(dispatcher.virtual_balance) + total_amount_payable;
   
@@ -551,7 +553,9 @@ class Payment {
           error: 'Oops, seems this dispatcher doesn\'t exists anymore...',
         });
       }
-      const fees = Number(is_package_valid.delivery_price) * 0.30;
+      const sms_charge = 50;
+      const transfer_charge = 10;
+      const fees = (Number(is_package_valid.delivery_price) * process.env.PACKAGE_DELIVERY_FEE) + sms_charge + transfer_charge;
       const total_amount_payable = Number(is_package_valid.delivery_price) - fees;
       const dispatcher_new_balance = Number(dispatcher.virtual_balance) + total_amount_payable;
 

@@ -105,6 +105,7 @@ class Schema {
   static edit_package_schema() {
     return Joi.object({
       weight: Joi.string(),
+      value: Joi.string().valid('0-999', '1000-9999', '10000-99999', '100000-999999', '1000000'),
       description: Joi.string(),
       payment_mode: Joi.string().valid('virtual_balance', 'koogah_coin'),
       from_country: Joi.string(),
@@ -121,6 +122,8 @@ class Schema {
       pickup_landmark: Joi.string(),
       contact_name: Joi.string(),
       contact_phone: Joi.string(),
+      receiver_contact_fullname: Joi.string(),
+      receiver_contact_phone: Joi.string(),
       type_of_dispatch: Joi.string()
     });
   }
@@ -135,6 +138,7 @@ class Schema {
   static intra_package_schema() {
     return Joi.object({
       weight: Joi.string().required(),
+      value: Joi.string().valid('0-999', '1000-9999', '10000-99999', '100000-999999', '1000000'),
       description: Joi.string().required(),
       payment_mode: Joi.string().valid('virtual_balance', 'koogah_coin').required(),
       from_state: Joi.string().required(),
@@ -147,6 +151,8 @@ class Schema {
       pickup_landmark: Joi.string(),
       contact_name: Joi.string().required(),
       contact_phone: Joi.string().required(),
+      receiver_contact_fullname: Joi.string().required(),
+      receiver_contact_phone: Joi.string().required(),
       delivery_price: Joi.string().required(),
       distance: Joi.string().required(),
     });
@@ -161,6 +167,7 @@ class Schema {
   static inter_package_schema() {
     return Joi.object({
       weight: Joi.string().required(),
+      value: Joi.string().valid('0-999', '1000-9999', '10000-99999', '100000-999999', '1000000'),
       description: Joi.string().required(),
       payment_mode: Joi.string().valid('virtual_balance', 'koogah_coin').required(),
       from_state: Joi.string().required(),
@@ -174,6 +181,8 @@ class Schema {
       landmark: Joi.string(),
       contact_name: Joi.string().required(),
       contact_phone: Joi.string().required(),
+      receiver_contact_fullname: Joi.string().required(),
+      receiver_contact_phone: Joi.string().required(),
       delivery_price: Joi.string().required(),
     });
   }
@@ -187,6 +196,7 @@ class Schema {
   static international_package_schema() {
     return Joi.object({
       weight: Joi.string().required(),
+      value: Joi.string().valid('0-999', '1000-9999', '10000-99999', '100000-999999', '1000000'),
       description: Joi.string().required(),
       payment_mode: Joi.string().valid('virtual_balance', 'koogah_coin').required(),
       from_country: Joi.string().required(),
@@ -202,6 +212,8 @@ class Schema {
       landmark: Joi.string(),
       contact_name: Joi.string().required(),
       contact_phone: Joi.string().required(),
+      receiver_contact_fullname: Joi.string().required(),
+      receiver_contact_phone: Joi.string().required(),
       delivery_price: Joi.string().required(),
     });
   }

@@ -7,7 +7,7 @@ import payoutRoutes from './payouts.route';
 import notifyRoutes from './notify.route';
 import profileRoutes from './profile.route';
 import historyRoutes from './history.route';
-import sendSMS from '../helpers/sms';
+import verifyRoute from './verifyme.route';
 
 const route = express();
 
@@ -28,5 +28,6 @@ route.use('/payout', payoutRoutes);
 route.use('/notifications', notifyRoutes);
 route.use('/profile', profileRoutes);
 route.use('/history', historyRoutes);
+route.use('/verify', verifyRoute);
 
 export default route;

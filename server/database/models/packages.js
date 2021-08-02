@@ -140,6 +140,18 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
+    receiver_contact_fullname: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    receiver_contact_phone: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    value: {
+      type: DataTypes.STRING,
+      allowNull: true
+    }
   },
   {
     underscored: true,

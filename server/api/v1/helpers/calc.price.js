@@ -36,7 +36,7 @@ function calc_delivery_price(type, weight, distance, value) {
     if (type === 'intra-state') {
       if (package_value > 1) {
         if (net_price >= 3300 && price_slash_list.includes(weight)) {
-          net_price = net_price * 0.8
+          net_price = net_price * 0.7
         }
       } else {
         if (net_price >= 9000 && price_slash_list.includes(weight)) {

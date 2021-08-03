@@ -21,33 +21,11 @@ function calc_delivery_price(type, weight, distance, value) {
   }
   const weight_value = weight_range[weight];
   const package_value = value_range[value];
-  const price_slash_list = ['0-5', '6-10','11-15']
+  const sms_charge = 50;
+  const transfer_charge = 10;
   if (!weight_range) return false;
-  var net_price = Math.ceil(((weight_value * distance) + Number(base_price)) * package_value);
-  if (Number(distance) > 50) {
-    if (type === 'intra-state') {
-      if (net_price >= 15000 && price_slash_list.includes(weight)) {
-          net_price = net_price * 0.7
-      }
-    }
-  } else {
-    if (type === 'intra-state') {
-      if (package_value > 1) {
-        if (net_price >= 3300 && price_slash_list.includes(weight)) {
-          net_price = net_price * 0.7
-        }
-      } else {
-        if (net_price >= 2500 && price_slash_list.includes(weight)) {
-          net_price = net_price * 0.8
-        }
-        if (net_price >= 9000 && price_slash_list.includes(weight)) {
-          net_price = net_price * 0.8
-        }
-      }
-
-    }
-  }
-  return Math.ceil(net_price);
+  var net_price = Math.ceil(Number(base_price) + (50 * weight_value) + (50 * Number(distance)) + (package_value / 100) + sms_charge + transfer_charge);
+  return net_price;
 }
 
 export default calc_delivery_price;

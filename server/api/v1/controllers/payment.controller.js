@@ -556,7 +556,7 @@ class Payment {
       const sms_charge = 50;
       const transfer_charge = 10;
       const fees = (Number(is_package_valid.delivery_price) * process.env.PACKAGE_DELIVERY_FEE) + sms_charge + transfer_charge;
-      const total_amount_payable = Number(is_package_valid.delivery_price) - fees;
+      const total_amount_payable = Number(is_package_valid.delivery_price) - Math.ceil(fees);
       const dispatcher_new_balance = Number(dispatcher.virtual_balance) + total_amount_payable;
 
       const transaction_details = {

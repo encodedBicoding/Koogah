@@ -9,6 +9,7 @@ import jwt from '../api/v1/helpers/jwt';
 import eventEmitter from '../EventEmitter';
 import Notifier from '../api/v1/helpers/notifier';
 import Sequelize from 'sequelize';
+import moment from 'moment';
 
 const { Op } = Sequelize;
 
@@ -169,44 +170,52 @@ if (cluster.isMaster) {
         notification_id: msg.notification_id,
       });
       WsServer.clients.forEach(async (client) => {
-        if (client.readyState === WebSocket.OPEN) {
-          var client_id = client.connectionId.split(':')[2];
-          let timestamp_benchmark = moment().subtract(5, 'months').format();
-          const dispatcher = await Couriers.findOne({
-            where: {
-              id: client_id,
-            },
-          })
-          let all_notifications = await Notifications.findAll({
-            where: {
-              [Op.and]: [{ email: dispatcher.email }, { type: 'courier' }],
-              created_at: {
-                [Op.gte]:timestamp_benchmark
-              }
+        try {
+          if (client.readyState === WebSocket.OPEN) {
+            var client_id = client.connectionId.split(':')[2];
+            let timestamp_benchmark = moment().subtract(5, 'months').format();
+            const dispatcher = await Couriers.findOne({
+              where: {
+                id: client_id,
+              },
+            });
+        
+            if (dispatcher) {
+              let all_notifications = await Notifications.findAll({
+                where: {
+                  [Op.and]: [{ email: dispatcher.email }, { type: 'courier' }],
+                  created_at: {
+                    [Op.gte]:timestamp_benchmark
+                  }
+                }
+              });
+              const device_notify_obj = {
+                title: `New Package Creation @ ${msg.channel.toUpperCase()}`,
+                body: msg.detail,
+                click_action: 'FLUTTER_NOTIFICATION_CLICK',
+                icon: 'ic_launcher'
+              };
+              const _notification = {
+                email: dispatcher.email,
+                desc: 'CD012',
+                message: msg.detail,
+                title: `New Package Creation @ ${msg.channel.toUpperCase()}`,
+                action_link: ''
+              };
+              await Notifier(
+                all_notifications,
+                dispatcher,
+                'dispatcher',
+                device_notify_obj,
+                _notification
+              );
+              // get the client device id;
+              client.send(m);
             }
-          });
-          const device_notify_obj = {
-            title: `New Package Creation @ ${msg.channel.toUpperCase()}`,
-            body: msg.detail,
-            click_action: 'FLUTTER_NOTIFICATION_CLICK',
-            icon: 'ic_launcher'
-          };
-          const _notification = {
-            email: dispatcher.email,
-            desc: 'CD012',
-            message: msg.detail,
-            title: `New Package Creation @ ${msg.channel.toUpperCase()}`,
-            action_link: ''
-          };
-          await Notifier(
-            all_notifications,
-            dispatcher,
-            'dispatcher',
-            device_notify_obj,
-            _notification
-          );
-          // get the client device id;
-          client.send(m);
+          }
+        } catch (err) {
+          console.log(err);
+          return;
         }
       });
     } catch (err) {

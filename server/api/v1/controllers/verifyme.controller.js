@@ -203,7 +203,7 @@ class VerifyMe {
     return Promise.try(async () => {
       const API_SECRET = process.env.NODE_ENV === 'production' ? process.env.VERIFYME_LIVE_SECRET : process.env.VERIFYME_TEST_SECRET;
       const signature = Crypto.createHmac('sha512', API_SECRET).update(JSON.stringify(req.body)).digest('hex');
-      if (signature === req.headers['x-verifyme-signatue']) {
+      if (signature === req.headers['x-verifyme-signature']) {
         sendEmergencyContactAddressVerification(req.body.data);
         return res.status(200).json({
           status: 200,

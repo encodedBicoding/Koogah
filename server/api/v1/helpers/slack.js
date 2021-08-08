@@ -46,6 +46,118 @@ export default function sendSlackNotification(hookUrl, text, blocks=[]) {
   )
 }
 
+
+export const sendEmergencyContactAddressVerification = function sendEmergencyContactAddressVerification(data) {
+  const {
+    applicant,
+    neighbor,
+    status
+  } = data;
+  sendSlackNotification(process.env.SLACK_ADDRESS_VERIFICATION_CHANNEL_HOOK, '', [
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "Applicant"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "fields": [
+        {
+          "type": "plain_text",
+          "text": `Firstname: ${applicant.firstname}\nLastname: ${applicant.lastname}\nPhone: ${applicant.phone}\nIdentification Type: ${applicant.idType}\nIdentification Number: ${applicant.idNumber}\nMiddlename: ${applicant.middlename}\nGender: ${applicant.gender}Birthdate: ${applicant.birthdate}`,
+          "emoji": true
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "plain_text",
+        "text": `Created At: ${data.createdAt}\nCompleted At: ${data.completedAt}\nLattitude: ${data.lattitude}\nLongitude: ${data.longitude}`,
+        "emoji": true
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "plain_text",
+        "text": `Comment: ${data.comment}`
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": `Photos: ${data.photos.join(',')}`
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "Neighbor"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "plain_text",
+        "text": `Is Available: ${neighbor.isAvailable}\nName: ${neighbor.name}\nComment: ${neighbor.comment}\nPhone: ${neighbor.phone}`
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "Status"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "plain_text",
+        "text": `Status: ${status.status}\nSub Status: ${status.subStatus}\nState: ${status.state}`
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "plain_text",
+        "text": `City: ${data.city}\nStreet: ${data.street}\nLGA: ${data.lga}\nState: ${data.state}\nCountry: ${data.country}\nRef: ${data.reference}`
+      }
+    },
+  ]);
+}
+
 export const sendNewCustomerNotification = function sendNewCustomerNotification(user) {
   sendSlackNotification(process.env.SLACK_ONBOARDING_CHANNEL_HOOK, '', [
     {

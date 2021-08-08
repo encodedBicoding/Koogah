@@ -5,7 +5,8 @@ const verifyRoute = express();
 const {
   verifyBVN,
   verifyNIN,
-  submitAddressVerification
+  submitAddressVerification,
+  addressVerificationWebhook,
 } = VerifyMe;
 
 verifyRoute.post(
@@ -22,5 +23,8 @@ verifyRoute.post(
   '/address',
   submitAddressVerification,
 );
-
+verifyRoute.post(
+  '/address/webhook',
+  addressVerificationWebhook,
+);
 export default verifyRoute;

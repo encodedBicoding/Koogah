@@ -1,5 +1,8 @@
 import log from 'fancy-log';
 import fetch from 'node-fetch';
+import Crypto from 'crypto';
+
+import { sendEmergencyContactAddressVerification } from '../helpers/slack';
 class VerifyMe {
   /**
    * @method verifyBVN
@@ -186,6 +189,36 @@ class VerifyMe {
       log(err);
       return;
     });
+  }
+
+  /**
+   * @method addressVerificationWebhook
+   * @memberof VerifyMe
+   * @description This method is a webhook.
+   * @params req, res
+   * @return JSON object
+   */
+
+  static addressVerificationWebhook(req, res) {
+    return Promise.try(async () => {
+      const API_SECRET = process.env.NODE_ENV === 'production' ? process.env.VERIFYME_LIVE_SECRET : process.env.VERIFYME_TEST_SECRET;
+      const signature = Crypto.createHmac('sha512', API_SECRET).update(JSON.stringify(req.body)).digest('hex');
+      if (signature === req.headers['x-verifyme-signatue']) {
+        sendEmergencyContactAddressVerification(req.body.data);
+        return res.status(200).json({
+          status: 200,
+          message: 'Message received and sent'
+        });
+      } else {
+        return res.status(400).json({
+          status: 400,
+          message: 'UnAuthorized'
+        })
+      }
+    }).catch(err => {
+      log(err);
+      return;
+    })
   }
 }
 

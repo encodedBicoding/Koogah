@@ -162,61 +162,48 @@ if (cluster.isMaster) {
   });
 
   eventEmitter.on('notify_new_package_creation', async function (msg) {
+    const user_state = msg.pickup_state.split(',')[0]; 
     try {
-      const m = JSON.stringify({
-        detail: msg.detail,
-        package_id: msg.package_id,
-        event: 'notify_new_package_creation',
-        notification_id: msg.notification_id,
+      const allDispatchers = await Couriers.findAll({
+        where: {
+          is_verified: true,
+          is_active: true,
+          is_approved: true,
+          state: user_state,
+        }
       });
-      WsServer.clients.forEach(async (client) => {
-        try {
-          if (client.readyState === WebSocket.OPEN) {
-            var client_id = client.connectionId.split(':')[2];
-            let timestamp_benchmark = moment().subtract(5, 'months').format();
-            const dispatcher = await Couriers.findOne({
-              where: {
-                id: client_id,
-              },
-            });
-        
-            if (dispatcher) {
-              let all_notifications = await Notifications.findAll({
-                where: {
-                  [Op.and]: [{ email: dispatcher.email }, { type: 'courier' }],
-                  created_at: {
-                    [Op.gte]:timestamp_benchmark
-                  }
-                }
-              });
-              const device_notify_obj = {
-                title: `New Package Creation @ ${msg.channel.toUpperCase()}`,
-                body: msg.detail,
-                click_action: 'FLUTTER_NOTIFICATION_CLICK',
-                icon: 'ic_launcher'
-              };
-              const _notification = {
-                email: dispatcher.email,
-                desc: 'CD012',
-                message: msg.detail,
-                title: `New Package Creation @ ${msg.channel.toUpperCase()}`,
-                action_link: ''
-              };
-              await Notifier(
-                all_notifications,
-                dispatcher,
-                'dispatcher',
-                device_notify_obj,
-                _notification
-              );
-              // get the client device id;
-              client.send(m);
+      let timestamp_benchmark = moment().subtract(5, 'months').format();
+
+      allDispatchers.forEach(async (dispatcher) => {
+        let all_notifications = await Notifications.findAll({
+          where: {
+            [Op.and]: [{ email: dispatcher.email }, { type: 'courier' }],
+            created_at: {
+              [Op.gte]:timestamp_benchmark
             }
           }
-        } catch (err) {
-          console.log(err);
-          return;
-        }
+        });
+        const device_notify_obj = {
+          title: 'Koogah Logistics',
+          body: msg.detail,
+          click_action: 'FLUTTER_NOTIFICATION_CLICK',
+          icon: 'ic_launcher'
+        };
+        const _notification = {
+          email: dispatcher.email,
+          desc: 'CD012',
+          message: msg.detail,
+          title: 'Koogah Logistics',
+          action_link: '',
+          id: msg.notification_id,
+        };
+        await Notifier(
+          all_notifications,
+          dispatcher,
+          'dispatcher',
+          device_notify_obj,
+          _notification
+        );
       });
     } catch (err) {
       console.log(err);

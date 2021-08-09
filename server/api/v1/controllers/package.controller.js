@@ -147,7 +147,8 @@ class Package {
       const proposed_channel = `${propose_city}`;
       eventEmitter.emit('notify_new_package_creation', {
         channel: proposed_channel,
-        detail: `A new package has been created at ${data.from_town} area of ${data.from_state}. \nYou may want to deliver this package, check it out.`,
+        pickup_state: data.from_state,
+        detail: `New package delivery @ ${data.from_town} area of ${data.from_state} to ${data.to_town}. \nYou may want to deliver this package, check it out.`,
         package_id: package_detail.package_id,
         notification_id: package_detail.id,
       });

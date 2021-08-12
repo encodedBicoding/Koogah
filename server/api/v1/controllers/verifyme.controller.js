@@ -63,6 +63,63 @@ class VerifyMe {
   }
 
   /**
+   * @method verifyDriverLicense
+   * @memberof VerifyMe
+   * @description This method verifies user Driver License
+   * @params req, res
+   * @return JSON object
+   */
+   static verifyDriverLicense(req, res) {
+    return Promise.try(async () => {
+      const { ref, lastName, firstName } = req.body;
+      const { auth } = req.query;
+      if (auth !== process.env.KOOGAH_VERIFYME_AUTH) {
+        return res.status(401).json({
+          status: 401,
+          error:'Not Authorized'
+        });
+      }
+      const VERIFYME_BASE_URL = process.env.VERIFYME_BASE_URL;
+      const url = `${VERIFYME_BASE_URL}/v1/verifications/identities/drivers_license/${ref}`;
+      const API_SECRET = process.env.NODE_ENV === 'production' ? process.env.VERIFYME_LIVE_SECRET : process.env.VERIFYME_TEST_SECRET;
+      let response = await fetch(
+        url,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${API_SECRET}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(
+            {
+              lastname: lastName,
+              firstname: firstName,
+            }
+          ),
+        }
+      );
+      let statusCode = response.status;
+      let statusText = response.statusText;
+      response = await response.json();
+      if (statusCode === 201) {
+        return res.status(statusCode).json({
+          status: statusCode,
+          message: 'Driver license data returned successfully',
+          data: response.data,
+        })
+      } else {
+        return res.status(statusCode).json({
+          status: statusCode,
+          error: statusText
+        })
+      }
+    }).catch((err) => {
+      log(err);
+      return;
+    })
+  }
+
+  /**
    * @method verifyNIN
    * @memberof VerifyMe
    * @description This method verifies user National Identity Number

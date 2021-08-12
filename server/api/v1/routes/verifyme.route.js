@@ -7,6 +7,7 @@ const {
   verifyNIN,
   submitAddressVerification,
   addressVerificationWebhook,
+  verifyDriverLicense,
 } = VerifyMe;
 
 verifyRoute.post(
@@ -17,6 +18,10 @@ verifyRoute.post(
 verifyRoute.post(
   '/nin',
   verifyNIN,
+);
+verifyRoute.post(
+  '/driver_license',
+  verifyDriverLicense,
 );
 
 verifyRoute.post(

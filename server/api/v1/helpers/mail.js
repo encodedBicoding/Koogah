@@ -186,6 +186,75 @@ export const createCourierApprovalMail = function createCourierApprovalMail(user
 
   return msg_obj;
 };
+export const createCustomerPersonalizedMail = function createCustomerPersonalizedMail(userObj) {
+  let { first_name, user_email, last_name } = userObj;
+  first_name = toSentenceCase.call(null, first_name);
+  last_name = toSentenceCase.call(null, last_name);
+  let html;
+
+  html = `
+  <table width='100%' cellspacing='0' cellpadding='0'>
+    <tr>
+      <td>
+        <table>
+          <tr>
+            <td>
+              <div>
+              <a href="https://koogah.com"><img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:10% !important; width:10%; height:auto !important;" width="58" alt="Koogah Logo" data-proportionally-constrained="true" data-responsive="true" src="http://cdn.mcauto-images-production.sendgrid.net/7e40b7ed2842548c/f01429ea-615c-4fbd-bbc8-9b72dd7140b3/500x500.png"></a>
+              </div>
+              <div style="font-family: inherit; text-align: inherit"><span style="font-size: 18px"><strong>Koogah Logistics</strong></span></div>
+              <div>
+                  <h2>Hello ${first_name}</h2>
+                  <p>We are building a community to support the ever growing e-commerce market in Nigeria, and we believe we can achieve this by providing a better logistics/delivery experience for you.</p>
+                  <p>I want to thank you for joining us on this journey, and also let you know that we are here to serve you.</p>
+                  <br/>
+                  <br/>
+                  <h2><br>Our Dispatchers</br></h2>
+                  <p>Our aim is to decentralize the delivery system, and provide you with the finest dispatchers to fulfil all of your delivery needs.</p>
+                  <p>Our partnership with <b>VerifyMe Nigeria</br> and our <b>Rating system</br> ensures that we provide you with only the best people to fulfill your delivery needs.</p>
+                  <b>Our dispatchers can be anyone with a bike, a car, a truck or other means of transportation, as long as they can deliver your package intact and on time.</b>
+                  <br/>
+                  <p>That's not all...</p>
+                  <p>Koogah gives you total control over your deliveries. With this control, you can:</p>
+                  <ul>
+                    <li>Choose who delivers for you</li>
+                    <li>Track your delivery in real-time from pickup to drop-off</li>
+                    <li>Reach us on WhatsApp via +2348149332331 😊 if you have any complaints.</li>
+                  </ul>
+                  <br/>
+                  <br/>
+                  <p>From the depth of my heart, I want to welcome you to Koogah.</p>
+                  <br/>
+                  <br/>
+                  <br/>
+                  <p>
+                    Dominic Olije Isioma, <br/>
+                    CEO/Founder The Koogah Brand Limited.
+                  </p>
+              </div>
+              <section style='margin-top: 10%'>
+                <p style='font-size: 50%; text-align: center;'>
+                This message was sent to ${first_name} ${last_name} (${user_email}) because you signed up as a Koogah customer<br />
+                </p>
+               </section>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+`
+let msgObj = {
+  to: user_email,
+  from: 'noreply@koogah.com',
+  subject: 'Welcome to Koogah',
+  html,
+}
+
+return msgObj
+  
+ }
+
 export const createKoogahWelcomeMailToCourier = function sendWelcomMailToCourier(userObj) {
   let { first_name, user_email, last_name } = userObj;
   first_name = toSentenceCase.call(null, first_name);
@@ -217,7 +286,7 @@ export const createKoogahWelcomeMailToCourier = function sendWelcomMailToCourier
                       <br/>
                       <br/>
                       <p>
-                        Cheers,
+                        Cheers,<br/>
                         The Koogah Logistics Team.
                       </p>
                   </div>

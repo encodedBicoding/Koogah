@@ -24,7 +24,8 @@ import sendMail, {
     createCourierApprovalMail,
     createApprovalMailToCourier,
     createPasswordResetEmail,
-    createKoogahWelcomeMailToCourier
+    createKoogahWelcomeMailToCourier,
+    createCustomerPersonalizedMail,
 } from '../helpers/mail';
 
 import { sendNewCustomerNotification, sendUnApprovedDispatcherNotification } from '../helpers/slack';
@@ -700,6 +701,13 @@ class UserController {
         refresh_token: REFRESH_TOKEN,
         ...approved_user.getSafeDataValues(),
       };
+      const user_obj = {
+        first_name: approved_user.first_name,
+        user_email: approved_user.email,
+        last_name: approved_user.last_name,
+      };
+      const MSG_OBJ = createCustomerPersonalizedMail(user_obj);
+      await sendMail(MSG_OBJ);
       sendNewCustomerNotification(approved_user)
       res.status(200).json({
         status: 200,

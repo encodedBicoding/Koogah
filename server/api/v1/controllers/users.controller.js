@@ -24,7 +24,8 @@ import sendMail, {
     createCourierApprovalMail,
     createApprovalMailToCourier,
     createPasswordResetEmail,
-    createKoogahWelcomeMailToCourier
+    createKoogahWelcomeMailToCourier,
+    createCustomerPersonalizedMail,
 } from '../helpers/mail';
 
 import { sendNewCustomerNotification, sendUnApprovedDispatcherNotification } from '../helpers/slack';

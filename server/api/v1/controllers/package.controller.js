@@ -33,6 +33,8 @@ import {
   sendPackageDeliveredNotification
 } from '../helpers/slack';
 
+const cron = require('node-cron');
+
 config();
 distanceApi.key(process.env.GOOGLE_API_KEY);
 
@@ -53,7 +55,7 @@ class Package {
   static async request_dispatch(req, res) {
     const { user } = req.session;
     let { type } = req.params;
-    const { weight, delivery_price, distance, value, ...data } = req.body;
+    let { weight, delivery_price, distance, value, ...data } = req.body;
     if (type.length <= 5) {
       type = `${type}-state`;
     }
@@ -141,16 +143,11 @@ class Package {
          delivery_key,
          ...data,
        });
-       // TODO: this should create a new package creation notification
-       // and/or send a push notification to all couriers registered in the package location area.
-      const propose_city = data.from_town.split(',').map((e) => e.toLowerCase()).join('');
-      const proposed_channel = `${propose_city}`;
-      eventEmitter.emit('notify_new_package_creation', {
-        channel: proposed_channel,
-        pickup_state: data.from_state,
-        detail: `New package delivery @ ${data.from_town} area of ${data.from_state} to ${data.to_town}. \nYou may want to deliver this package, check it out.`,
-        package_id: package_detail.package_id,
-        notification_id: package_detail.id,
+      const message = {
+        pickup_state: data.from_state.split(',')[0]
+      };
+      const task = cron.schedule('1 * * * * *', () => {
+        Package.sendNewPackageCreationToDispatchers(message, task);
       });
       sendNewPackageNotification(package_detail, user, data);
       return res.status(200).json({
@@ -2633,6 +2630,67 @@ class Package {
     });
   }
 
+  /**
+   * @method sendNewPackageCreationToDispatchers
+   * @memberof Package
+   * @params req, res
+   * @description Customers new package creation to dispatcher.
+   * @return JSON object
+   */
+  static sendNewPackageCreationToDispatchers(msg, task) {
+    return Promise.try(async() => {
+      const allDispatchers = await Couriers.findAll({
+        where: {
+          is_verified: true,
+          is_active: true,
+          is_approved: true,
+          state: msg.pickup_state,
+        }
+      });
+      let timestamp_benchmark = moment().subtract(5, 'months').format();
+      allDispatchers.forEach(async (dispatcher) => {
+        let all_notifications = await Notifications.findAll({
+          where: {
+            [Op.and]: [{ email: dispatcher.email }, { type: 'courier' }],
+            created_at: {
+              [Op.gte]:timestamp_benchmark
+            }
+          }
+        });
+        const device_notify_obj = {
+          title: 'Koogah Logistics',
+          body: msg.detail,
+          click_action: 'FLUTTER_NOTIFICATION_CLICK',
+          icon: 'ic_launcher'
+        };
+        const _notification = {
+          email: dispatcher.email,
+          desc: 'CD012',
+          message: msg.detail,
+          title: 'Koogah Logistics',
+          action_link: '',
+          id: msg.notification_id,
+        };
+        await Notifier(
+          all_notifications,
+          dispatcher,
+          'dispatcher',
+          device_notify_obj,
+          _notification
+        );
+
+        if (dispatcher.id === allDispatchers[allDispatchers.length - 1].id) {
+          task.stop();
+        }
+      });
+    }).catch(err => {
+      log(err);
+      return res.status(400).json({
+       status: 400,
+        error: err,
+     });
+    });
+   }
 }
 
 

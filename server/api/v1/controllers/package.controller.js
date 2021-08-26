@@ -144,7 +144,8 @@ class Package {
          ...data,
        });
       const message = {
-        pickup_state: data.from_state.split(',')[0]
+        pickup_state: data.from_state.split(',')[0],
+        detail: `New Package creation @ ${data.from_town} area of ${data.from_state} state. You might want to pick it up, do check it out!.`
       };
       const task = cron.schedule('1 * * * * *', () => {
         Package.sendNewPackageCreationToDispatchers(message, task);

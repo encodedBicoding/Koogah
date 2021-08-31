@@ -438,3 +438,14 @@ export const createPasswordResetEmail = function createPasswordResetEmail(userOb
   };
   return msgObj;
 }
+
+export const createDeliveryReceipt = function createDeliveryReceipt(obj) {
+  const { customer, package, dispatcher } = obj;
+  let html = ``;
+  let msgObj = {
+    to: customer.email,
+    from: 'receipts@koogah.com',
+    subject: 'Delivery Receipt',
+    html,
+  };
+ }

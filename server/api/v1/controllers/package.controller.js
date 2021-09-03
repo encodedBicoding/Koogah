@@ -145,7 +145,7 @@ class Package {
        });
       const message = {
         pickup_state: data.from_state.split(',')[0],
-        detail: `New Package creation @ ${data.from_town} area of ${data.from_state} state. You might want to pick it up, do check it out!.`
+        detail: `New Package creation @ ${data.from_town} area of ${data.from_state}. You might want to pick it up, do check it out!.`
       };
       const task = cron.schedule('1 * * * * *', () => {
         Package.sendNewPackageCreationToDispatchers(message, task);
@@ -220,9 +220,7 @@ class Package {
           where: {
             package_id,
           },
-          attributes: {
-            exclude: ['delivery_key']
-          }
+          c
         });
         const customer = await Customers.findOne({
           where: {

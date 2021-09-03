@@ -257,7 +257,7 @@ class Schema {
     });
   }
   /**
-   * @method top_up_amount_schema
+   * @method amount_schema
    * @description This method return Joi object which delivers a schema to validate amount on topup
    * @memberof Schema
    * @return Joi Object
@@ -266,6 +266,20 @@ class Schema {
   static amount_schema() {
     return Joi.object({
       amount: Joi.number().integer().required(),
+    });
+  }
+
+  /**
+   * @method company_amount_schema
+   * @description This method return Joi object which delivers a schema to validate amount on topup
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+   static company_amount_schema() {
+    return Joi.object({
+      amount: Joi.number().integer().required(),
+      bank_code: Joi.string().required(),
     });
   }
 
@@ -554,6 +568,104 @@ class Schema {
       new_password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
     })
   }
+
+  /**
+   * @method company_signup_schema
+   * @description This method return Joi object which enables a company signup
+   * @memberof Schema
+   * @return Joi Object
+  */
+  
+  static company_signup_schema() {
+    return Joi.object({
+      business_name: Joi.string().trim().required(),
+      nin: Joi.string().trim().required(),
+      first_name: Joi.string().trim().min(2).max(30).required(),
+      last_name: Joi.string().trim().min(2).max(30).required(),
+      country_code: Joi.string().trim().required(),
+      email: Joi.string().trim().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
+      phone: Joi.string().min(10).max(11).required(),
+      business_address: Joi.string().trim().required(),
+      business_state: Joi.string().trim().required(),
+      business_town: Joi.string().trim().required(),
+      business_country: Joi.string().trim().required(),
+    });
+  }
+  /**
+   * @method email_verify_schema
+   * @description This method return Joi object which verifies email alone
+   * @memberof Schema
+   * @return Joi Object
+  */
+  static email_verify_schema() {
+    return Joi.object({
+      email: Joi.string().trim().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
+    });
+  }
+
+  /**
+   * @method code_email_schema
+   * @description This method return Joi object which verifies email and verify code
+   * @memberof Schema
+   * @return Joi Object
+  */
+  
+  static code_email_schema() {
+    return Joi.object({
+      email_verify_code: Joi.string().trim().required(),
+      email: Joi.string().trim().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
+    });
+  }
+
+  /**
+   * @method mobile_code_email_schema
+   * @description This method return Joi object which verifies email and verify code
+   * @memberof Schema
+   * @return Joi Object
+  */
+  
+   static mobile_code_email_schema() {
+    return Joi.object({
+      mobile_verify_code: Joi.string().trim().required(),
+      email: Joi.string().trim().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
+    });
+  }
+
+  /**
+   * @method company_reg_dispatcher_step_three_schema
+   * @description This method return Joi object which verifies mobile number, email, country_code
+   * @memberof Schema
+   * @return Joi Object
+  */
+   static company_reg_dispatcher_step_three_schema() {
+    return Joi.object({
+      mobile_number: Joi.string().trim().required(),
+      country_code: Joi.string().trim().required(),
+      email: Joi.string().trim().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
+    });
+   }
+  
+  /**
+   * @method company_reg_dispatcher_step_five_schema
+   * @description This method return Joi object which verifies the complete company dispatcher
+   * @memberof Schema
+   * @return Joi Object
+  */
+  static company_reg_dispatcher_step_five_schema() {
+    return Joi.object({
+      profile_image: Joi.string().trim().required(),
+      first_name: Joi.string().trim().required(),
+      last_name: Joi.string().trim().required(),
+      email: Joi.string().trim().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
+      password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
+      state: Joi.string().trim().required(),
+      town: Joi.string().trim().required(),
+      address: Joi.string().trim().required(),
+      nationality: Joi.string().trim().required(),
+      sex: Joi.string().valid('M', 'F').required(),
+    });
+  }
+  
 }
 
 

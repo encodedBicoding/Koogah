@@ -25,6 +25,45 @@ export function toSentenceCase(string) {
   return value;
 }
 
+export function createCompanyDispatcherVerificationMail(user_email, company_obj, verification_code) {
+  const { business_name } = company_obj;
+  let html = `
+        <body>
+        <div class='container'>
+          <section class='email_header'>
+          <div>
+          <a href="https://koogah.com"><img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:10% !important; width:10%; height:auto !important;" width="58" alt="Koogah Logo" data-proportionally-constrained="true" data-responsive="true" src="http://cdn.mcauto-images-production.sendgrid.net/7e40b7ed2842548c/f01429ea-615c-4fbd-bbc8-9b72dd7140b3/500x500.png"></a>
+          </div>
+          <div style="font-family: inherit; text-align: inherit"><span style="font-size: 18px"><strong>Koogah Logistics</strong></span></div>
+          </section>
+          <section class='email_body'>
+            <h2>Hello</h2>
+            <p>We have received a request to add you as a dispatcher for a Company (${business_name})</p>
+            <p>Please ignore this email, if you have no affiliate with the afforementioned company.</p>
+            <br/>
+            <p>If you are in support of this action, kindly share the code below with the operator registering your account</p>
+            <br/>
+            <h1>${verification_code}</h1>
+            </section>
+          <section class='email_footer' style='margin-top: 40px;'>
+            <p style='font-size: 50%; text-align: center;'>
+              This message was sent to ${user_email} regarding your request to join ${app.get('title')} as a Dispatcher by ${business_name}<br />
+              Lagos, Nigeria. <br />
+              support@koogah.com
+            </p>
+          </section>
+      </div>
+      </body>
+  `;
+  const msg_obj = {
+    to: user_email,
+    from: 'noreply@koogah.com',
+    subject: 'Verify your account',
+    html,
+  };
+  return msg_obj;
+ }
+
 export const createVerificationMail = function createVerificationMail(user_email, user_obj, type) {
   let { first_name, last_name, verify_link } = user_obj;
   first_name = toSentenceCase.call(null, first_name);
@@ -88,6 +127,56 @@ export const createVerificationMail = function createVerificationMail(user_email
   `;
   }
 
+  if (type === 'company') {
+    html = `
+    <body>
+    <div class='container'>
+      <section class='email_header'>
+      <div>
+      <a href="https://koogah.com"><img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:10% !important; width:10%; height:auto !important;" width="58" alt="Koogah Logo" data-proportionally-constrained="true" data-responsive="true" src="http://cdn.mcauto-images-production.sendgrid.net/7e40b7ed2842548c/f01429ea-615c-4fbd-bbc8-9b72dd7140b3/500x500.png"></a>
+      </div>
+      <div style="font-family: inherit; text-align: inherit"><span style="font-size: 18px"><strong>Koogah Logistics</strong></span></div>
+      </section>
+      <section class='email_body'>
+        <p style='font-size: 15px;'>Hi ${first_name} ${last_name},</p>
+        <p>Thank you for joining our community, we hope you achieve your aim, which we believe is to earn while your dispatchers dispatch goods and/or packages for customers within the Koogah community</p>
+        <p>We are working on making this community as trustworthy as possible and we encourage you to make this goal achievable,</p>
+        <p>as we look forward to helping you earn on this platform</p>
+
+        <p id='note' style='padding: 15px; background-color: #e6e600; border-radius: 4px'>
+          <span id='note_head'>
+            Note: 
+          </span>
+          <span id='note_body' style="color: black;">
+              You would not be able to access your account until you are approved by our team
+          </span> 
+        </p>
+
+        <h3>Steps to getting approved</h3>
+        <ul>
+            <li>First you need to verify your email</li>
+            <li>Fill up our emergency contact form</li>
+        </ul>
+        <p>
+          Click the link below to verify email.
+          <p>
+            ${verify_link}
+          </p>
+        </p>
+
+      </section>
+      <section class='email_footer' style='margin-top: 40px;'>
+        <p style='font-size: 50%; text-align: center;'>
+          This message was sent to ${first_name} ${last_name} (${user_email}) regarding your request to join ${app.get('title')} as a Company <br />
+          Lagos, Nigeria. <br />
+          support@koogah.com
+        </p>
+      </section>
+   </div>
+  </body>
+      `;
+  }
+
   if (type === 'customer') {
     html = `
       <body>
@@ -135,6 +224,66 @@ export const createVerificationMail = function createVerificationMail(user_email
   return msg_obj;
 };
 
+export const createEmergencyContactMail = function createEmergencyContactMail(user_email, userObj, user_type) {
+  let { first_name, last_name } = userObj;
+  first_name = toSentenceCase.call(null, first_name);
+  last_name = toSentenceCase.call(null, last_name);
+  let html;
+  html = `
+  <body>
+  <div class='container'>
+  <section class='email_header'>
+  <div>
+  <a href="https://koogah.com"><img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:10% !important; width:10%; height:auto !important;" width="58" alt="Koogah Logo" data-proportionally-constrained="true" data-responsive="true" src="http://cdn.mcauto-images-production.sendgrid.net/7e40b7ed2842548c/f01429ea-615c-4fbd-bbc8-9b72dd7140b3/500x500.png"></a>
+  </div>
+  <div style="font-family: inherit; text-align: inherit"><span style="font-size: 18px"><strong>Koogah Logistics</strong></span></div>
+  </section>
+  <section class='email_body'>
+    <p style='font-size: 15px;'>Hi ${first_name} ${last_name},</p>
+    <p>As part of our verification process, we need you to fill up the emegency contact details below</p>
+
+    <p id='note' style='padding: 15px; background-color: #e6e600; border-radius: 4px'>
+      <span id='note_head'>
+        Note: 
+      </span>
+      <span id='note_body' style="color: black;">
+          You would not be able to access your account until you are approved by our team
+      </span> 
+    </p>
+    <h3>Steps to getting approved</h3>
+    <ul>
+        <li>First you need to verify your email</li>
+        <li>We would take a few days (usually within 24 hours) to verify your identity</li>
+        <li>Once verified, we would place a call to you.</li>
+        <li>If we deem you certified, you will receive an email from us</li>
+    </ul>
+    <p>
+      Click the link below to complete your registration process.
+      <p>
+        <a href="https://docs.google.com/forms/d/179NJo0DmnjH30XILHVSy0UDdT-OMvFQSzJp4uvByOOs/edit?ts=60ed40d2">COMPLETE REGISTRATION</a>
+      </p>
+    </p>
+
+  </section>
+  <section class='email_footer' style='margin-top: 40px;'>
+    <p style='font-size: 50%; text-align: center;'>
+      This message was sent to ${first_name} ${last_name} (${user_email}) regarding your request to join ${app.get('title')} as a ${user_type}<br />
+      Lagos, Nigeria. <br />
+      support@koogah.com
+    </p>
+  </section>
+</div>
+  </body>
+  `;
+  const msg_obj = {
+    to: user_email,
+    from: 'noreply@koogah.com',
+    subject: 'Complete your registration - Emergency Contact',
+    html,
+  };
+  return msg_obj;
+}
+
 
 export const createCourierApprovalMail = function createCourierApprovalMail(userObj) {
   const company_email = 'thekoogahbrand@gmail.com'; //change to dispatcher_awaiting_approval@koogah.com
@@ -181,6 +330,64 @@ export const createCourierApprovalMail = function createCourierApprovalMail(user
     to: company_email,
     from: 'awaitings@koogah.com',
     subject: 'New Awaiting Approval',
+    html,
+  };
+
+  return msg_obj;
+};
+export const createCompanyApprovalMail = function createCompanyApprovalMail(userObj) {
+  const company_email = 'thekoogahbrand@gmail.com';
+  let {
+    first_name,
+    last_name,
+    approval_link,
+    user_email,
+    phone,
+    nin,
+    business_name,
+    business_country,
+  } = userObj;
+  first_name = toSentenceCase.call(null, first_name);
+  last_name = toSentenceCase.call(null, last_name);
+
+  let html;
+
+  html = `
+      <body>
+        <div class='container'>
+          <section class='approval_header' style='display: flex; flex-direction: row; padding: 13px; border-radius: 4px' background-color: gold;>
+            <img src='/' alt='${app.get('title')} logo' style='width: 50px; height: 50px; border-radius: 50%'>
+            <h2>${app.get('title')}</h2>
+          </section>
+          <section class='approval_body'>
+            <h2>A new user (Company) is awaiting approval</h2>
+            <h2>User details</h2>
+            <ul>
+              <li>Name: ${first_name} ${last_name}</li>
+              <li>Business Name: ${business_name}</li>
+              <li>Business Country: ${business_country}</li>
+              <li>Email: ${user_email}</li>
+              <li>Phone: ${phone}</li>
+              <li>National Identity Number: ${nin}</li>
+            </ul>
+            <div style='margin: 8%;'>
+                <h3>The autogenerated approval link for this user is: </h3>
+                <p>${approval_link}</p>
+            </div>
+          </section>
+          <section class='approval_footer' style='margin-top: 10%'>
+            <p style='font-size: 50%; text-align: center;'>
+              This message was sent to the company ${app.get('title')} based on a user's ${first_name} ${last_name} (${user_email}) request to join the platform as a Company.
+            </p>
+          </section>
+        </div>
+      </body>  
+  `;
+
+  const msg_obj = {
+    to: company_email,
+    from: 'awaitings@koogah.com',
+    subject: 'New Company Awaiting Approval',
     html,
   };
 
@@ -293,6 +500,65 @@ export const createKoogahWelcomeMailToCourier = function sendWelcomMailToCourier
                   <section style='margin-top: 10%'>
                     <p style='font-size: 50%; text-align: center;'>
                     This message was sent to ${first_name} ${last_name} (${user_email}) regarding your request to join ${app.get('title')} as a Dispatcher<br />
+                    </p>
+                   </section>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+  `
+
+  let msgObj = {
+    to: user_email,
+    from: 'noreply@koogah.com',
+    subject: 'Approval notice - Welcome to Koogah',
+    html,
+  }
+
+  return msgObj
+}
+
+export const createKoogahWelcomeMailToCompany = function sendWelcomMailToCourier(userObj) {
+  let { first_name, user_email, last_name } = userObj;
+  first_name = toSentenceCase.call(null, first_name);
+  last_name = toSentenceCase.call(null, last_name);
+  let html;
+
+  html = `
+      <table width='100%' cellspacing='0' cellpadding='0'>
+        <tr>
+          <td>
+            <table>
+              <tr>
+                <td>
+                  <div>
+                  <a href="https://koogah.com"><img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:10% !important; width:10%; height:auto !important;" width="58" alt="Koogah Logo" data-proportionally-constrained="true" data-responsive="true" src="http://cdn.mcauto-images-production.sendgrid.net/7e40b7ed2842548c/f01429ea-615c-4fbd-bbc8-9b72dd7140b3/500x500.png"></a>
+                  </div>
+                  <div style="font-family: inherit; text-align: inherit"><span style="font-size: 18px"><strong>Koogah Logistics</strong></span></div>
+                  <div>
+                      <h2>Welcome To Koogah</h2>
+                      <p>We are filled with so much joy in our hearts, as we foresee a good future working with you to provide better delivery service for customers within the Koogah network</p>
+                      <p>Earning with Koogah is easy, all you have to do is;</p>
+                      <ul>
+                        <li>Log in to your account</li>
+                        <li>Add your dispatchers</li>
+                        <li>Your dispatchers deliver packages for customers within the Koogah network</li>
+                        <li>Track your dispatchers in real-time</li>
+                        <li>Get notified of all your dispatcher activities via email</li>
+                        <li>After a successful delivery, payment are stored on the dispatcher wallet, which you can withdraw into your bank account instantly</li>
+                      </ul>
+                      <br/>
+                      <br/>
+                      <p>
+                        Cheers,<br/>
+                        The Koogah Logistics Team.
+                      </p>
+                  </div>
+                  <section style='margin-top: 10%'>
+                    <p style='font-size: 50%; text-align: center;'>
+                    This message was sent to ${first_name} ${last_name} (${user_email}) regarding your request to join ${app.get('title')} as a Company<br />
                     </p>
                    </section>
                 </td>
@@ -440,7 +706,7 @@ export const createPasswordResetEmail = function createPasswordResetEmail(userOb
 }
 
 export const createDeliveryReceipt = function createDeliveryReceipt(obj) {
-  const { customer, package, dispatcher } = obj;
+  const { customer, _package, dispatcher } = obj;
   let html = ``;
   let msgObj = {
     to: customer.email,

@@ -37,6 +37,13 @@ const {
   start_dispatch_schema,
   change_password_schema,
   courierApprovalSchema,
+  company_signup_schema,
+  email_verify_schema,
+  code_email_schema,
+  company_reg_dispatcher_step_three_schema,
+  company_reg_dispatcher_step_five_schema,
+  mobile_code_email_schema,
+  company_amount_schema
 } = Schema;
 
 /**
@@ -437,6 +444,25 @@ class Validate {
   }
 
   /**
+   * @method check_company_payout_amount
+   * @description This method validates delivery type
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+   static check_company_payout_amount(req, res, next) {
+    const isvalid = company_amount_schema().validate(req.body);
+    if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      });
+    }
+    return next();
+  }
+
+  /**
    * @method check_notify_id
    * @description This method validates notification id
    * @memberof Validate
@@ -699,6 +725,117 @@ class Validate {
    }
    return next();
   }
+
+  /**
+   * @method check_company_signup
+   * @description This method validates company signup
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_company_signup(req, res, next) {
+    const isValid = company_signup_schema().validate(req.body);
+    if (isValid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isValid.error.details,
+      });
+    }
+    return next();
+  }
+
+  /**
+   * @method check_email
+   * @description This method validates email
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+   static check_email(req, res, next) {
+    const isValid = email_verify_schema().validate(req.body);
+     if (isValid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isValid.error.details,
+      });
+    }
+    return next();
+   }
+   /**
+   * @method check_email_and_code
+   * @description This method validates email and email verify code
+   * @memberof Validate
+   * @param {req, res, next}
+    * @return next
+   */
+
+  static check_email_and_code(req, res, next) {
+    const isValid = code_email_schema().validate(req.body);
+    if (isValid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isValid.error.details,
+      });
+    }
+    return next();
+  }
+
+    /**
+   * @method check_email_and_mobile_code
+   * @description This method validates email and email verify code
+   * @memberof Validate
+   * @param {req, res, next}
+    * @return next
+   */
+
+     static check_email_and_mobile_code(req, res, next) {
+      const isValid = mobile_code_email_schema().validate(req.body);
+      if (isValid.hasOwnProperty('error')) {
+        return res.status(400).json({
+          status: 400,
+          error: isValid.error.details,
+        });
+      }
+      return next();
+    }
+
+  /**
+   * @method check_company_reg_dispatcher_step_three
+   * @description This method validates email, mobile_number and country code
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+  static check_company_reg_dispatcher_step_three(req, res, next) {
+    const isValid = company_reg_dispatcher_step_three_schema().validate(req.body);
+    if (isValid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isValid.error.details,
+      });
+    }
+    return next();
+  }
+  /**
+   * @method check_company_reg_dispatcher_step_five
+   * @description This method validates the complete data for company dispatcher reg
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_company_reg_dispatcher_step_five(req, res, next) {
+    const isValid = company_reg_dispatcher_step_five_schema().validate(req.body);
+    if (isValid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isValid.error.details,
+      });
+    }
+    return next();
+  }
+
 }
 
 export default Validate;

@@ -202,6 +202,28 @@ export const sendUnApprovedDispatcherNotification = function sendUnApprovedDispa
   ])
 }
 
+export const sendUnApprovedCompanyNotification = function sendUnApprovedDispatcherNotification(user) {
+  sendSlackNotification(process.env.SLACK_ONBOARDING_CHANNEL_HOOK, 'New Company', [
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "Type: `Company`\nAction: `Awaiting Approval`"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "• Name: `" + user.first_name + " " + user.last_name + "` \n• Phone: `" + user.phone + "`\n• Email: `" + user.user_email + "`"
+      }
+    }
+  ])
+}
+
 export const sendNewPackageNotification = function sendNewPackageNotification(package_detail, user, other) {
   sendSlackNotification(process.env.SLACK_DISPATCH_CHANNEL_HOOK, '', [
     {

@@ -277,7 +277,7 @@ export const createEmergencyContactMail = function createEmergencyContactMail(us
   `;
   const msg_obj = {
     to: user_email,
-    from: 'noreply@koogah.com',
+    from: 'thekoogahbrand@gmail.com',
     subject: 'Complete your registration - Emergency Contact',
     html,
   };
@@ -707,11 +707,613 @@ export const createPasswordResetEmail = function createPasswordResetEmail(userOb
 
 export const createDeliveryReceipt = function createDeliveryReceipt(obj) {
   const { customer, _package, dispatcher } = obj;
-  let html = ``;
+  const dispatcher_first_name = toSentenceCase.call(null, dispatcher.first_name);
+  const dispatcher_last_name = toSentenceCase(null, dispatcher.last_name);
+  let html = `
+  <body>
+  <center class="wrapper" data-link-color="#1188E6" data-body-style="font-size:12px; font-family:lucida sans unicode,lucida grande,sans-serif; color:#000000; background-color:#FFFFFF;">
+    <div class="webkit">
+      <table cellpadding="0" cellspacing="0" border="0" width="100%" class="wrapper" bgcolor="#FFFFFF">
+        <tr>
+          <td valign="top" bgcolor="#FFFFFF" width="100%">
+            <table width="100%" role="content-container" class="outer" align="center" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td width="100%">
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td>
+                        <!--[if mso]>
+<center>
+<table><tr><td width="600">
+<![endif]-->
+                                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%; max-width:600px;" align="center">
+                                  <tr>
+                                    <td role="modules-container" style="padding:0px 0px 0px 0px; color:#000000; text-align:left;" bgcolor="#FFFFFF" width="100%" align="left"><table class="module preheader preheader-hide" role="module" data-type="preheader" border="0" cellpadding="0" cellspacing="0" width="100%" style="display: none !important; mso-hide: all; visibility: hidden; opacity: 0; color: transparent; height: 0; width: 0;">
+<tr>
+  <td role="module-content">
+    <p></p>
+  </td>
+</tr>
+</table><table border="0" cellpadding="0" cellspacing="0" align="center" width="100%" role="module" data-type="columns" style="padding:10px 10px 10px 10px;" bgcolor="#000000" data-distribution="1,1">
+<tbody>
+  <tr role="module-content">
+    <td height="100%" valign="top"><table width="285" style="width:285px; border-spacing:0; border-collapse:collapse; margin:0px 5px 0px 0px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-0">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="wrapper" role="module" data-type="image" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="221f3106-6c36-45e7-851f-d31e9e73c33c">
+<tbody>
+  <tr>
+    <td style="font-size:6px; line-height:10px; padding:0px 0px 0px 0px;" valign="top" align="left">
+      <img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:45% !important; width:45%; height:auto !important;" width="128" alt="" data-proportionally-constrained="true" data-responsive="true" src="http://cdn.mcauto-images-production.sendgrid.net/7e40b7ed2842548c/9fcece24-6a87-48d0-b53e-bf8d33a9d3a0/250x90.png">
+    </td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table><table width="285" style="width:285px; border-spacing:0; border-collapse:collapse; margin:0px 0px 0px 5px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-1">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="6f27ff83-d313-485e-9c07-a8a5f8586a3e" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:18px 0px 18px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: right"><span style="color: #ffffff">${new Date().toLocaleDateString()}</span></div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table></td>
+  </tr>
+</tbody>
+</table><table border="0" cellpadding="0" cellspacing="0" align="center" width="100%" role="module" data-type="columns" style="padding:10px 10px 10px 10px;" bgcolor="#FFFFFF" data-distribution="1">
+<tbody>
+  <tr role="module-content">
+    <td height="100%" valign="top"><table width="560" style="width:560px; border-spacing:0; border-collapse:collapse; margin:0px 10px 0px 10px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-0">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="66b9bb8a-c1da-4a30-bae3-ad601f6dd2e4" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:18px 0px 18px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: inherit"><span style="font-size: 30px"><strong>${_package.delivery_price}</strong></span></div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table></td>
+  </tr>
+</tbody>
+</table><table border="0" cellpadding="0" cellspacing="0" align="center" width="100%" role="module" data-type="columns" style="padding:0px 10px 0px 10px;" bgcolor="#FFFFFF" data-distribution="1,1">
+<tbody>
+  <tr role="module-content">
+    <td height="100%" valign="top"><table width="280" style="width:280px; border-spacing:0; border-collapse:collapse; margin:0px 10px 0px 0px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-0">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="9f2b7326-10dd-4537-9888-83f7eebc756e" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:0px 0px 0px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: inherit">Package ID</div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table><table width="280" style="width:280px; border-spacing:0; border-collapse:collapse; margin:0px 0px 0px 10px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-1">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="770b8590-c9f8-4dfb-ae1e-e5b431fc8c88" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:0px 0px 0px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: right">${_package.package_id}</div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table></td>
+  </tr>
+</tbody>
+</table><table border="0" cellpadding="0" cellspacing="0" align="center" width="100%" role="module" data-type="columns" style="padding:0px 10px 0px 10px;" bgcolor="#FFFFFF" data-distribution="1,1">
+<tbody>
+  <tr role="module-content">
+    <td height="100%" valign="top"><table width="280" style="width:280px; border-spacing:0; border-collapse:collapse; margin:0px 10px 0px 0px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-0">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="9f2b7326-10dd-4537-9888-83f7eebc756e.1" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:0px 0px 0px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: inherit">Base fee</div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table><table width="280" style="width:280px; border-spacing:0; border-collapse:collapse; margin:0px 0px 0px 10px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-1">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="770b8590-c9f8-4dfb-ae1e-e5b431fc8c88.1" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:0px 0px 0px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: right">${process.env.KOOGAH_INTRA_STATE_DISPATCH_BASE_FEE}</div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table></td>
+  </tr>
+</tbody>
+</table><table border="0" cellpadding="0" cellspacing="0" align="center" width="100%" role="module" data-type="columns" style="padding:0px 10px 0px 10px;" bgcolor="#FFFFFF" data-distribution="1,1">
+<tbody>
+  <tr role="module-content">
+    <td height="100%" valign="top"><table width="280" style="width:280px; border-spacing:0; border-collapse:collapse; margin:0px 10px 0px 0px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-0">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="9f2b7326-10dd-4537-9888-83f7eebc756e.1.1" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:0px 0px 0px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: inherit">Distance</div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table><table width="280" style="width:280px; border-spacing:0; border-collapse:collapse; margin:0px 0px 0px 10px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-1">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="770b8590-c9f8-4dfb-ae1e-e5b431fc8c88.1.1" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:0px 0px 0px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: right">${_package.distance}km</div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table></td>
+  </tr>
+</tbody>
+</table><table border="0" cellpadding="0" cellspacing="0" align="center" width="100%" role="module" data-type="columns" style="padding:0px 10px 0px 10px;" bgcolor="#FFFFFF" data-distribution="1,1">
+<tbody>
+  <tr role="module-content">
+    <td height="100%" valign="top"><table width="280" style="width:280px; border-spacing:0; border-collapse:collapse; margin:0px 10px 0px 0px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-0">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="9f2b7326-10dd-4537-9888-83f7eebc756e.1.1.1" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:0px 0px 0px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: inherit">Weight</div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table><table width="280" style="width:280px; border-spacing:0; border-collapse:collapse; margin:0px 0px 0px 10px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-1">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="770b8590-c9f8-4dfb-ae1e-e5b431fc8c88.1.1.1" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:0px 0px 0px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: right">${_package.weight}kg</div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table></td>
+  </tr>
+</tbody>
+</table><table border="0" cellpadding="0" cellspacing="0" align="center" width="100%" role="module" data-type="columns" style="padding:0px 10px 0px 10px;" bgcolor="#FFFFFF" data-distribution="1,1">
+<tbody>
+  <tr role="module-content">
+    <td height="100%" valign="top"><table width="280" style="width:280px; border-spacing:0; border-collapse:collapse; margin:0px 10px 0px 0px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-0">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="9f2b7326-10dd-4537-9888-83f7eebc756e.1.1.1.1" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:0px 0px 0px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: inherit">Value</div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table><table width="280" style="width:280px; border-spacing:0; border-collapse:collapse; margin:0px 0px 0px 10px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-1">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="770b8590-c9f8-4dfb-ae1e-e5b431fc8c88.1.1.1.1" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:0px 0px 0px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: right">${_package.value}</div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table></td>
+  </tr>
+</tbody>
+</table><table border="0" cellpadding="0" cellspacing="0" align="center" width="100%" role="module" data-type="columns" style="padding:0px 10px 10px 10px;" bgcolor="#FFFFFF" data-distribution="1,1">
+<tbody>
+  <tr role="module-content">
+    <td height="100%" valign="top"><table width="280" style="width:280px; border-spacing:0; border-collapse:collapse; margin:0px 10px 0px 0px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-0">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="9f2b7326-10dd-4537-9888-83f7eebc756e.1.1.1.1.1" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:0px 0px 0px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: inherit"><strong>Total</strong></div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table><table width="280" style="width:280px; border-spacing:0; border-collapse:collapse; margin:0px 0px 0px 10px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-1">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="770b8590-c9f8-4dfb-ae1e-e5b431fc8c88.1.1.1.1.1" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:0px 0px 0px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: right">${_package.delivery_price}</div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table></td>
+  </tr>
+</tbody>
+</table><table class="module" role="module" data-type="divider" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="d4e92564-c789-4be7-bad8-bb38e0bdd58d">
+<tbody>
+  <tr>
+    <td style="padding:0px 0px 0px 0px;" role="module-content" height="100%" valign="top" bgcolor="">
+      <table border="0" cellpadding="0" cellspacing="0" align="center" width="100%" height="1px" style="line-height:1px; font-size:1px;">
+        <tbody>
+          <tr>
+            <td style="padding:0px 0px 1px 0px;" bgcolor="#000000"></td>
+          </tr>
+        </tbody>
+      </table>
+    </td>
+  </tr>
+</tbody>
+</table><table border="0" cellpadding="0" cellspacing="0" align="center" width="100%" role="module" data-type="columns" style="padding:0px 10px 10px 10px;" bgcolor="#FFFFFF" data-distribution="1,1">
+<tbody>
+  <tr role="module-content">
+    <td height="100%" valign="top"><table width="280" style="width:280px; border-spacing:0; border-collapse:collapse; margin:0px 10px 0px 0px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-0">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="9f2b7326-10dd-4537-9888-83f7eebc756e.1.1.1.1.1.1" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:0px 0px 0px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: inherit">Pick up address</div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table><table width="280" style="width:280px; border-spacing:0; border-collapse:collapse; margin:0px 0px 0px 10px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-1">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="770b8590-c9f8-4dfb-ae1e-e5b431fc8c88.1.1.1.1.1.1" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:0px 0px 0px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: right">${_package.pickup_address}</div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table></td>
+  </tr>
+</tbody>
+</table><table border="0" cellpadding="0" cellspacing="0" align="center" width="100%" role="module" data-type="columns" style="padding:0px 10px 10px 10px;" bgcolor="#FFFFFF" data-distribution="1,1">
+<tbody>
+  <tr role="module-content">
+    <td height="100%" valign="top"><table width="280" style="width:280px; border-spacing:0; border-collapse:collapse; margin:0px 10px 0px 0px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-0">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="9f2b7326-10dd-4537-9888-83f7eebc756e.1.1.1.1.1.1.1" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:0px 0px 0px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: inherit">Drop off address</div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table><table width="280" style="width:280px; border-spacing:0; border-collapse:collapse; margin:0px 0px 0px 10px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-1">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="770b8590-c9f8-4dfb-ae1e-e5b431fc8c88.1.1.1.1.1.1.1" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:0px 0px 0px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: right">${_package.dropoff_address}</div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table></td>
+  </tr>
+</tbody>
+</table><table border="0" cellpadding="0" cellspacing="0" align="center" width="100%" role="module" data-type="columns" style="padding:0px 10px 0px 10px;" bgcolor="#f4f6f3" data-distribution="1,1">
+<tbody>
+  <tr role="module-content">
+    <td height="100%" valign="top"><table width="290" style="width:290px; border-spacing:0; border-collapse:collapse; margin:0px 0px 0px 0px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-0">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="wrapper" role="module" data-type="image" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="9728df98-d9e9-4553-ab77-5c86ad297b2e">
+<tbody>
+  <tr>
+    <td style="font-size:6px; line-height:10px; padding:10px 0px 10px 0px;" valign="top" align="center">
+      <img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:15% !important; width:15%; height:auto !important;" width="44" alt="" data-proportionally-constrained="true" data-responsive="true" src="${dispatcher.profile_image}">
+    </td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table><table width="290" style="width:290px; border-spacing:0; border-collapse:collapse; margin:0px 0px 0px 0px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-1">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="16835c53-d973-478a-b70d-77f7ccc041ee" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:18px 0px 18px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: center">${dispatcher_first_name} ${dispatcher_last_name} was your dispatcher</div><div></div></div></td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table></td>
+  </tr>
+</tbody>
+</table><table border="0" cellpadding="0" cellspacing="0" align="center" width="100%" role="module" data-type="columns" style="padding:0px 0px 0px 0px;" bgcolor="#f29b38" data-distribution="1">
+<tbody>
+  <tr role="module-content">
+    <td height="100%" valign="top"><table width="580" style="width:580px; border-spacing:0; border-collapse:collapse; margin:0px 10px 0px 10px;" cellpadding="0" cellspacing="0" align="left" border="0" bgcolor="" class="column column-0">
+  <tbody>
+    <tr>
+      <td style="padding:0px;margin:0px;border-spacing:0;"><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="475eb0af-e27e-4c21-b9fc-ffc957e7e8d9" data-mc-module-version="2019-10-22">
+<tbody>
+  <tr>
+    <td style="padding:18px 0px 18px 0px; line-height:22px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><div style="font-family: inherit; text-align: center"><span style="font-size: 11px"><strong>REFER A FRIEND</strong></span></div><div></div></div></td>
+  </tr>
+</tbody>
+</table><table class="module" role="module" data-type="social" align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="7f0f6d0f-67ac-4005-9f66-ad77e400b592">
+<tbody>
+  <tr>
+    <td valign="top" style="padding:0px 0px 0px 0px; font-size:6px; line-height:10px;" align="center">
+      <table align="center" style="-webkit-margin-start:auto;-webkit-margin-end:auto;">
+        <tbody><tr align="center"><td style="padding: 0px 5px;" class="social-icon-column">
+  <a role="social-icon-link" href="https://web.facebook.com/thekoogahbrand" target="_blank" alt="Facebook" title="Facebook" style="display:inline-block; background-color:#3B579D; height:30px; width:30px; border-radius:100px; -webkit-border-radius:100px; -moz-border-radius:100px;">
+    <img role="social-icon" alt="Facebook" title="Facebook" src="https://mc.sendgrid.com/assets/social/white/facebook.png" style="height:30px; width:30px;" height="30" width="30">
+  </a>
+</td></tr><tr align="center"><td style="padding: 0px 5px;" class="social-icon-column">
+  <a role="social-icon-link" href="https://www.twitter.com/thekoogahbrand" target="_blank" alt="Twitter" title="Twitter" style="display:inline-block; background-color:#7AC4F7; height:30px; width:30px; border-radius:100px; -webkit-border-radius:100px; -moz-border-radius:100px;">
+    <img role="social-icon" alt="Twitter" title="Twitter" src="https://mc.sendgrid.com/assets/social/white/twitter.png" style="height:30px; width:30px;" height="30" width="30">
+  </a>
+</td></tr><tr align="center"><td style="padding: 0px 5px;" class="social-icon-column">
+  <a role="social-icon-link" href="https://www.instagram.com/thekoogahbrand" target="_blank" alt="Instagram" title="Instagram" style="display:inline-block; background-color:#7F4B30; height:30px; width:30px; border-radius:100px; -webkit-border-radius:100px; -moz-border-radius:100px;">
+    <img role="social-icon" alt="Instagram" title="Instagram" src="https://mc.sendgrid.com/assets/social/white/instagram.png" style="height:30px; width:30px;" height="30" width="30">
+  </a>
+</td></tr>
+<tr align="center"><td style="padding: 0px 5px;" class="social-icon-column">
+  <a role="social-icon-link" href="https://www.koogah.com.ng" target="_blank" alt="LinkedIn" title="LinkedIn" style="display:inline-block; background-color:#0077B5; height:30px; width:30px; border-radius:100px; -webkit-border-radius:100px; -moz-border-radius:100px;">
+    <img role="social-icon" alt="LinkedIn" title="LinkedIn" src="https://mc.sendgrid.com/assets/social/white/linkedin.png" style="height:30px; width:30px;" height="30" width="30">
+  </a>
+</td></tr></tbody>
+      </table>
+    </td>
+  </tr>
+</tbody>
+</table></td>
+    </tr>
+  </tbody>
+</table></td>
+  </tr>
+</tbody>
+</table><div data-role="module-unsubscribe" class="module" role="module" data-type="unsubscribe" style="color:#444444; font-size:12px; line-height:20px; padding:16px 16px 16px 16px; text-align:Center;" data-muid="4e838cf3-9892-4a6d-94d6-170e474d21e5"><div class="Unsubscribe--addressLine"><p class="Unsubscribe--senderName" style="font-size:12px; line-height:20px;">{{Sender_Name}}</p><p style="font-size:12px; line-height:20px;"><span class="Unsubscribe--senderAddress">{{Sender_Address}}</span>, <span class="Unsubscribe--senderCity">{{Sender_City}}</span>, <span class="Unsubscribe--senderState">{{Sender_State}}</span> <span class="Unsubscribe--senderZip">{{Sender_Zip}}</span></p></div><p style="font-size:12px; line-height:20px;"><a class="Unsubscribe--unsubscribeLink" href="{{{unsubscribe}}}" target="_blank" style="">Unsubscribe</a> - <a href="{{{unsubscribe_preferences}}}" target="_blank" class="Unsubscribe--unsubscribePreferences" style="">Unsubscribe Preferences</a></p></div></td>
+                                  </tr>
+                                </table>
+                                <!--[if mso]>
+                              </td>
+                            </tr>
+                          </table>
+                        </center>
+                        <![endif]-->
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </center>
+</body>
+  `;
   let msgObj = {
     to: customer.email,
     from: 'receipts@koogah.com',
-    subject: 'Delivery Receipt',
+    subject: 'Koogah - Delivery Receipt',
     html,
   };
+  return msgObj;
  }
+
+export const createCompanyDispatcherApproveOrDecline = function createCompanyDispatcherApproveOrDecline(obj) {
+  const {
+    event,
+    dispatcher,
+    _package,
+    company } = obj;
+  const dispatcher_first_name = toSentenceCase.call(null, dispatcher.first_name);
+  const dispatcher_last_name = toSentenceCase.call(null, dispatcher.last_name);
+  let html;
+  if (event === 'PICKUP') {
+    html = `
+    <table width='100%' cellspacing='0' cellpadding='0'>
+    <tr>
+      <td>
+        <table>
+          <tr>
+            <td>
+              <div>
+              <a href="https://koogah.com"><img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:10% !important; width:10%; height:auto !important;" width="58" alt="Koogah Logo" data-proportionally-constrained="true" data-responsive="true" src="http://cdn.mcauto-images-production.sendgrid.net/7e40b7ed2842548c/f01429ea-615c-4fbd-bbc8-9b72dd7140b3/500x500.png"></a>
+              </div>
+              <div style="font-family: inherit; text-align: inherit"><span style="font-size: 18px"><strong>Koogah Logistics</strong></span></div>
+              <div>
+                  <h2>Dispatcher Pickup Delivery Event.</h2>
+                  <p>Your dispatcher ${dispatcher_first_name} ${dispatcher_last_name} has been approved to pick up a delivery</p>
+                  <h4>PICKUP DETAILS</h4>
+                  <ul>
+                    <li>Country: ${_package.from_country}</li>
+                    <li>State: ${_package.from_state}</li>
+                    <li>City: ${_package.from_town}</li>
+                    <li>Full Address: ${_package.pickup_address}</li>
+                  </ul>
+                  <br/>
+                  <h4>DROPOFF DETAILS</h4>
+                  <ul>
+                    <li>Country: ${_package.to_country}</li>
+                    <li>State: ${_package.to_state}</li>
+                    <li>City: ${_package.to_town}</li>
+                    <li>Full Address: ${_package.dropoff_address}</li>
+                  </ul>
+                  <br/>
+                  <h4>OTHER DETAILS</h4>
+                  <ul>
+                  <li>Delivery Price: ${_package.delivery_price}</li>
+                  <li>Package ID: ${_package.package_id}</li>s
+                </ul>
+                  <br/>
+                  <br/><br/>
+                  <p>
+                    Cheers,<br/>
+                    The Koogah Logistics Team.
+                  </p>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+    `;
+  }
+  if (event === 'DECLINE') {
+    html = `
+    <table width='100%' cellspacing='0' cellpadding='0'>
+    <tr>
+      <td>
+        <table>
+          <tr>
+            <td>
+              <div>
+              <a href="https://koogah.com"><img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:10% !important; width:10%; height:auto !important;" width="58" alt="Koogah Logo" data-proportionally-constrained="true" data-responsive="true" src="http://cdn.mcauto-images-production.sendgrid.net/7e40b7ed2842548c/f01429ea-615c-4fbd-bbc8-9b72dd7140b3/500x500.png"></a>
+              </div>
+              <div style="font-family: inherit; text-align: inherit"><span style="font-size: 18px"><strong>Koogah Logistics</strong></span></div>
+              <div>
+                  <h2>Dispatcher Decline Delivery Event.</h2>
+                  <p>Your dispatcher ${dispatcher_first_name} ${dispatcher_last_name} has been declined from picking up a delivery</p>
+                  <h4>PICKUP DETAILS</h4>
+                  <ul>
+                    <li>Country: ${_package.from_country}</li>
+                    <li>State: ${_package.from_state}</li>
+                    <li>City: ${_package.from_town}</li>
+                    <li>Full Address: ${_package.pickup_address}</li>
+                  </ul>
+                  <br/>
+                  <h4>DROPOFF DETAILS</h4>
+                  <ul>
+                    <li>Country: ${_package.to_country}</li>
+                    <li>State: ${_package.to_state}</li>
+                    <li>City: ${_package.to_town}</li>
+                    <li>Full Address: ${_package.dropoff_address}</li>
+                  </ul>
+                  <br/>
+                  <h4>OTHER DETAILS</h4>
+                  <ul>
+                  <li>Delivery Price: ${_package.delivery_price}</li>
+                  <li>Package ID: ${_package.package_id}</li>s
+                </ul>
+                  <br/>
+                  <br/><br/>
+                  <p>
+                    Cheers,<br/>
+                    The Koogah Logistics Team.
+                  </p>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+    `;
+  }
+  if (event === 'PAYMENT') {
+    html = `
+    <table width='100%' cellspacing='0' cellpadding='0'>
+    <tr>
+      <td>
+        <table>
+          <tr>
+            <td>
+              <div>
+              <a href="https://koogah.com"><img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; max-width:10% !important; width:10%; height:auto !important;" width="58" alt="Koogah Logo" data-proportionally-constrained="true" data-responsive="true" src="http://cdn.mcauto-images-production.sendgrid.net/7e40b7ed2842548c/f01429ea-615c-4fbd-bbc8-9b72dd7140b3/500x500.png"></a>
+              </div>
+              <div style="font-family: inherit; text-align: inherit"><span style="font-size: 18px"><strong>Koogah Logistics</strong></span></div>
+              <div>
+                  <h2>Dispatcher Payment Delivery Event.</h2>
+                  <p>Your dispatcher ${dispatcher_first_name} ${dispatcher_last_name} has just been paid for a delivery</p>
+                  <h4>PICKUP DETAILS</h4>
+                  <ul>
+                    <li>Country: ${_package.from_country}</li>
+                    <li>State: ${_package.from_state}</li>
+                    <li>City: ${_package.from_town}</li>
+                    <li>Full Address: ${_package.pickup_address}</li>
+                  </ul>
+                  <br/>
+                  <h4>DROPOFF DETAILS</h4>
+                  <ul>
+                    <li>Country: ${_package.to_country}</li>
+                    <li>State: ${_package.to_state}</li>
+                    <li>City: ${_package.to_town}</li>
+                    <li>Full Address: ${_package.dropoff_address}</li>
+                    <li>Dropoff time: ${_package.dropoff_time}</li>
+                  </ul>
+                  <br/>
+                  <h4>OTHER DETAILS</h4>
+                  <ul>
+                  <li>Delivery Price: ${_package.delivery_price}</li>
+                  <li>Package ID: ${_package.package_id}</li>s
+                </ul>
+                  <br/>
+                  <br/><br/>
+                  <p>
+                    Cheers,<br/>
+                    The Koogah Logistics Team.
+                  </p>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+    `;
+  }
+  let msgObj = {
+    to: company.email,
+    from: 'dispatch_report@koogah.com',
+    subject: `Koogah - New ${event} Event on Delivery`,
+    html,
+  };
+  return msgObj;
+}

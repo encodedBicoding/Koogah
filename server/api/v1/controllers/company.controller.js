@@ -503,6 +503,8 @@ class CompanyController {
         verify_token: EMAIL_VERIFY_CODE.toString(),
         is_active: false,
         is_approved: false,
+        owns_automobile: true,
+        done_dispatch_before: true,
       };
       if (!isFound) {
         await Couriers.create(NEW_COMPANY_DISPATCHER);
@@ -736,6 +738,12 @@ class CompanyController {
           error: 'Dispatcher is not found',
         });
       }
+      if (isFound.is_approved) {
+        return res.status(409).json({
+          status: 409,
+          error: 'Dispatcher is already approved to dispatch on Koogah',
+        });
+      }
       const hashed_password = await bcrypt.hash(password, 8);
       await Couriers.update(
         {
@@ -754,6 +762,8 @@ class CompanyController {
           is_approved: true,
           is_active: true,
           approval_code: null,
+          owns_automobile: true,
+          done_dispatch_before: true,
         },
         {
           where: {
@@ -890,7 +900,7 @@ class CompanyController {
     return Promise.try(async () => {
       const { user } = req.session;
       const company = Companies.findByPk(user.id);
-      // console.log(Object.keys(company.__proto__));
+      console.log(Object.keys(company.__proto__));
       const all_dispatchers = await Couriers.findAll({
         where: {
           [Op.and]: [

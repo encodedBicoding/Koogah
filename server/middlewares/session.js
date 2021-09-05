@@ -4,7 +4,7 @@
 import { config } from 'dotenv';
 import client from '../redis/redis.client';
 import jwt from '../api/v1/helpers/jwt';
-import { Couriers, Customers } from '../database/models';
+import { Couriers, Customers, Companies } from '../database/models';
 
 config();
 
@@ -60,6 +60,81 @@ const checkSession = function checkSession(req, res, next) {
     error: err,
   }));
 };
+export const companyCheckSession = function companyCheckSession(req, res, next) {
+  let token = '';
+  if (!req.headers.authorization) {
+    return res.status(401).json({
+      status: 401,
+      error: 'Authentication error',
+    });
+  }
+  if (req.headers.authorization.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  } else {
+    token = req.headers.authorization;
+  }
+  return Promise.try(async () => {
+    const request_payload = await jwt.verify(token);
+    return client.get(`${request_payload.email}:COMPANY`, async (err, result) => {
+      try {
+        if (result) {
+          const current_token = result;
+          const actual_payload = await jwt.verify(current_token);
+          if (actual_payload.iat !== request_payload.iat
+              || actual_payload.exp !== request_payload.exp
+          ) {
+            return res.status(400).json({
+              status: 401,
+              error: 'Session expired. Please log in again',
+            });
+          }
+          req.session.user = {};
+          req.session.user.token = token;
+          return next();
+        }
+        return res.status(401).json({
+          status: 401,
+          error: 'Not Authorized.',
+          useRefresh: true,
+        });
+      } catch (error) {
+        return res.status(500).json({
+          status: 500,
+          error,
+        });
+      }
+    });
+  }).catch((err) => res.status(400).json({
+    status: 400,
+    error: err,
+  }));
+};
+
+export const isCompanyLoggedIn = function isCompanyLoggedIn(req, res, next) {
+  const { token } = req.session.user;
+  return Promise.try(async () => {
+    const payload = await jwt.verify(token);
+    const isFound = await Companies.findOne({
+      where: {
+        email: payload.email,
+      },
+    });
+    if (!isFound) return res.status(401).json({
+      status: 401,
+      error: 'Not Authorized. Please contact support to lay complains. contact support@koogah.com',
+    });
+    if (!isFound.is_approved) return res.status(401).json({
+      status: 401,
+      error: 'Cannot perform this action until your account is approved by our team',
+    });
+    delete req.session.user.token;
+    req.session.user = isFound.getSafeDataValues();
+    return next();
+  }).catch((err) => res.status(400).json({
+    status: 400,
+    error: err,
+  }));
+};
 
 export const isCourierLoggedIn = function isCourierLoggedIn(req, res, next) {
   const { token } = req.session.user;
@@ -92,6 +167,8 @@ export const isCourierLoggedIn = function isCourierLoggedIn(req, res, next) {
     error: err,
   }));
 };
+
+
 export const isCustomerLoggedIn = function isCustomerLoggedIn(req, res, next) {
   const { token } = req.session.user;
   return Promise.try(async () => {

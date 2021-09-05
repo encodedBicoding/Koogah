@@ -8,6 +8,7 @@ import notifyRoutes from './notify.route';
 import profileRoutes from './profile.route';
 import historyRoutes from './history.route';
 import verifyRoute from './verifyme.route';
+import companyRoute from './company.route';
 
 const route = express();
 
@@ -29,5 +30,6 @@ route.use('/notifications', notifyRoutes);
 route.use('/profile', profileRoutes);
 route.use('/history', historyRoutes);
 route.use('/verify', verifyRoute);
+route.use('/company', companyRoute);
 
 export default route;

@@ -26,6 +26,7 @@ import sendMail, {
     createPasswordResetEmail,
     createKoogahWelcomeMailToCourier,
     createCustomerPersonalizedMail,
+    createEmergencyContactMail,
 } from '../helpers/mail';
 
 import { sendNewCustomerNotification, sendUnApprovedDispatcherNotification } from '../helpers/slack';
@@ -69,6 +70,8 @@ class UserController {
         emergency_contact_one_phone,
         emergency_contact_two_name,
         emergency_contact_two_phone,
+        owns_automobile,
+        done_dispatch_before
       } = req.body;
       const { ref, fromApp } = req.query;
 
@@ -121,6 +124,8 @@ class UserController {
         emergency_contact_one_phone,
         emergency_contact_two_name,
         emergency_contact_two_phone,
+        owns_automobile: owns_automobile ? owns_automobile : false,
+        done_dispatch_before: done_dispatch_before ? done_dispatch_before : false,
         referal_id: REFERAL_ID,
         refered_by: ref ? ref : null,
       };
@@ -313,6 +318,7 @@ class UserController {
     // send the user details as mail to the company.
 
     const MSG_OBJ = createCourierApprovalMail(AWAITING_USER_OBJ);
+    const emergency_contact_msg_obj = createEmergencyContactMail(payload.email, verifying_user, 'Dispatcher');
     return Promise.try(async () => {
       await Couriers.update(
         {
@@ -329,6 +335,7 @@ class UserController {
       );
       await Awaitings.create(AWAITING_USER_OBJ);
       await sendMail(MSG_OBJ);
+      await sendMail(emergency_contact_msg_obj);
       sendUnApprovedDispatcherNotification(AWAITING_USER_OBJ)
       return res.status(200).json({
         status:200,

@@ -17,6 +17,7 @@ import {
   PackagesTrackings,
   Transactions,
   HistoryTransactions,
+  Companies,
   sequelize
 } from '../../../database/models';
 
@@ -32,6 +33,8 @@ import {
   sendDispatcherStartsDispatchNotification,
   sendPackageDeliveredNotification
 } from '../helpers/slack';
+import company from '../../../database/models/company';
+import sendMail, { createCompanyDispatcherApproveOrDecline, createDeliveryReceipt } from '../helpers/mail';
 
 const cron = require('node-cron');
 
@@ -145,7 +148,7 @@ class Package {
        });
       const message = {
         pickup_state: data.from_state.split(',')[0],
-        detail: `New Package creation @ ${data.from_town} area of ${data.from_state} state. You might want to pick it up, do check it out!.`
+        detail: `New Package creation @ ${data.from_town} area of ${data.from_state}. You might want to pick it up, do check it out!.`
       };
       const task = cron.schedule('1 * * * * *', () => {
         Package.sendNewPackageCreationToDispatchers(message, task);
@@ -344,6 +347,7 @@ class Package {
           error: 'Oops, seems the dispatcher doesn\'t exists anymore...',
         });
       }
+      let MSG_OBJ;
       if (response === 'approve') {
         const date_time = new Date().toLocaleString();
         if (dispatcher.pending > 0) {
@@ -384,6 +388,19 @@ class Package {
           packageId: package_id,
           event: 'package_dispatch_approval'
         });
+        if (dispatcher.is_cooperate === true) {
+          const company = await Companies.findOne({
+            where: {
+              id: dispatcher.company_id
+            }
+          });
+          MSG_OBJ = {
+            event: 'PICKUP',
+            dispatcher: dispatcher,
+            _package: _package,
+            company: company,
+          };
+        }
       }
       if (response === 'decline') {
         if (_package.status === 'picked-up') {
@@ -442,6 +459,20 @@ class Package {
         NEW_NOTIFICATION.message = `A customer has declined your request to dispatch their package with id: ${package_id}.`;
         NEW_NOTIFICATION.title = 'New Dispatch Decline';
         NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
+
+        if (dispatcher.is_cooperate === true) {
+          const company = await Companies.findOne({
+            where: {
+              id: dispatcher.company_id
+            }
+          });
+          MSG_OBJ = {
+            event: 'DECLINE',
+            dispatcher: dispatcher,
+            _package: _package,
+            company: company,
+          };
+        }
       }
       const updated_package = await Packages.findOne({
         where: {
@@ -479,7 +510,11 @@ class Package {
         _notification
       );
       const res_message = `Successfully ${response === 'approve' ? 'approved' : 'declined'} dispatcher request`;
-      sendInterestApprovedOrDeclinedNotification(response === 'approve', package_id, dispatcher)
+      sendInterestApprovedOrDeclinedNotification(response === 'approve', package_id, dispatcher);
+      if (dispatcher.is_cooperate === true) {
+        let msg = createCompanyDispatcherApproveOrDecline(MSG_OBJ);
+        sendMail(msg);
+      }
       return res.status(200).json({
         status: 200,
         message: res_message,
@@ -881,7 +916,7 @@ class Package {
       const transfer_charge = 10;
       const user_new_delivery_count = parseInt(user.deliveries, 10) + 1;
       const user_new_pending_count = parseInt(user.pending, 10) - 1;
-      const fees = (Number(_package.delivery_price) * Number(process.env.PACKAGE_DELIVERY_FEE)) + sms_charge + transfer_charge;
+      const fees = (Number(_package.delivery_price) * user.is_cooperate ? Number(process.env.COMPANY_PACKAGE_DELIVERY_FEE) : Number(process.env.PACKAGE_DELIVERY_FEE)) + sms_charge + transfer_charge;
       const total_amount_payable = Number(_package.delivery_price) - (Math.ceil(fees));
       const dispatcher_new_balance = Number(user.virtual_balance) + total_amount_payable;
 
@@ -1092,7 +1127,33 @@ class Package {
         connectionId: `dispatcher:${user.email}:${user.id}`,
         event: 'unsubscribe_from_package'
       });
-      sendPackageDeliveredNotification(package_id, user, customer)
+      sendPackageDeliveredNotification(package_id, user, customer);
+      if (user.is_cooperate == true) {
+        const company = await Companies.findOne({
+          where: {
+            id: user.company_id,
+          }
+        });
+        let MSG_OBJ = {
+          event: 'PAYMENT',
+          company,
+          dispatcher: user,
+          _package: updated_package,
+        }
+        let msg = createCompanyDispatcherApproveOrDecline(MSG_OBJ);
+        sendMail(msg);
+      }
+
+      // send receipt to customer;
+      let receipt_obj = {
+        customer,
+        _package: updated_package,
+        dispatcher: user,
+      };
+
+      let receipt_msg = createDeliveryReceipt(receipt_obj);
+      sendMail(receipt_msg);
+
       return res.status(200).json({
         status: 200,
         message: 'Package delivered successfully',

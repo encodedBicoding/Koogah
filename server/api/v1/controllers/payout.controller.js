@@ -4,6 +4,8 @@ import { config } from 'dotenv';
 import generate_ref from '../helpers/ref.id';
 import { Payouts, Couriers } from '../../../database/models';
 import fetch from 'node-fetch';
+import Sequelize from 'sequelize';
+const { Op } = Sequelize;
 
 config();
 
@@ -60,6 +62,7 @@ class Payout {
           }
         }
       );
+
       if (response.status !== 201 && response.status !== 200) {
         return res.status(response.status).json({
           status: response.status,
@@ -140,6 +143,159 @@ class Payout {
     });
   }
 
+  /**
+   * @method company_request_payout
+   * @memberof Payout
+   * @params req, res
+   * @description this method allows companies to request payout.
+   * @return JSON object
+   */
+
+  static company_request_payout(req, res) {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      const { amount, bank_code } = req.body;
+      if (Number(amount) < 500.00) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Cannot request payout for amount less than N 500.00',
+        });
+      }
+      // get all dispatcher total balance with money
+      const all_dispatchers = await Couriers.findAll({
+        where: {
+          [Op.and]: [
+            { company_id: user.id },
+            {
+              virtual_balance: {
+                [Op.gt]: 0,
+              }
+            }
+          ]
+        }
+      });
+      let totalWalletAmount = all_dispatchers.reduce((acc, curr) => {
+        acc = acc + Number(curr.virtual_balance);
+        return acc;
+      }, 0);
+
+      if (Number(amount) > Number(totalWalletAmount)) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Amount requested is more than what you have. Please reduce the requested amount',
+        });
+      }
+      // process payment
+      let response = await fetch(
+        'https://api.paystack.co/transferrecipient',
+        {
+          method: 'POST',
+          body: JSON.stringify(
+            {
+              type: 'nuban',
+              name: `${user.first_name} ${user.last_name}`,
+              account_number: user.bank_account_number,
+              bank_code: bank_code,
+              currency: 'NGN'
+            }
+          ),
+          headers: {
+            'Authorization': `Bearer ${process.env['PAYSTACK_LIVE_SECRET_KEY']}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.status !== 201 && response.status !== 200) {
+        return res.status(response.status).json({
+          status: response.status,
+          error: 'An error occurred, please retry. If error persists, send mail to support@koogah.com'
+        });
+      }
+
+      response = await response.json();
+      const recipient_code = response.data.recipient_code;
+
+      let t_res = await fetch(
+        'https://api.paystack.co/transfer',
+        {
+          method: 'POST',
+          body: JSON.stringify(
+            {
+              source: 'balance',
+              amount: (parseInt(amount, 10) * 100),
+              recipient: recipient_code,
+              reason: "Payout for delivery on "
+            }
+          ),
+          headers: {
+            'Authorization': `Bearer ${process.env['PAYSTACK_LIVE_SECRET_KEY']}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (t_res.status !== 200 && t_res.status !== 201) {
+        return res.status(t_res.status).json({
+          status: t_res.status,
+          error: 'An error occurred, please retry. If error persists, send mail to support@koogah.com'
+        })
+      }
+      t_res = await t_res.json();
+
+      const transfer_code = t_res.data.transfer_code;
+
+      const payout_details = {
+        dispatcher_first_name: user.first_name,
+        dispatcher_last_name: user.last_name,
+        dispatcher_email: user.email,
+        amount_requested: amount,
+        dispatcher_account_number: user.bank_account_number,
+        dispatcher_bank_name: user.bank_account_name,
+        status: 'paid',
+        reference_id: transfer_code,
+      };
+      const new_payout = await Payouts.create({ ...payout_details });
+
+      // deduct moneies from all dispatchers in the company.
+      await Couriers.update({
+        virtual_balance: 0,
+      }, {
+        where: {
+          [Op.and]: [
+            { company_id: user.id },
+            {
+              virtual_balance: {
+                [Op.gt]: 0,
+              }
+            }
+          ]
+        }
+      });
+
+      return res.status(200).json({
+        status: 200,
+        message: 'Payout successful, you will be credited shortly',
+        data: new_payout,
+      });
+    }).catch(err => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
+  }
+
+
+
+  /**
+   * @method payout_summary
+   * @memberof Payout
+   * @params req, res
+   * @description this method gets independent couriers payout summary
+   * @return JSON object
+   */
   static payout_summary(req, res) {
     return Promise.try(async () => {
       const { user } = req.session;

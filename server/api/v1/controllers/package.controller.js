@@ -223,7 +223,9 @@ class Package {
           where: {
             package_id,
           },
-          c
+          attributes: {
+            exclude: ['delivery_key']
+          }
         });
         const customer = await Customers.findOne({
           where: {

@@ -58,7 +58,6 @@ class UserController {
         email,
         mobile_number,
         sex,
-        bvn,
         nationality,
         identification_number,
         profile_image,
@@ -66,10 +65,6 @@ class UserController {
         state,
         town,
         address,
-        emergency_contact_one_name,
-        emergency_contact_one_phone,
-        emergency_contact_two_name,
-        emergency_contact_two_phone,
         owns_automobile,
         done_dispatch_before
       } = req.body;
@@ -84,7 +79,7 @@ class UserController {
 
       const VERIFY_TOKEN = await jwt.sign({
         email,
-        bvn,
+        identification_number,
         first_name,
         mobile_number: `${country_code}${mobile_number}`,
         country_code: country_code
@@ -112,7 +107,6 @@ class UserController {
         email,
         mobile_number,
         sex,
-        bvn,
         nationality,
         verify_token: VERIFY_TOKEN,
         state,
@@ -120,10 +114,6 @@ class UserController {
         address,
         identification_number,
         profile_image,
-        emergency_contact_one_name,
-        emergency_contact_one_phone,
-        emergency_contact_two_name,
-        emergency_contact_two_phone,
         owns_automobile: owns_automobile ? owns_automobile : false,
         done_dispatch_before: done_dispatch_before ? done_dispatch_before : false,
         referal_id: REFERAL_ID,
@@ -135,7 +125,7 @@ class UserController {
       const isFound = await Couriers.findOne({
         where: {
           [Op.or]: [
-            { email }, { bvn },
+            { email }, { identification_number },
           ],
         },
       });
@@ -143,7 +133,7 @@ class UserController {
       if (isFound) {
         return res.status(409).json({
           status: 409,
-          error: 'A user with the given email and/or bvn already exists',
+          error: 'A user with the given email and/or NIN already exists',
         });
       }
       await sendMail(MSG_OBJ);
@@ -187,7 +177,7 @@ class UserController {
   
       const verifying_user = await Couriers.findOne({
         where: {
-          [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
+          [Op.and]: [{ email: payload.email }, { identification_number: payload.identification_number }],
         },
       });
   
@@ -219,7 +209,7 @@ class UserController {
         },
         {
           where: {
-            [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
+            [Op.and]: [{ email: payload.email }, { identification_number: payload.identification_number }],
           },
         },
       );
@@ -265,7 +255,7 @@ class UserController {
 
     let verifying_user = await Couriers.findOne({
       where: {
-        [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
+        [Op.and]: [{ email: payload.email }, { identification_number: payload.identification_number }],
       },
     });
 
@@ -295,7 +285,7 @@ class UserController {
 
     payload = {
       email: verifying_user.email,
-      bvn: verifying_user.bvn,
+      identification_number: verifying_user.identification_number,
       first_name: verifying_user.first_name,
       mobile_number: verifying_user.mobile_number,
       is_courier: verifying_user.is_courier,
@@ -306,7 +296,7 @@ class UserController {
 
     const AWAITING_USER_OBJ = {
       first_name: payload.first_name,
-      bvn: payload.bvn,
+      bvn: `NIN: ${payload.identification_number}`,
       last_name: verifying_user.last_name,
       user_email: payload.email,
       mobile_number: payload.mobile_number,
@@ -329,7 +319,7 @@ class UserController {
         },
         {
           where: {
-            [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
+            [Op.and]: [{ email: payload.email }, { identification_number: payload.identification_number }],
           },
         },
       );
@@ -770,7 +760,7 @@ class UserController {
         first_name: isFound.first_name,
         last_name: isFound.last_name,
         email: isFound.email,
-        bvn: isFound.bvn,
+        nin: isFound.identification_number,
         is_courier: isFound.is_courier,
         is_admin: isFound.is_admin,
       };
@@ -1181,7 +1171,7 @@ class UserController {
 
         const PASSWORD_RESET_TOKEN = await jwt.sign({
           email,
-          bvn: isFound.bvn,
+          nin: isFound.identification_number,
           first_name: isFound.first_name,
           last_name: isFound.last_name,
           account_type,
@@ -1223,7 +1213,6 @@ class UserController {
         };
         const PASSWORD_RESET_TOKEN = await jwt.sign({
           email,
-          bvn: isFound.mobile_number_one,
           first_name: isFound.first_name,
           last_name: isFound.last_name,
           account_type,

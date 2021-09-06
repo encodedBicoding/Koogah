@@ -708,7 +708,7 @@ export const createPasswordResetEmail = function createPasswordResetEmail(userOb
 export const createDeliveryReceipt = function createDeliveryReceipt(obj) {
   const { customer, _package, dispatcher } = obj;
   const dispatcher_first_name = toSentenceCase.call(null, dispatcher.first_name);
-  const dispatcher_last_name = toSentenceCase(null, dispatcher.last_name);
+  const dispatcher_last_name = toSentenceCase.call(null, dispatcher.last_name);
   let html = `
   <body>
   <center class="wrapper" data-link-color="#1188E6" data-body-style="font-size:12px; font-family:lucida sans unicode,lucida grande,sans-serif; color:#000000; background-color:#FFFFFF;">
@@ -1172,7 +1172,6 @@ export const createCompanyDispatcherApproveOrDecline = function createCompanyDis
                   <p>Your dispatcher ${dispatcher_first_name} ${dispatcher_last_name} has been approved to pick up a delivery</p>
                   <h4>PICKUP DETAILS</h4>
                   <ul>
-                    <li>Country: ${_package.from_country}</li>
                     <li>State: ${_package.from_state}</li>
                     <li>City: ${_package.from_town}</li>
                     <li>Full Address: ${_package.pickup_address}</li>
@@ -1180,7 +1179,6 @@ export const createCompanyDispatcherApproveOrDecline = function createCompanyDis
                   <br/>
                   <h4>DROPOFF DETAILS</h4>
                   <ul>
-                    <li>Country: ${_package.to_country}</li>
                     <li>State: ${_package.to_state}</li>
                     <li>City: ${_package.to_town}</li>
                     <li>Full Address: ${_package.dropoff_address}</li>
@@ -1223,7 +1221,6 @@ export const createCompanyDispatcherApproveOrDecline = function createCompanyDis
                   <p>Your dispatcher ${dispatcher_first_name} ${dispatcher_last_name} has been declined from picking up a delivery</p>
                   <h4>PICKUP DETAILS</h4>
                   <ul>
-                    <li>Country: ${_package.from_country}</li>
                     <li>State: ${_package.from_state}</li>
                     <li>City: ${_package.from_town}</li>
                     <li>Full Address: ${_package.pickup_address}</li>
@@ -1231,7 +1228,6 @@ export const createCompanyDispatcherApproveOrDecline = function createCompanyDis
                   <br/>
                   <h4>DROPOFF DETAILS</h4>
                   <ul>
-                    <li>Country: ${_package.to_country}</li>
                     <li>State: ${_package.to_state}</li>
                     <li>City: ${_package.to_town}</li>
                     <li>Full Address: ${_package.dropoff_address}</li>
@@ -1274,7 +1270,6 @@ export const createCompanyDispatcherApproveOrDecline = function createCompanyDis
                   <p>Your dispatcher ${dispatcher_first_name} ${dispatcher_last_name} has just been paid for a delivery</p>
                   <h4>PICKUP DETAILS</h4>
                   <ul>
-                    <li>Country: ${_package.from_country}</li>
                     <li>State: ${_package.from_state}</li>
                     <li>City: ${_package.from_town}</li>
                     <li>Full Address: ${_package.pickup_address}</li>
@@ -1282,7 +1277,6 @@ export const createCompanyDispatcherApproveOrDecline = function createCompanyDis
                   <br/>
                   <h4>DROPOFF DETAILS</h4>
                   <ul>
-                    <li>Country: ${_package.to_country}</li>
                     <li>State: ${_package.to_state}</li>
                     <li>City: ${_package.to_town}</li>
                     <li>Full Address: ${_package.dropoff_address}</li>

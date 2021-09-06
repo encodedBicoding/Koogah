@@ -296,7 +296,7 @@ class UserController {
 
     const AWAITING_USER_OBJ = {
       first_name: payload.first_name,
-      bvn: payload.identification_number,
+      bvn: `NIN: ${payload.identification_number}`,
       last_name: verifying_user.last_name,
       user_email: payload.email,
       mobile_number: payload.mobile_number,

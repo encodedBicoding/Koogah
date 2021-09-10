@@ -452,9 +452,34 @@ class Schema {
       bank_name: Joi.string(),
     });
   }
+  
+  /**
+   * @method company_profile_update_schema
+   * @description This method return Joi object which delivers a schema for company profile update
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static company_profile_update_schema() {
+    return Joi.object({
+      first_name: Joi.string().trim(),
+      last_name: Joi.string().trim(),
+      email: Joi.string().trim(),
+      phone: Joi.string().trim(),
+      bank_account_name: Joi.string().trim(),
+      bank_account_number: Joi.string().trim(),
+      profile_image: Joi.string().allow(null, ''),
+      business_name: Joi.string().trim(),
+      business_address: Joi.string().trim(),
+      business_state: Joi.sstring().trim(),
+      business_town: Joi.string().trim(),
+      business_country:Joi.string().trim(),
+    });
+  }
+
   /**
    * @method customer_profile_update_schema
-   * @description This method return Joi object which delivers a schema for courier profile update
+   * @description This method return Joi object which delivers a schema for customer profile update
    * @memberof Schema
    * @return Joi Object
    */

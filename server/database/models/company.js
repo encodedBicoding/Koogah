@@ -92,6 +92,20 @@ module.exports = (sequelize, DataTypes) => {
     business_country: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    profile_image: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    total_payouts: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.0,
+    },
+    last_payout: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.0,
     }
   },
   {

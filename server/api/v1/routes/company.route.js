@@ -20,7 +20,9 @@ const {
   companyGetAllDispatchers,
   companyGetSingleDispatcher,
   companyGetWalletBalance,
-  companyGetSingleDispatcherTracking
+  companyGetSingleDispatcherTracking,
+  company_request_password_reset,
+  company_reset_password,
 } = CompanyController;
 
 const {
@@ -37,7 +39,8 @@ const {
   check_company_reg_dispatcher_step_five,
   check_email_and_mobile_code,
   check_company_payout_amount,
-  check_profile_id
+  check_profile_id,
+  check_reset_password
 } = Validate;
 
 const companyRoute = express();
@@ -155,6 +158,17 @@ companyRoute.get(
   isCompanyLoggedIn,
   check_profile_id,
   companyGetSingleDispatcherTracking
+);
+
+companyRoute.post(
+  '/password-reset/request',
+  check_email,
+  company_request_password_reset,
+);
+companyRoute.post(
+  '/reset/password',
+  check_reset_password,
+  company_reset_password,
 );
 
 

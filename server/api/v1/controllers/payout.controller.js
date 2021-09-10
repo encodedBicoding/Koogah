@@ -2,7 +2,7 @@
 import log from 'fancy-log';
 import { config } from 'dotenv';
 import generate_ref from '../helpers/ref.id';
-import { Payouts, Couriers } from '../../../database/models';
+import { Payouts, Couriers, Companies } from '../../../database/models';
 import fetch from 'node-fetch';
 import Sequelize from 'sequelize';
 const { Op } = Sequelize;
@@ -272,6 +272,22 @@ class Payout {
           ]
         }
       });
+      
+      let last_payout = Number(amount);
+      let total_payouts = Number(user.total_payouts) + Number(amount);
+
+      await Companies.update(
+        {
+          last_payout: last_payout,
+          total_payouts: total_payouts,
+        },
+        {
+          where: {
+            id: user.id,
+          }
+        }
+      );
+
 
       return res.status(200).json({
         status: 200,

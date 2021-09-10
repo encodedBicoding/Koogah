@@ -29,7 +29,7 @@ module.exports = {
   down: (queryInterface, Sequelize) => {
     return Promise.all([
       queryInterface.removeColumn('Couriers', 'owns_automobile'),
-      queryInterface.removeColumn('Packages', 'done_dispatch_before'),
+      queryInterface.removeColumn('Couriers', 'done_dispatch_before'),
     ]);
   }
 };

@@ -15,6 +15,7 @@ import sendMail, {
   createCompanyApprovalMail,
   createKoogahWelcomeMailToCompany,
   createCompanyDispatcherVerificationMail,
+  createPasswordResetEmail,
 } from '../helpers/mail';
 
 import {
@@ -77,7 +78,7 @@ class CompanyController {
         country_code: country_code
       }, '168h');
 
-      let VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${isProduction ? `${process.env.LANDING_PAGE_APP_HOST}` : 'localhost:4000'}/company/verify/email?key=${VERIFY_TOKEN}&code=COMPANY`;
+      let VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${isProduction ? `${process.env.LANDING_PAGE_APP_HOST}` : 'localhost:8080'}/company/verify/email?key=${VERIFY_TOKEN}&code=COMPANY`;
 
       const USR_OBJ = {
         first_name,
@@ -899,8 +900,6 @@ class CompanyController {
   static companyGetWalletBalance(req, res) {
     return Promise.try(async () => {
       const { user } = req.session;
-      const company = Companies.findByPk(user.id);
-      console.log(Object.keys(company.__proto__));
       const all_dispatchers = await Couriers.findAll({
         where: {
           [Op.and]: [
@@ -992,6 +991,138 @@ class CompanyController {
         }
       });
     }).catch(err => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    })
+  }
+
+   /**
+   * @method company_request_password_reset
+   * @memberof CompanyController
+   * @description This method allows a company request password reset
+   * @params req, res
+   * @return JSON object
+   */
+
+  static company_request_password_reset(req, res) {
+    return Promise.try(async () => {
+      const { email } = req.body;
+      const isFound = await Companies.findOne({
+        where: {
+          email,
+        }
+      });
+      if (!isFound) {
+        return res.status(400).json({
+          status: 400,
+          error: 'No account associated with the provided email address'
+        })
+      }
+      const PASSWORD_RESET_TOKEN = await jwt.sign({
+        email,
+        first_name: isFound.first_name,
+        last_name: isFound.last_name,
+      });
+      const PASSWORD_RESET_LINK = `${isProduction ? 'https' : 'http'}://${process.env.LANDING_PAGE_APP_HOST}/customer/password_reset?token=${PASSWORD_RESET_TOKEN}&code=COMPANY`;
+
+      const user_msg_obj = {
+        first_name: isFound.first_name,
+        last_name: isFound.last_name,
+        user_email: email,
+        password_reset_link: PASSWORD_RESET_LINK,
+        account_type: 'company',
+      };
+
+      const MSG_OBJ = createPasswordResetEmail(user_msg_obj);
+      await sendMail(MSG_OBJ);
+      await Companies.update({
+        password_reset_token: PASSWORD_RESET_TOKEN
+      }, {
+        where: {
+          email,
+        }
+      });
+      return res.status(200).json({
+        status: 200,
+        message: 'A password reset link has been sent to your email address'
+      })
+
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    })
+  }
+
+  /**
+   * @method company_reset_password
+   * @memberof CompanyController
+   * @description This method allows a company request password reset
+   * @params req, res
+   * @return JSON object
+   */
+
+  static company_reset_password(req, res) {
+    return Promise.try(async () => {
+      const { new_password } = req.body;
+      const { token } = req.query;
+      const USER = await jwt.verify(token);
+      if (!USER) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Reset link expired, please request for a new password reset link'
+        })
+      }
+      const isFound = await Companies.findOne(
+        {
+          where: {
+            email: isFound.email
+          }
+        }
+      );
+
+      if (!isFound) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Oops, user not found'
+        })
+      }
+      if (!isFound.password_reset_token) {
+        return res.status(400).json({
+          status: 400,
+          error: 'No password reset started for this user'
+        })
+      }
+      if (isFound.password_reset_token !== token) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Invalid reset link, please request for a new password reset link'
+        })
+      }
+      const saltRounds = 8;
+      const ENCRYPTED_NEW_PASSWORD = await bcrypt.hash(new_password, saltRounds);
+      await Companies.update(
+        {
+          password: ENCRYPTED_NEW_PASSWORD,
+          password_reset_token: null
+        },
+        {
+          where: {
+            email: isFound.email
+          }
+        }
+      );
+      return res.status(200).json({
+        status: 200,
+        message: 'Password reset successful'
+      })
+
+    }).catch((err) => {
       log(err);
       return res.status(400).json({
         status: 400,

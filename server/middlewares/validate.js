@@ -43,7 +43,8 @@ const {
   company_reg_dispatcher_step_three_schema,
   company_reg_dispatcher_step_five_schema,
   mobile_code_email_schema,
-  company_amount_schema
+  company_amount_schema,
+  company_profile_update_schema,
 } = Schema;
 
 /**
@@ -538,8 +539,25 @@ class Validate {
     return next();
   }
   /**
+   * @method check_company_profile
+   * @description This method validates company profile update
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+   static check_company_profile(req, res, next) {
+    const isvalid = company_profile_update_schema.validate(req.body);
+    if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      });
+    }
+    return next();
+  }
+  /**
    * @method check_customer_profile
-   * @description This method validates courier profile update
+   * @description This method validates company profile update
    * @memberof Validate
    * @param {req, res, next}
    * @return next

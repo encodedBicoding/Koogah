@@ -2554,7 +2554,7 @@ class Package {
               log(err);
               return res.status(400).json({
                status: 400,
-               error: err,
+               error: 'An error occurred, please try again',
              });
             }
           }

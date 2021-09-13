@@ -24,7 +24,7 @@ function calc_delivery_price(type, weight, distance, value) {
   const sms_charge = 50;
   const transfer_charge = 10;
   if (!weight_range) return false;
-  var net_price = Math.ceil(Number(base_price) + (50 * weight_value) + (50 * Number(distance)) + (package_value / 100) + sms_charge + transfer_charge);
+  var net_price = Math.ceil(Number(base_price) + (process.env.KOOGAH_PRICE_WEIGHT_BASE * weight_value) + (process.env.KOOGAH_PRICE_DISTANCE_BASE * Number(distance)) + (package_value === 1000 ? package_value  / 100 : package_value === 10000000 ? package_value  / 10000 : package_value  / 1000) + sms_charge + transfer_charge);
   return net_price;
 }
 

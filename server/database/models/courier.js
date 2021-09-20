@@ -50,7 +50,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     bvn: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       unique: true,
     },
     identification_number: {
@@ -60,27 +60,27 @@ module.exports = (sequelize, DataTypes) => {
     },
     emergency_contact_one_name: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       defaultValue: ''
     },
     emergency_contact_one_phone: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       defaultValue: ''
     },
     emergency_contact_two_name: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       defaultValue: ''
     },
     emergency_contact_two_phone: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       defaultValue: ''
     },
     profile_image: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     virtual_balance: {
       type: DataTypes.DECIMAL(10, 2),
@@ -177,6 +177,25 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ARRAY(DataTypes.STRING),
       defaultValue: []
     },
+    company_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    is_cooperate: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    owns_automobile: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    done_dispatch_before: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
   },
 
   {
@@ -209,6 +228,10 @@ module.exports = (sequelize, DataTypes) => {
       as: 'Payouts',
       foreignKey: 'dispatcher_email',
     });
+    Courier.belongsTo(models.Companies, {
+      as: 'Employer',
+      foreignKey: 'company_id'
+    })
   };
   return Courier;
 };

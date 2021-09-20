@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 import log from 'fancy-log';
-import { Customers, Couriers } from '../../../database/models';
+import { Customers, Couriers, Companies } from '../../../database/models';
 
 /**
  * @class Profile
@@ -65,6 +65,45 @@ class Profile {
   }
 
   /**
+   * @method company_get_own_profile
+   * @memberof Profile
+   * @params req, res
+   * @description this method allows a user to get their profile
+   * @return JSON object
+   */
+
+   static company_get_own_profile(req, res) {
+    const { user } = req.session;
+    return Promise.try(async () => {
+      let USER = await Companies.findOne(
+        {
+          where: {
+            id: user.id,
+          }
+        }
+      );
+      if (!USER) {
+        return res.status(404).json({
+          status: 404,
+          error: `No company found with email address: ${user.email}`,
+        });
+      }
+      
+      return res.status(200).json({
+        status: 200,
+        message: 'Profile retreived successfully',
+        data: USER.getSafeDataValues(),
+      });
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
+  }
+
+  /**
    * @method get_own_profile
    * @memberof Profile
    * @params req, res
@@ -74,6 +113,7 @@ class Profile {
 
   static get_own_profile(req, res) {
     const { user } = req.session;
+
     const model = user.is_courier ? 'couriers' : 'customers';
     return Promise.try(async () => {
       let USER;
@@ -165,7 +205,56 @@ class Profile {
       });
     });
   }
-
+  
+  /**
+   * @method company_update_profile
+   * @memberof Profile
+   * @params req, res
+   * @description this method allows a user update their profile
+   * @return JSON object
+   */
+   static company_update_profile(req, res) {
+    const { user } = req.session;
+    const { ...data } = req.body;
+    return Promise.try(async () => {
+      let USER;
+      const isFound = await Companies.findOne({
+        where: {
+          id: user.id,
+        }
+      });
+      if (!isFound) return res.status(404).json({
+        status: 404,
+        error: 'No company found'
+      });
+      await Companies.update(
+        {
+          ...data
+        },
+        {
+          where: {
+            id: user.id,
+          }
+        }
+      );
+      USER = await Companies.findOne({
+        where: {
+          id: user.id,
+        }
+      });
+      return res.status(200).json({
+        status: 200,
+        message: 'Profile updated successfully',
+        data: USER.getSafeDataValues(),
+      });
+    }).catch((error) => {
+      log(error);
+      return res.status(400).json({
+        status: 400,
+        error,
+      });
+    });
+  }
   /**
    * @method update_profile
    * @memberof Profile

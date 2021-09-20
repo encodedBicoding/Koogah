@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import express from 'express';
 import passport from 'passport';
-import checkSession, { isCourierLoggedIn, isCustomerLoggedIn } from '../../../middlewares/session';
+import checkSession, { isCourierLoggedIn, isCustomerLoggedIn, isCompanyLoggedIn, companyCheckSession } from '../../../middlewares/session';
 import Profile from '../controllers/profile.controller';
 import Validate from '../../../middlewares/validate';
 import {
@@ -13,13 +13,16 @@ const {
   get_courier_profile,
   get_customer_profile,
   get_own_profile,
+  company_get_own_profile,
   update_profile,
+  company_update_profile,
 } = Profile;
 
 const {
   check_profile_id,
   check_customer_profile,
   check_courier_profile,
+  check_company_profile,
 } = Validate;
 
 const profileRoutes = express();
@@ -49,6 +52,13 @@ profileRoutes.get(
   get_own_profile,
 );
 profileRoutes.get(
+  '/company/me',
+  passport.authenticate('bearer', { session: false }),
+  companyCheckSession,
+  isCompanyLoggedIn,
+  company_get_own_profile,
+);
+profileRoutes.get(
   '/courier/me',
   passport.authenticate('bearer', { session: false }),
   checkSession,
@@ -62,6 +72,14 @@ profileRoutes.put(
   isCustomerLoggedIn,
   check_customer_profile,
   update_profile,
+);
+profileRoutes.put(
+  '/company/p/edit',
+  passport.authenticate('bearer', { session: false }),
+  companyCheckSession,
+  isCompanyLoggedIn,
+  check_company_profile,
+  company_update_profile,
 );
 profileRoutes.put(
   '/courier/p/edit',

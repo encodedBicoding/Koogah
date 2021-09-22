@@ -8,6 +8,7 @@ import bcrypt from 'bcrypt';
 import log from 'fancy-log';
 import Sequelize from 'sequelize';
 import generate_ref from '../helpers/ref.id';
+import calculage_daterange_percentage from '../helpers/calc.date_range_percentage';
 
 import sendMail, { 
   createVerificationMail,
@@ -24,8 +25,10 @@ import {
   Couriers,
   PackagesTrackings,
   Packages,
+  Transactions,
 } from '../../../database/models';
 import { sendUnApprovedCompanyNotification } from '../helpers/slack';
+import moment from 'moment';
 
 
 const { Op } = Sequelize;
@@ -443,14 +446,14 @@ class CompanyController {
       const REFRESH_TOKEN = j_w_t.sign(SESSION_USER, process.env.SECRET_KEY);
 
       const user = isFound;
-      user.token = SESSION_TOKEN;
-      user.refresh_token = REFRESH_TOKEN;
 
       client.set(`${user.email}:COMPANY`, SESSION_TOKEN);
       return res.status(200).json({
         status: 200,
         message: 'Logged in successfully',
         data: user,
+        token: SESSION_TOKEN,
+        refresh_token: REFRESH_TOKEN
       });
     }).catch(err => {
       log(err);
@@ -779,6 +782,29 @@ class CompanyController {
       });
       
     }).catch(err => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
+  }
+
+  /**
+   * @method companyGetProfile
+   * @memberof CompanyController
+   * @description This method allows a company to get own profile
+   * @params req, res
+   * @return JSON object
+   */
+  static companyGetProfile(req, res) {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      return res.status(200).json({
+        status: 200,
+        data:user,
+      })
+    }).catch((err) => {
       log(err);
       return res.status(400).json({
         status: 400,
@@ -1128,6 +1154,655 @@ class CompanyController {
         status: 400,
         error: err,
       });
+    })
+  }
+
+    /**
+   * @method company_use_refresh
+   * @memberof companyController
+   * @description This method allows a company refresh their token to discourage numerous login
+   * @params req, res
+   * @return JSON object
+   */
+
+     static company_use_refresh(req, res) {
+      const { refresh_token } = req.query;
+      let isFound = undefined;
+
+      return Promise.try(async () => {
+        // verify token validity;
+        const user = j_w_t.verify(refresh_token, process.env.SECRET_KEY);
+        if (user) {
+          let { iat, ...data } = user;
+          // create a new token;
+          const SESSION_TOKEN = await jwt.sign(data, '168h');
+          isFound = await Companies.findOne({
+            where: {
+              email: user.email
+            }
+          })
+  
+          if (!isFound) {
+            return res.status(401).json({
+              status: 401,
+              error: 'User does not exist'
+            })
+          }
+  
+          const USER = isFound.getSafeDataValues();
+          client.set(`${USER.email}:COMPANY`, SESSION_TOKEN);
+          return res.status(200).json({
+            status: 200,
+            message: 'Refresh Login successful',
+            data: USER,
+            token: SESSION_TOKEN,
+            refresh_token: refresh_token
+          })
+  
+        } else {
+          return res.status(401).json({
+            status: 401,
+            error: 'Not Authorized'
+          })
+        }
+      }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+      })
+     }
+  
+  /**
+   * @method get_total_earnings
+   * @memberof companyController
+   * @description This method allows a company get their total earnings
+   * @params req, res
+   * @return JSON object
+   */
+
+  static get_total_earnings(req, res) {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      const { time_frame } = req.query;
+      let current_period_from;
+      let current_period_to;
+      let last_period_from;
+      let last_period_to;
+
+      let current_period_collection = [];
+      let last_period_collection = [];
+      let result = {
+        current_month: 0,
+        last_month: 0,
+        total_value: 0,
+        increased: false,
+        percent: 0.0,
+      };
+      // get all active dispatchers.
+      const allDispatchers = await Couriers.findAll({
+        where: {
+          company_id: user.id,
+          is_active: true,
+        }
+      });
+
+      if (allDispatchers) {
+        result.total_value = allDispatchers.reduce((acc, curr) => {
+          acc = acc + Number(curr.virtual_balance);
+          return acc;
+        }, 0);
+
+        if (time_frame === 'days') {
+          current_period_from = moment().clone().startOf('day').format();
+          current_period_to = moment().clone().endOf('day').format();
+          last_period_from = moment(current_period_from).subtract(1, 'day').format();
+          last_period_to = moment(current_period_to).subtract(1, 'day').format();
+        }
+        if (time_frame === 'weeks') {
+          current_period_from = moment().clone().startOf('isoweek').format();
+          current_period_to = moment().clone().endOf('isoweek').format();
+          last_period_from = moment(current_period_from).subtract(1, 'week').format();
+          last_period_to = moment(current_period_to).subtract(1, 'week').format();
+        }
+        if (time_frame === 'months') {
+          current_period_from = moment().clone().startOf('month').format();
+          current_period_to = moment().clone().endOf('month').format();
+          last_period_from = moment(current_period_from).subtract(1, 'month').format();
+          last_period_to = moment(current_period_to).subtract(1, 'month').format();
+        }
+        allDispatchers.forEach(async (d) => {
+        let dispatcher_tranx = await Transactions.findAll({
+          where: {
+            [Op.and]: [
+              {
+                dispatcher_id: d.id
+              },
+              {
+                reason: 'dispatch-payment',
+              },
+              {
+                created_at: {
+                  [Op.and]: [
+                    {
+                      [Op.gte]: current_period_from,
+                    },
+                    {
+                      [Op.lte]: current_period_to
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        });
+        current_period_collection.push(dispatcher_tranx);
+      });
+      allDispatchers.forEach(async (d) => {
+        let dispatcher_tranx = await Transactions.findAll({
+          where: {
+            [Op.and]: [
+              {
+                dispatcher_id: d.id
+              },
+              {
+                reason: 'dispatch-payment',
+              },
+              {
+                created_at: {
+                  [Op.and]: [
+                    {
+                      [Op.gte]: last_period_from,
+                    },
+                    {
+                      [Op.lte]: last_period_to,
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        });
+        last_period_collection.push(dispatcher_tranx);
+      });
+        let current_period_num_value = 0;
+        let last_period_num_value = 0;
+        if (current_period_collection.length <= 0 && last_period_collection.length <=0 ) {
+          return res.status(200).json({
+            status: 200,
+            message: 'Data retrieved successfully',
+            data: result,
+          })
+        }
+        if (current_period_collection.length > 0 && last_period_collection.length <= 0) {
+          current_period_num_value = current_period_collection.reduce((acc, curr) => {
+            acc = acc + Number(curr.amount_paid);
+            return acc;
+          }, 0);
+          // calculate percentage.
+          let pc = calculage_daterange_percentage(current_period_num_value, 0);
+          let increased = pc > 0 ? true : pc === 0 ? false : false;
+          result = {
+            ...result,
+            current_month: current_period_num_value,
+            last_month: 0,
+            increased,
+            percent: pc,
+          };
+          return res.status(200).json({
+            status: 200,
+            message: 'Data retrieved successfully',
+            data: result,
+          })
+        }
+        if (current_period_collection.length <= 0 && last_period_collection.length > 0) {
+          last_period_num_value = last_period_collection.reduce((acc, curr) => {
+            acc = acc + Number(curr.amount_paid);
+            return acc;
+          }, 0);
+          // calculate percentage.
+          let pc = calculage_daterange_percentage(0, last_period_num_value);
+          let increased = pc > 0 ? true : pc === 0 ? false : false;
+          result = {
+            ...result,
+            current_month: 0,
+            last_month: last_period_num_value,
+            increased,
+            percent: pc,
+          };
+          return res.status(200).json({
+            status: 200,
+            message: 'Data retrieved successfully',
+            data: result,
+          })
+        }
+        if (current_period_collection.length >= 0 && last_period_collection.length >= 0) {
+          current_period_num_value = current_period_collection.reduce((acc, curr) => {
+            acc = acc + Number(curr.amount_paid);
+            return acc;
+          }, 0);
+
+          last_period_num_value = last_period_collection.reduce((acc, curr) => {
+            acc = acc + Number(curr.amount_paid);
+            return acc;
+          }, 0);
+
+           // calculate percentage.
+           let pc = calculage_daterange_percentage(current_period_num_value, last_period_num_value);
+           let increased = pc > 0 ? true : pc === 0 ? false : false;
+            result = {
+             ...result,
+             current_month: 0,
+             last_month: last_period_num_value,
+             increased,
+             percent: pc,
+           };
+           return res.status(200).json({
+             status: 200,
+             message: 'Data retrieved successfully',
+             data: result,
+           })
+        }
+      } else {
+        return res.status(200).json({
+          status: 200,
+          message: 'Data retrieved successfully',
+          data: result,
+        })
+      }
+      
+    }).catch((err) => {
+        log(err);
+        return res.status(400).json({
+          status: 400,
+          error: err,
+        });
+    })
+  }
+
+  /**
+   * @method get_total_dispatchers_overview
+   * @memberof companyController
+   * @description This method allows a company get their total dispatchers overview
+   * @params req, res
+   * @return JSON object
+   */
+
+  static get_total_dispatchers_overview(req, res) {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      const { time_frame } = req.query;
+      let current_period_from;
+      let current_period_to;
+      let last_period_from;
+      let last_period_to;
+
+      let current_period_collection = [];
+      let last_period_collection = [];
+      let result = {
+        current_month: 0,
+        last_month: 0,
+        total_value: 0,
+        increased: false,
+        percent: 0.0,
+      };
+      const allDispatchers = await Couriers.findAndCountAll({
+        where: {
+          company_id: user.id,
+          is_active: true,
+        }
+      });
+
+      if (allDispatchers.count > 0) {
+        result.total_value = allDispatchers.count;
+        if (time_frame === 'days') {
+          current_period_from = moment().clone().startOf('day').format();
+          current_period_to = moment().clone().endOf('day').format();
+          last_period_from = moment(current_period_from).subtract(1, 'day').format();
+          last_period_to = moment(current_period_to).subtract(1, 'day').format();
+        }
+        if (time_frame === 'weeks') {
+          current_period_from = moment().clone().startOf('isoweek').format();
+          current_period_to = moment().clone().endOf('isoweek').format();
+          last_period_from = moment(current_period_from).subtract(1, 'week').format();
+          last_period_to = moment(current_period_to).subtract(1, 'week').format();
+        }
+        if (time_frame === 'months') {
+          current_period_from = moment().clone().startOf('month').format();
+          current_period_to = moment().clone().endOf('month').format();
+          last_period_from = moment(current_period_from).subtract(1, 'month').format();
+          last_period_to = moment(current_period_to).subtract(1, 'month').format();
+        }
+        current_period_collection = await Couriers.findAll({
+          where: {
+            [Op.and]: [
+              {
+                company_id: user.id,
+              },
+              {
+                is_active: true,
+              },
+              {
+                created_at: {
+                  [Op.and]: [
+                    {
+                      [Op.gte]: current_period_from,
+                    },
+                    {
+                      [Op.lte]: current_period_to
+                    }
+                  ],
+                }
+              }
+            ]
+          }
+        });
+        last_period_collection = await Couriers.findAll({
+          where: {
+            [Op.and]: [
+              {
+                company_id: user.id,
+              },
+              {
+                is_active: true,
+              },
+              {
+                created_at: {
+                  [Op.and]: [
+                    {
+                      [Op.gte]: last_period_from,
+                    },
+                    {
+                      [Op.lte]: last_period_to
+                    }
+                  ],
+                }
+              }
+            ]
+          }
+        });
+        let current_period_num_value = 0;
+        let last_period_num_value = 0;
+        if (current_period_collection.length <= 0 && last_period_collection.length <=0 ) {
+          return res.status(200).json({
+            status: 200,
+            message: 'Data retrieved successfully',
+            data: result,
+          })
+        }
+        if (current_period_collection.length > 0 && last_period_collection.length <= 0) {
+          current_period_num_value = current_period_collection.length;
+          // calculate percentage.
+          let pc = calculage_daterange_percentage(current_period_num_value, 0);
+          let increased = pc > 0 ? true : pc === 0 ? false : false;
+          result = {
+            ...result,
+            current_month: current_period_num_value,
+            last_month: 0,
+            increased,
+            percent: pc,
+          };
+          return res.status(200).json({
+            status: 200,
+            message: 'Data retrieved successfully',
+            data: result,
+          })
+        }
+        if (current_period_collection.length <= 0 && last_period_collection.length > 0) {
+          last_period_num_value = last_period_collection.length
+          // calculate percentage.
+          let pc = calculage_daterange_percentage(0, last_period_num_value);
+          let increased = pc > 0 ? true : pc === 0 ? false : false;
+          result = {
+            ...result,
+            current_month: 0,
+            last_month: last_period_num_value,
+            increased,
+            percent: pc,
+          };
+          return res.status(200).json({
+            status: 200,
+            message: 'Data retrieved successfully',
+            data: result,
+          })
+        }
+        if (current_period_collection.length >= 0 && last_period_collection.length >= 0) {
+          current_period_num_value = current_period_collection.length;
+          last_period_num_value = last_period_collection.length;
+
+           // calculate percentage.
+           let pc = calculage_daterange_percentage(current_period_num_value, last_period_num_value);
+           let increased = pc > 0 ? true : pc === 0 ? false : false;
+          result = {
+             ...result,
+             current_month: 0,
+             last_month: last_period_num_value,
+             increased,
+             percent: pc,
+           };
+           return res.status(200).json({
+             status: 200,
+             message: 'Data retrieved successfully',
+             data: result,
+           })
+        }
+      } else {
+        return res.status(200).json({
+          status: 200,
+          message: 'Data retrieved successfully',
+          data: result,
+        })
+      }
+
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    })
+  }
+
+  /**
+   * @method get_total_deliveries_overview
+   * @memberof companyController
+   * @description This method allows a company get their total dispatcher deliveries
+   * @params req, res
+   * @return JSON object
+   */
+
+  static get_total_deliveries_overview(req, res) {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      const { time_frame } = req.query;
+      let current_period_from;
+      let current_period_to;
+      let last_period_from;
+      let last_period_to;
+
+      let current_period_collection = [];
+      let last_period_collection = [];
+      let result = {
+        current_month: 0,
+        last_month: 0,
+        total_value: 0,
+        increased: false,
+        percent: 0.0,
+      };
+
+      // get all active dispatchers.
+      const allDispatchers = await Couriers.findAll({
+        where: {
+          company_id: user.id,
+          is_active: true,
+        }
+      });
+
+      if (allDispatchers) {
+        result.total_value = allDispatchers.reduce((acc, curr) => {
+          acc = acc + Number(curr.deliveries);
+          return acc;
+        }, 0);
+
+        if (time_frame === 'days') {
+          current_period_from = moment().clone().startOf('day').format();
+          current_period_to = moment().clone().endOf('day').format();
+          last_period_from = moment(current_period_from).subtract(1, 'day').format();
+          last_period_to = moment(current_period_to).subtract(1, 'day').format();
+        }
+        if (time_frame === 'weeks') {
+          current_period_from = moment().clone().startOf('isoweek').format();
+          current_period_to = moment().clone().endOf('isoweek').format();
+          last_period_from = moment(current_period_from).subtract(1, 'week').format();
+          last_period_to = moment(current_period_to).subtract(1, 'week').format();
+        }
+        if (time_frame === 'months') {
+          current_period_from = moment().clone().startOf('month').format();
+          current_period_to = moment().clone().endOf('month').format();
+          last_period_from = moment(current_period_from).subtract(1, 'month').format();
+          last_period_to = moment(current_period_to).subtract(1, 'month').format();
+        }
+        current_period_collection = await Couriers.findAll({
+          where: {
+            [Op.and]: [
+              {
+                company_id: user.id,
+              },
+              {
+                is_active: true,
+              },
+              {
+                created_at: {
+                  [Op.and]: [
+                    {
+                      [Op.gte]: current_period_from,
+                    },
+                    {
+                      [Op.lte]: current_period_to
+                    }
+                  ],
+                }
+              }
+            ]
+          }
+        });
+        last_period_collection = await Couriers.findAll({
+          where: {
+            [Op.and]: [
+              {
+                company_id: user.id,
+              },
+              {
+                is_active: true,
+              },
+              {
+                created_at: {
+                  [Op.and]: [
+                    {
+                      [Op.gte]: last_period_from,
+                    },
+                    {
+                      [Op.lte]: last_period_to
+                    }
+                  ],
+                }
+              }
+            ]
+          }
+        });
+        let current_period_num_value = 0;
+        let last_period_num_value = 0;
+        if (current_period_collection.length <= 0 && last_period_collection.length <=0 ) {
+          return res.status(200).json({
+            status: 200,
+            message: 'Data retrieved successfully',
+            data: result,
+          })
+        }
+        if (current_period_collection.length > 0 && last_period_collection.length <= 0) {
+          current_period_num_value = current_period_collection.reduce((acc, curr) => {
+            acc = acc + Number(curr.deliveries);
+            return acc;
+          }, 0);
+          // calculate percentage.
+          let pc = calculage_daterange_percentage(current_period_num_value, 0);
+          let increased = pc > 0 ? true : pc === 0 ? false : false;
+          result = {
+            ...result,
+            current_month: current_period_num_value,
+            last_month: 0,
+            increased,
+            percent: pc,
+          };
+          return res.status(200).json({
+            status: 200,
+            message: 'Data retrieved successfully',
+            data: result,
+          })
+        }
+        if (current_period_collection.length <= 0 && last_period_collection.length > 0) {
+          last_period_num_value = last_period_collection.reduce((acc, curr) => {
+            acc = acc + Number(curr.deliveries);
+            return acc;
+          }, 0);
+          // calculate percentage.
+          let pc = calculage_daterange_percentage(0, last_period_num_value);
+          let increased = pc > 0 ? true : pc === 0 ? false : false;
+          result = {
+            ...result,
+            current_month: 0,
+            last_month: last_period_num_value,
+            increased,
+            percent: pc,
+          };
+          return res.status(200).json({
+            status: 200,
+            message: 'Data retrieved successfully',
+            data: result,
+          })
+        }
+
+        if (current_period_collection.length >= 0 && last_period_collection.length >= 0) {
+          current_period_num_value = current_period_collection.reduce((acc, curr) => {
+            acc = acc + Number(curr.deliveries);
+            return acc;
+          }, 0);
+
+          last_period_num_value = last_period_collection.reduce((acc, curr) => {
+            acc = acc + Number(curr.deliveries);
+            return acc;
+          }, 0);
+
+           // calculate percentage.
+           let pc = calculage_daterange_percentage(current_period_num_value, last_period_num_value);
+           let increased = pc > 0 ? true : pc === 0 ? false : false;
+            result = {
+             ...result,
+             current_month: 0,
+             last_month: last_period_num_value,
+             increased,
+             percent: pc,
+           };
+           return res.status(200).json({
+             status: 200,
+             message: 'Data retrieved successfully',
+             data: result,
+           })
+        }
+      } else {
+        return res.status(200).json({
+          status: 200,
+          message: 'Data retrieved successfully',
+          data: result,
+        })
+      }
+    }).catch((err) => {
+        log(err);
+        return res.status(400).json({
+          status: 400,
+          error: err,
+        });
     })
   }
 

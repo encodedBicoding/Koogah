@@ -155,6 +155,29 @@ class WebSocketFunctions {
       return false;
     }
   }
+
+  async getCompanyTrackingDispatchers(company_id) {
+    try {
+      const all_tracking_dispatchers = await Couriers.findAll({
+        where: {
+          [Op.and]: [
+            {
+              company_id,
+            },
+            {
+              is_active: true,
+            },
+            {
+              is_currently_dispatching: true,
+            }
+          ]
+        }
+      });
+      return all_tracking_dispatchers;
+    } catch (err) {
+      return false;
+    }
+   }
 }
 
 export default WebSocketFunctions;

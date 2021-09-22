@@ -275,7 +275,6 @@ class Schema {
 
    static company_amount_schema() {
     return Joi.object({
-      amount: Joi.number().integer().required(),
       bank_code: Joi.string().required(),
     });
   }

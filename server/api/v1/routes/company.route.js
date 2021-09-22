@@ -23,6 +23,11 @@ const {
   companyGetSingleDispatcherTracking,
   company_request_password_reset,
   company_reset_password,
+  companyGetProfile,
+  company_use_refresh,
+  get_total_earnings,
+  get_total_dispatchers_overview,
+  get_total_deliveries_overview,
 } = CompanyController;
 
 const {
@@ -118,6 +123,19 @@ companyRoute.post(
 );
 
 companyRoute.get(
+  '/me',
+  passport.authenticate('bearer', { session: false }),
+  companyCheckSession,
+  isCompanyLoggedIn,
+  companyGetProfile,
+);
+companyRoute.get(
+  '/me/refresh',
+  company_use_refresh,
+);
+
+
+companyRoute.get(
   '/dispatcher/all',
   passport.authenticate('bearer', { session: false }),
   companyCheckSession,
@@ -171,5 +189,25 @@ companyRoute.post(
   company_reset_password,
 );
 
+companyRoute.get(
+  '/total_earnings',
+  companyCheckSession,
+  isCompanyLoggedIn,
+  get_total_earnings
+);
+
+companyRoute.get(
+  '/total_dispatchers/overview',
+  companyCheckSession,
+  isCompanyLoggedIn,
+  get_total_dispatchers_overview
+);
+
+companyRoute.get(
+  '/total_deliveries/overview',
+  companyCheckSession,
+  isCompanyLoggedIn,
+  get_total_deliveries_overview
+)
 
 export default companyRoute;

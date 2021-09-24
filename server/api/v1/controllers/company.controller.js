@@ -800,6 +800,23 @@ class CompanyController {
   static companyGetProfile(req, res) {
     return Promise.try(async () => {
       const { user } = req.session;
+      const all_dispatchers = await Couriers.findAll({
+        where: {
+          [Op.and]: [
+            { company_id: user.id },
+            {
+              virtual_balance: {
+                [Op.gt]: 0,
+              }
+            }
+          ]
+        }
+      });
+      let totalWalletAmount = all_dispatchers.reduce((acc, curr) => {
+        acc = acc + Number(curr.virtual_balance);
+        return acc;
+      }, 0);
+      user.current_wallet_balance = totalWalletAmount;
       return res.status(200).json({
         status: 200,
         data:user,
@@ -837,7 +854,7 @@ class CompanyController {
       if (!field) field = 'is_active';
       if (!fieldValue) fieldValue = true;
       if (!page) page = 0;
-      if (!limit) limit = 10;
+      if (!limit) limit = 15;
       let offset = page * limit;
       const allDispatchers = await Couriers.findAndCountAll(
         {
@@ -854,22 +871,40 @@ class CompanyController {
           order: [
             [orderBy, orderDir]
           ],
-          attributes: {
-            exclude: ['password']
-          }
+          attributes: [
+            'address',
+            'created_at',
+            'deliveries',
+            'email',
+            'first_name',
+            'last_name',
+            'id',
+            'is_currently_dispatching',
+            'mobile_number',
+            'nationality',
+            'pickups',
+            'profile_image',
+            'rating',
+            'sex',
+            'referal_id',
+            'state',
+            'town',
+          ]
         }
       );
       let result = {
         count: allDispatchers.count,
-        currentPage: page + 1,
+        currentPage: Number(page) + 1,
         totalPages: Math.ceil(allDispatchers.count / limit),
-        data: allDispatchers.rows,
+        rows: allDispatchers.rows,
 
       }
       return res.status(200).json({
         status: 200,
         message: 'Data retrieved successfully',
-        ...result,
+        data: {
+          ...result,
+        }
       });
     }).catch((err) => {
       log(err);
@@ -923,7 +958,7 @@ class CompanyController {
    * @return JSON object
   */
   
-  static companyGetWalletBalance(req, res) {
+  static companyGetWithdrawableWalletBalance(req, res) {
     return Promise.try(async () => {
       const { user } = req.session;
       const all_dispatchers = await Couriers.findAll({
@@ -934,18 +969,21 @@ class CompanyController {
               virtual_balance: {
                 [Op.gt]: 0,
               }
+            },
+            {
+              is_currently_dispatching: false,
             }
           ]
         }
       });
-      let totalWalletAmount = all_dispatchers.reduce((acc, curr) => {
+      let amount = all_dispatchers.reduce((acc, curr) => {
         acc = acc + Number(curr.virtual_balance);
         return acc;
       }, 0);
       return res.status(200).json({
         status: 200,
         data: {
-          balance: totalWalletAmount,
+          withdrawable_balance: amount,
         }
       });
     }).catch(err => {
@@ -1190,6 +1228,25 @@ class CompanyController {
           }
   
           const USER = isFound.getSafeDataValues();
+          const all_dispatchers = await Couriers.findAll({
+            where: {
+              [Op.and]: [
+                { company_id: USER.id },
+                {
+                  virtual_balance: {
+                    [Op.gt]: 0,
+                  }
+                }
+              ]
+            }
+          });
+          let totalWalletAmount = all_dispatchers.reduce((acc, curr) => {
+            acc = acc + Number(curr.virtual_balance);
+            return acc;
+          }, 0);
+
+          USER.current_wallet_balance = totalWalletAmount;
+          
           client.set(`${USER.email}:COMPANY`, SESSION_TOKEN);
           return res.status(200).json({
             status: 200,
@@ -1248,11 +1305,13 @@ class CompanyController {
         }
       });
 
+      // total earnings is total payout + current balance.
       if (allDispatchers) {
-        result.total_value = allDispatchers.reduce((acc, curr) => {
+        let currentBalance = allDispatchers.reduce((acc, curr) => {
           acc = acc + Number(curr.virtual_balance);
           return acc;
         }, 0);
+        result.total_value = Number(user.total_payouts) + currentBalance;
 
         if (time_frame === 'days') {
           current_period_from = moment().clone().startOf('day').format();
@@ -1341,11 +1400,11 @@ class CompanyController {
             return acc;
           }, 0);
           // calculate percentage.
-          let pc = calculage_daterange_percentage(current_period_num_value, 0);
+          let pc = calculage_daterange_percentage(current_period_num_value + Number(user.total_payouts), 0);
           let increased = pc > 0 ? true : pc === 0 ? false : false;
           result = {
             ...result,
-            current_month: current_period_num_value,
+            current_month: current_period_num_value + Number(user.total_payouts),
             last_month: 0,
             increased,
             percent: pc,
@@ -1362,12 +1421,12 @@ class CompanyController {
             return acc;
           }, 0);
           // calculate percentage.
-          let pc = calculage_daterange_percentage(0, last_period_num_value);
+          let pc = calculage_daterange_percentage(0, last_period_num_value + Number(user.total_payouts));
           let increased = pc > 0 ? true : pc === 0 ? false : false;
           result = {
             ...result,
             current_month: 0,
-            last_month: last_period_num_value,
+            last_month: last_period_num_value + Number(user.total_payouts),
             increased,
             percent: pc,
           };
@@ -1389,12 +1448,12 @@ class CompanyController {
           }, 0);
 
            // calculate percentage.
-           let pc = calculage_daterange_percentage(current_period_num_value, last_period_num_value);
+           let pc = calculage_daterange_percentage(current_period_num_value + Number(user.total_payouts), last_period_num_value + Number(user.total_payouts));
            let increased = pc > 0 ? true : pc === 0 ? false : false;
             result = {
              ...result,
              current_month: 0,
-             last_month: last_period_num_value,
+             last_month: last_period_num_value + Number(user.total_payouts),
              increased,
              percent: pc,
            };
@@ -1804,6 +1863,60 @@ class CompanyController {
           error: err,
         });
     })
+  }
+
+  static get_new_dispatchers_count(req, res) {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      let timestamp_benchmark = moment().subtract(4, 'days').format();
+      const all_new_signups = await Couriers.findAndCountAll({
+        where: {
+          [Op.and]: [
+            {
+              company_id: user.id,
+            },
+            {
+              is_cooperate: true,
+            },
+            {
+              created_at: {
+                [Op.gte]: timestamp_benchmark
+              },
+            }
+          ],
+        },
+        attributes: [
+          'address',
+          'created_at',
+          'deliveries',
+          'email',
+          'first_name',
+          'last_name',
+          'id',
+          'is_currently_dispatching',
+          'mobile_number',
+          'nationality',
+          'pickups',
+          'profile_image',
+          'rating',
+          'sex',
+          'referal_id',
+          'state',
+          'town',
+        ]
+      });
+      return res.status(200).json({
+        status: 200,
+        message: 'Data retrieved successfully',
+        data: all_new_signups,
+      });
+    }).catch(err => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
   }
 
 }

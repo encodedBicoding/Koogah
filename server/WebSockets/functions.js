@@ -171,7 +171,26 @@ class WebSocketFunctions {
               is_currently_dispatching: true,
             }
           ]
-        }
+        },
+        attributes: [
+          'address',
+          'created_at',
+          'deliveries',
+          'email',
+          'first_name',
+          'last_name',
+          'id',
+          'is_currently_dispatching',
+          'mobile_number',
+          'nationality',
+          'pickups',
+          'profile_image',
+          'rating',
+          'sex',
+          'referal_id',
+          'state',
+          'town',
+        ]
       });
       return all_tracking_dispatchers;
     } catch (err) {

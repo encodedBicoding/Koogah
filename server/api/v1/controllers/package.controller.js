@@ -1163,7 +1163,7 @@ class Package {
         event: 'unsubscribe_from_package'
       });
       sendPackageDeliveredNotification(package_id, user, customer);
-      if (user.is_cooperate == true) {
+      if (user.is_cooperate === true) {
         const company = await Companies.findOne({
           where: {
             id: user.company_id,

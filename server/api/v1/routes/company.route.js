@@ -19,7 +19,7 @@ const {
   companyRegisterDispatcherStepFive,
   companyGetAllDispatchers,
   companyGetSingleDispatcher,
-  companyGetWalletBalance,
+  companyGetWithdrawableWalletBalance,
   companyGetSingleDispatcherTracking,
   company_request_password_reset,
   company_reset_password,
@@ -28,6 +28,7 @@ const {
   get_total_earnings,
   get_total_dispatchers_overview,
   get_total_deliveries_overview,
+  get_new_dispatchers_count
 } = CompanyController;
 
 const {
@@ -153,11 +154,11 @@ companyRoute.get(
 );
 
 companyRoute.get(
-  '/accounts/wallet',
+  '/accounts/wallet/withdrawable',
   passport.authenticate('bearer', { session: false }),
   companyCheckSession,
   isCompanyLoggedIn,
-  companyGetWalletBalance
+  companyGetWithdrawableWalletBalance,
 );
 
 companyRoute.post(
@@ -208,6 +209,12 @@ companyRoute.get(
   companyCheckSession,
   isCompanyLoggedIn,
   get_total_deliveries_overview
+)
+companyRoute.get(
+  '/dispatchers/new',
+  companyCheckSession,
+  isCompanyLoggedIn,
+  get_new_dispatchers_count,
 )
 
 export default companyRoute;

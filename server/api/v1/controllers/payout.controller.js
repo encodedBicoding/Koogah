@@ -30,6 +30,14 @@ class Payout {
     const { bank_code } = req.body;
     return Promise.try(async () => {
       const user_current_balance = user.virtual_balance;
+
+      if (user.is_cooperate) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Oops, you are not allowed to withraw funds.',
+        });
+      }
+
       if (Number(amount) < 500.00) {
         return res.status(400).json({
           status: 400,
@@ -177,7 +185,7 @@ class Payout {
       if (payableWalletAmount < 500) {
         return res.status(400).json({
           status: 400,
-          error: 'Your payable amount is less then 500 NGN.',
+          error: 'Your payable amount is less than 500 NGN.',
         });
       }
       // process payment
@@ -252,7 +260,7 @@ class Payout {
       };
       const new_payout = await Payouts.create({ ...payout_details });
 
-      // deduct moneies from all dispatchers that had money a the time the code first ran.
+      // deduct moneies from all dispatchers that had money at the time the code first ran.
       all_dispatchers.forEach(async (d) => {
         await Couriers.update({
           virtual_balance: 0,

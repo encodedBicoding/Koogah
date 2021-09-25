@@ -28,7 +28,8 @@ const {
   get_total_earnings,
   get_total_dispatchers_overview,
   get_total_deliveries_overview,
-  get_new_dispatchers_count
+  get_new_dispatchers_count,
+  get_single_dispatcher_delivery_history
 } = CompanyController;
 
 const {
@@ -215,6 +216,13 @@ companyRoute.get(
   companyCheckSession,
   isCompanyLoggedIn,
   get_new_dispatchers_count,
+)
+companyRoute.get(
+  '/dispatcher/delivery/history/:id',
+  companyCheckSession,
+  isCompanyLoggedIn,
+  check_profile_id,
+  get_single_dispatcher_delivery_history,
 )
 
 export default companyRoute;

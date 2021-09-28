@@ -155,6 +155,48 @@ class WebSocketFunctions {
       return false;
     }
   }
+
+  async getCompanyTrackingDispatchers(company_id) {
+    try {
+      const all_tracking_dispatchers = await Couriers.findAll({
+        where: {
+          [Op.and]: [
+            {
+              company_id,
+            },
+            {
+              is_active: true,
+            },
+            {
+              is_currently_dispatching: true,
+            }
+          ]
+        },
+        attributes: [
+          'address',
+          'created_at',
+          'deliveries',
+          'email',
+          'first_name',
+          'last_name',
+          'id',
+          'is_currently_dispatching',
+          'mobile_number',
+          'nationality',
+          'pickups',
+          'profile_image',
+          'rating',
+          'sex',
+          'referal_id',
+          'state',
+          'town',
+        ]
+      });
+      return all_tracking_dispatchers;
+    } catch (err) {
+      return false;
+    }
+   }
 }
 
 export default WebSocketFunctions;

@@ -30,6 +30,14 @@ class Payout {
     const { bank_code } = req.body;
     return Promise.try(async () => {
       const user_current_balance = user.virtual_balance;
+
+      if (user.is_cooperate) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Oops, you are not allowed to withraw funds.',
+        });
+      }
+
       if (Number(amount) < 500.00) {
         return res.status(400).json({
           status: 400,
@@ -154,14 +162,8 @@ class Payout {
   static company_request_payout(req, res) {
     return Promise.try(async () => {
       const { user } = req.session;
-      const { amount, bank_code } = req.body;
-      if (Number(amount) < 500.00) {
-        return res.status(400).json({
-          status: 400,
-          error: 'Cannot request payout for amount less than N 500.00',
-        });
-      }
-      // get all dispatcher total balance with money
+      const { bank_code } = req.body;
+      // get all dispatchers total balance with money and not currently tracking.
       const all_dispatchers = await Couriers.findAll({
         where: {
           [Op.and]: [
@@ -170,19 +172,20 @@ class Payout {
               virtual_balance: {
                 [Op.gt]: 0,
               }
-            }
+            },
+            { is_currently_dispatching: false }
           ]
         }
       });
-      let totalWalletAmount = all_dispatchers.reduce((acc, curr) => {
+      let payableWalletAmount = all_dispatchers.reduce((acc, curr) => {
         acc = acc + Number(curr.virtual_balance);
         return acc;
       }, 0);
 
-      if (Number(amount) > Number(totalWalletAmount)) {
+      if (payableWalletAmount < 500) {
         return res.status(400).json({
           status: 400,
-          error: 'Amount requested is more than what you have. Please reduce the requested amount',
+          error: 'Your payable amount is less than 500 NGN.',
         });
       }
       // process payment
@@ -223,7 +226,7 @@ class Payout {
           body: JSON.stringify(
             {
               source: 'balance',
-              amount: (parseInt(amount, 10) * 100),
+              amount: (parseInt(payableWalletAmount, 10) * 100),
               recipient: recipient_code,
               reason: "Payout for delivery on "
             }
@@ -249,7 +252,7 @@ class Payout {
         dispatcher_first_name: user.first_name,
         dispatcher_last_name: user.last_name,
         dispatcher_email: user.email,
-        amount_requested: amount,
+        amount_requested: payableWalletAmount,
         dispatcher_account_number: user.bank_account_number,
         dispatcher_bank_name: user.bank_account_name,
         status: 'paid',
@@ -257,25 +260,23 @@ class Payout {
       };
       const new_payout = await Payouts.create({ ...payout_details });
 
-      // deduct moneies from all dispatchers in the company.
-      await Couriers.update({
-        virtual_balance: 0,
-      }, {
-        where: {
-          [Op.and]: [
-            { company_id: user.id },
-            {
-              virtual_balance: {
-                [Op.gt]: 0,
-              }
-            }
-          ]
-        }
-      });
-      
-      let last_payout = Number(amount);
-      let total_payouts = Number(user.total_payouts) + Number(amount);
+      // deduct moneies from all dispatchers that had money at the time the code first ran.
+      all_dispatchers.forEach(async (d) => {
+        await Couriers.update({
+          virtual_balance: 0,
+        }, {
+          where: {
+            [Op.and]: [
+              { id: d.id },
+              { company_id: user.id },
+            ],
+          }
+        });
+      })
 
+      
+      let last_payout = Number(payableWalletAmount);
+      let total_payouts = Number(user.total_payouts) + last_payout;
       await Companies.update(
         {
           last_payout: last_payout,
@@ -291,7 +292,7 @@ class Payout {
 
       return res.status(200).json({
         status: 200,
-        message: 'Payout successful, you will be credited shortly',
+        message: `Payout of ${payableWalletAmount}NGN was successful, you will be credited shortly`,
         data: new_payout,
       });
     }).catch(err => {

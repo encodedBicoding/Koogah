@@ -105,7 +105,6 @@ userRoute.post(
 
 userRoute.post(
   '/refresh/token',
-  check_refresh_token,
   use_refresh
 )
 

@@ -60,7 +60,8 @@ if (cluster.isMaster) {
         'http://www.koogah.com.ng',
         'http://www.koogah.com',
         'https://www.koogah.com.ng',
-        'https://www.koogah.com'
+        'https://www.koogah.com',
+        'https://koogah-web-staging.herokuapp.com'
       ];
       if (accepted_web_hosts.includes(origin)) {
         var cookies = {};

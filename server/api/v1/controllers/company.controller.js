@@ -1395,37 +1395,12 @@ class CompanyController {
           dispatcher_id,
         }
       });
-      const _package = await Packages.findOne({
-        where: {
-          dispatcher_id
-        },
-        attributes: [
-          'address',
-          'created_at',
-          'deliveries',
-          'email',
-          'first_name',
-          'last_name',
-          'id',
-          'is_currently_dispatching',
-          'mobile_number',
-          'nationality',
-          'pickups',
-          'profile_image',
-          'rating',
-          'sex',
-          'referal_id',
-          'state',
-          'town',
-        ],
-      });
       return res.status(200).json({
         status: 200,
         message: 'Data retrieved successfully',
         data: {
           tracking_package: tracking_package,
           dispatcher: isFound.getSafeDataValues(),
-          package: _package,
         }
       });
     }).catch(err => {
@@ -2261,6 +2236,9 @@ class CompanyController {
               is_cooperate: true,
             },
             {
+              is_active: true,
+            },
+            {
               created_at: {
                 [Op.gte]: timestamp_benchmark
               },
@@ -2373,6 +2351,112 @@ class CompanyController {
         error: err,
       });
     })
+  }
+
+  /**
+   * @method edit_dispatcher_details
+   * @memberof companyController
+   * @description This method allows a company edit a single dispatcher details.
+   * @params req, res
+   * @return JSON object
+   */
+
+  static edit_dispatcher_details(req, res) {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      const { id } = req.params;
+      const { ...data } = req.body;
+      // first find the dispatcher...
+
+      if (data.mobile_number) {
+        var firstDigit = data.mobile_number[0].toString();
+        if (firstDigit === '0') {
+          data.mobile_number = data.mobile_number.substring(1, data.mobile_number.length);
+        }
+      }
+
+      const isFound = await Couriers.findOne({
+        where: {
+          [Op.and]: [
+            {
+              company_id: user.id,
+            },
+            {
+              id,
+            },
+            {
+              is_active: true,
+            }
+          ]
+        }
+      });
+      if (!isFound) {
+        return res.status(404).json({
+          status: 404,
+          error: 'Dispatcher not found.'
+        })
+      }
+      await Couriers.update(
+        {
+          ...data,
+        },
+        {
+          where: {
+            [Op.and]: [
+              {
+                company_id: user.id,
+              },
+              {
+                id,
+              }
+            ]
+          }
+        }
+      );
+
+      const updated_dispatcher = await Couriers.findOne({
+        where: {
+          [Op.and]: [
+            {
+              company_id: user.id,
+            },
+            {
+              id,
+            }
+          ]
+        },
+        attributes: [
+          'address',
+            'created_at',
+            'deliveries',
+            'email',
+            'first_name',
+            'last_name',
+            'id',
+            'is_currently_dispatching',
+            'mobile_number',
+            'nationality',
+            'pickups',
+            'profile_image',
+            'rating',
+            'sex',
+            'referal_id',
+            'state',
+            'town',
+        ],
+      });
+      return res.status(200).json({
+        status: 200,
+        message: 'Data updated successfully',
+        data: updated_dispatcher
+      })
+    }).catch(err => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
   }
 
 }

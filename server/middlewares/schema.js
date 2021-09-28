@@ -125,6 +125,21 @@ class Schema {
     });
   }
 
+  /**
+   * @method edit_dispatcher_schema
+   * @description This method return Joi object which delivers a schema for companies to edit their dispatchers.
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static edit_dispatcher_schema() {
+    return Joi.object({
+      first_name: Joi.string(),
+      last_name: Joi.string(),
+      mobile_number: Joi.string(),
+    });
+  }
+
 
   /**
    * @method intra_package_schema

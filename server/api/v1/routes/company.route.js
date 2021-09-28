@@ -29,7 +29,8 @@ const {
   get_total_dispatchers_overview,
   get_total_deliveries_overview,
   get_new_dispatchers_count,
-  get_single_dispatcher_delivery_history
+  get_single_dispatcher_delivery_history,
+  edit_dispatcher_details
 } = CompanyController;
 
 const {
@@ -47,7 +48,8 @@ const {
   check_email_and_mobile_code,
   check_company_payout_amount,
   check_profile_id,
-  check_reset_password
+  check_reset_password,
+  check_edit_dispatcher
 } = Validate;
 
 const companyRoute = express();
@@ -224,5 +226,13 @@ companyRoute.get(
   check_profile_id,
   get_single_dispatcher_delivery_history,
 )
+
+companyRoute.put(
+  '/dispatcher/edit/:id',
+  companyCheckSession,
+  isCompanyLoggedIn,
+  check_edit_dispatcher,
+  edit_dispatcher_details
+);
 
 export default companyRoute;

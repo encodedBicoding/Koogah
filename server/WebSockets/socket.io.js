@@ -120,6 +120,18 @@ if (cluster.isMaster) {
     return;
   }
   });
+  eventEmitter.on('company_new_package_creation', async function (d) {
+    const { message } = d;
+    WsServer.clients.forEach((c) => {
+      if (c.hasOwnProperty('companyId') && c.readyState === WebSocket.OPEN) {
+        let result = JSON.stringify({
+          event: 'company_new_package_creation',
+          payload: message,
+        });
+        c.send(result);
+      }
+    })
+  })
   eventEmitter.on('new_company_dispatcher_tracking', async function (d) {
     const { companyId } = d;
     const all_tracking_dispatchers = await socketFunction.getCompanyTrackingDispatchers(companyId);

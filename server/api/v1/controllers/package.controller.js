@@ -33,7 +33,6 @@ import {
   sendDispatcherStartsDispatchNotification,
   sendPackageDeliveredNotification
 } from '../helpers/slack';
-import company from '../../../database/models/company';
 import sendMail, { createCompanyDispatcherApproveOrDecline, createDeliveryReceipt } from '../helpers/mail';
 
 const cron = require('node-cron');
@@ -154,6 +153,12 @@ class Package {
         Package.sendNewPackageCreationToDispatchers(message, task);
       });
       sendNewPackageNotification(package_detail, user, data);
+
+      // push event to all companies;
+      let comp_m = `New Package creation @ ${data.from_town} area of ${data.from_state}`;
+      eventEmitter.emit('company_new_package_creation', {
+        message: comp_m,
+      })
       return res.status(200).json({
         status: 200,
         message: 'Package created successfully. Please wait, dispatchers will reach out to you soon',

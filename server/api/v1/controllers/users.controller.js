@@ -307,7 +307,7 @@ class UserController {
     // Insert the user in the awaiting user's db.
     // send the user details as mail to the company.
 
-    const MSG_OBJ = createCourierApprovalMail(AWAITING_USER_OBJ);
+    const MSG_OBJ = createCourierApprovalMail(Object.assign(AWAITING_USER_OBJ, {identification_number: payload.identification_number}));
     const emergency_contact_msg_obj = createEmergencyContactMail(payload.email, verifying_user, 'Dispatcher');
     return Promise.try(async () => {
       await Couriers.update(

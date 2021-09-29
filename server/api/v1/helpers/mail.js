@@ -462,7 +462,7 @@ return msgObj
   
  }
 
-export const createKoogahWelcomeMailToCourier = function sendWelcomMailToCourier(userObj) {
+export const createKoogahWelcomeMailToCourier = function createKoogahWelcomeMailToCourier(userObj) {
   let { first_name, user_email, last_name } = userObj;
   first_name = toSentenceCase.call(null, first_name);
   last_name = toSentenceCase.call(null, last_name);

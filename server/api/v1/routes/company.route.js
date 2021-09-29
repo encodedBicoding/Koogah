@@ -30,7 +30,8 @@ const {
   get_total_deliveries_overview,
   get_new_dispatchers_count,
   get_single_dispatcher_delivery_history,
-  edit_dispatcher_details
+  edit_dispatcher_details,
+  company_update_profile
 } = CompanyController;
 
 const {
@@ -234,5 +235,12 @@ companyRoute.put(
   check_edit_dispatcher,
   edit_dispatcher_details
 );
+
+companyRoute.put(
+  '/profile/update',
+  companyCheckSession,
+  isCompanyLoggedIn,
+  company_update_profile,
+)
 
 export default companyRoute;

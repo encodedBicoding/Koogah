@@ -2459,6 +2459,54 @@ class CompanyController {
     });
   }
 
+  /**
+   * @method company_update_profile
+   * @memberof companyController
+   * @description This method allows a company to update their profile.
+   * @params req, res
+   * @return JSON object
+   */
+
+  static company_update_profile(req, res) {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      const { ...data } = req.body;
+      const isFound = await Companies.findOne({
+        where: {
+          id: user.id,
+        }
+      });
+      if (isFound) {
+        await Companies.update({ ...data }, {
+          where: {
+            id: user.id,
+          }
+        });
+        const updated_user = await Companies.findOne({
+          where: {
+            id: user.id,
+          },
+        });
+        return res.status(200).json({
+          status: 200,
+          message: 'Data updated successfully',
+          data:  updated_user.getSafeDataValues()
+        })
+      } else {
+        return res.status(400).json({
+          status: 404,
+          error: 'User not found'
+        })
+      }
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
+  }
+
 }
 
 

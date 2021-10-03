@@ -27,6 +27,7 @@ const {
   is_session_valid,
   change_password,
   has_rated_dispatcher,
+  send_approval_mail_to_courier,
 } = UserController;
 
 const {
@@ -200,5 +201,9 @@ userRoute.get(
   checkSession,
   isCustomerLoggedIn,
   has_rated_dispatcher
+)
+userRoute.post(
+  '/courier/send/approval',
+  send_approval_mail_to_courier,
 )
 export default userRoute;

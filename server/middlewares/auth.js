@@ -1,7 +1,11 @@
 /* eslint-disable camelcase */
 import BearerStrategy from 'passport-http-bearer';
 import jwt from '../api/v1/helpers/jwt';
-import { Couriers, Customers } from '../database/models';
+import {
+  Couriers,
+  Customers,
+  Companies,
+} from '../database/models';
 
 class Auth {
   static bearerStrategy() {
@@ -15,6 +19,9 @@ class Auth {
           email: payload.email,
         },
       });
+      if (is_found_user) {
+        return done(null, is_found_user);
+      }
 
       if (!is_found_user) {
         // check main users table
@@ -23,13 +30,24 @@ class Auth {
             email: payload.email,
           },
         });
-        if (!is_found_user) {
-          return done({ status: 401, error: 'Unauthorized' }, false);
+        if (is_found_user) {
+          return done(null, is_found_user);
         }
-
-        return done(null, is_found_user);
       }
-      return done(null, is_found_user);
+      if (!is_found_user) {
+         // check main company table
+        is_found_user = await Companies.findOne({
+          where: {
+            email: payload.email,
+          }
+        });
+        if (is_found_user) {
+          return done(null, is_found_user);
+        }
+      }
+      if (!is_found_user) {
+        return done({ status: 401, error: 'Unauthorized' }, false);
+      }
     });
   }
 }

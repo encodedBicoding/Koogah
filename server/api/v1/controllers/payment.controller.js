@@ -145,12 +145,9 @@ class Payment {
 
       // update user koogah coin
       // koogah coin worth process.env.KOOGAH_COIN_WORTH
-      // UNCOMMENT THIS CODE WHEN APP IS IS FULL PHASE
-      // const coin = Math.floor(Number(amount) * 0.001);
-      // const customer_coin_balance = Number(user.koogah_coin) + Number(coin);
+      const coin = Math.floor(Number(amount) * 0.001);
+      const customer_coin_balance = Number(user.koogah_coin) + Number(coin);
 
-      // COMMENT THIS CODE WHEN APP IS IN FULL PHASE
-      const customer_coin_balance = Number(user.koogah_coin) + 0.00;
       // if the customer was referred by another user
       // first check if the user is a customer
       // if not, check if the user is a courier
@@ -345,7 +342,9 @@ class Payment {
             error: 'Oops, seems this dispatcher doesn\'t exists anymore...',
           });
         }
-        const fees = Number(is_package_valid.delivery_price) * 0.30;
+        const sms_charge = 50;
+        const transfer_charge = 10;
+        const fees = (Number(is_package_valid.delivery_price) * process.env.PACKAGE_DELIVERY_FEE) + sms_charge + transfer_charge;
         const total_amount_payable = Number(is_package_valid.delivery_price) - fees;
         const dispatcher_new_balance = Number(dispatcher.virtual_balance) + total_amount_payable;
   
@@ -551,8 +550,10 @@ class Payment {
           error: 'Oops, seems this dispatcher doesn\'t exists anymore...',
         });
       }
-      const fees = Number(is_package_valid.delivery_price) * 0.30;
-      const total_amount_payable = Number(is_package_valid.delivery_price) - fees;
+      const sms_charge = 50;
+      const transfer_charge = 10;
+      const fees = (Number(is_package_valid.delivery_price) * process.env.PACKAGE_DELIVERY_FEE) + sms_charge + transfer_charge;
+      const total_amount_payable = Number(is_package_valid.delivery_price) - Math.ceil(fees);
       const dispatcher_new_balance = Number(dispatcher.virtual_balance) + total_amount_payable;
 
       const transaction_details = {

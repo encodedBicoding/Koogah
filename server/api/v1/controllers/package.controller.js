@@ -17,6 +17,7 @@ import {
   PackagesTrackings,
   Transactions,
   HistoryTransactions,
+  Companies,
   sequelize
 } from '../../../database/models';
 
@@ -24,6 +25,18 @@ import geoPackageDestination from '../helpers/geo-package-destination';
 import Notifier from '../helpers/notifier';
 import eventEmitter from '../../../EventEmitter';
 import sendDeliverySMS from '../helpers/delivery_sms';
+import { 
+  sendNewPackageNotification,
+  sendNewInterestInPackageNotification,
+  sendInterestApprovedOrDeclinedNotification,
+  sendDispatcherDeclinedPickupNotification,
+  sendDispatcherStartsDispatchNotification,
+  sendPackageDeliveredNotification
+} from '../helpers/slack';
+import company from '../../../database/models/company';
+import sendMail, { createCompanyDispatcherApproveOrDecline, createDeliveryReceipt } from '../helpers/mail';
+
+const cron = require('node-cron');
 
 config();
 distanceApi.key(process.env.GOOGLE_API_KEY);
@@ -45,7 +58,7 @@ class Package {
   static async request_dispatch(req, res) {
     const { user } = req.session;
     let { type } = req.params;
-    const { weight, delivery_price, distance, ...data } = req.body;
+    let { weight, delivery_price, distance, value, ...data } = req.body;
     if (type.length <= 5) {
       type = `${type}-state`;
     }
@@ -55,6 +68,9 @@ class Package {
     }
     if (!data.payment_mode) {
       data.payment_mode = 'virtual_balance';
+    }
+    if (!value) {
+      value = '0-999';
     }
     // calculate the distance between package pickup location
     // and package dropoff location
@@ -69,7 +85,7 @@ class Package {
         if ((Number(user.virtual_balance) - Number(user.virtual_allocated_balance)) < Number(delivery_price)) {
           return res.status(400).json({
             status: 400,
-            error: 'Sorry you have reached your package balance threshold, \nplease top-up your account or delete a package that has not been picked-up'
+            error: 'Package limit exceeded for the amount in your wallet, \nTop-up your wallet or delete a package that has not been picked-up'
           })
         }
         const updated_V_A_B = Number(user.virtual_allocated_balance) + Number(delivery_price)
@@ -123,28 +139,26 @@ class Package {
          type_of_dispatch: type,
          customer_id: user.id,
          weight,
+         value,
          distance,
          delivery_price,
          package_id,
          delivery_key,
          ...data,
        });
-       // TODO: this should create a new package creation notification
-       // and/or send a push notification to all couriers registered in the package location area.
-      const propose_city = data.from_town.split(',').map((e) => e.toLowerCase()).join('');
-      const proposed_channel = `${propose_city}`;
-      eventEmitter.emit('notify_new_package_creation', {
-        channel: proposed_channel,
-        detail: `A new package has been created at ${data.from_town} area of ${data.from_state}. \nYou may want to deliver this package, check it out.`,
-        package_id: package_detail.package_id,
-        notification_id: package_detail.id,
+      const message = {
+        pickup_state: data.from_state.split(',')[0],
+        detail: `New Package creation @ ${data.from_town} area of ${data.from_state}. You might want to pick it up, do check it out!.`
+      };
+      const task = cron.schedule('1 * * * * *', () => {
+        Package.sendNewPackageCreationToDispatchers(message, task);
       });
-      
-       return res.status(200).json({
-         status: 200,
-         message: 'Package created successfully. Please wait, dispatchers will reach out to you soon',
-         data: package_detail,
-       });
+      sendNewPackageNotification(package_detail, user, data);
+      return res.status(200).json({
+        status: 200,
+        message: 'Package created successfully. Please wait, dispatchers will reach out to you soon',
+        data: package_detail,
+      });
     }).catch((error) => {
       log(error);
       return res.status(400).json({
@@ -256,7 +270,7 @@ class Package {
           device_notify_obj,
           _notification
         );
-
+        sendNewInterestInPackageNotification(package_id, user, customer)
         return res.status(200).json({
           status: 200,
           message: 'Your interest is acknowledged. The owner of the package will be notified shortly',
@@ -333,6 +347,7 @@ class Package {
           error: 'Oops, seems the dispatcher doesn\'t exists anymore...',
         });
       }
+      let MSG_OBJ;
       if (response === 'approve') {
         const date_time = new Date().toLocaleString();
         if (dispatcher.pending > 0) {
@@ -365,7 +380,7 @@ class Package {
 
         NEW_NOTIFICATION.email = dispatcher.email;
         NEW_NOTIFICATION.desc='CD005';
-        NEW_NOTIFICATION.message = 'A customer has approved you to dispatch their package. \nPlease ensure you meet them at a rather safe zone or outside their doors and/or gate';
+        NEW_NOTIFICATION.message = 'A customer has approved you to dispatch their package. \nPlease ensure you meet them at a safe zone or outside their doors and/or gate';
         NEW_NOTIFICATION.title = 'New Dispatch Approval';
         NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
         eventEmitter.emit('package_approval', {
@@ -373,6 +388,19 @@ class Package {
           packageId: package_id,
           event: 'package_dispatch_approval'
         });
+        if (dispatcher.is_cooperate === true) {
+          const company = await Companies.findOne({
+            where: {
+              id: dispatcher.company_id
+            }
+          });
+          MSG_OBJ = {
+            event: 'PICKUP',
+            dispatcher: dispatcher,
+            _package: _package,
+            company: company,
+          };
+        }
       }
       if (response === 'decline') {
         if (_package.status === 'picked-up') {
@@ -431,6 +459,20 @@ class Package {
         NEW_NOTIFICATION.message = `A customer has declined your request to dispatch their package with id: ${package_id}.`;
         NEW_NOTIFICATION.title = 'New Dispatch Decline';
         NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
+
+        if (dispatcher.is_cooperate === true) {
+          const company = await Companies.findOne({
+            where: {
+              id: dispatcher.company_id
+            }
+          });
+          MSG_OBJ = {
+            event: 'DECLINE',
+            dispatcher: dispatcher,
+            _package: _package,
+            company: company,
+          };
+        }
       }
       const updated_package = await Packages.findOne({
         where: {
@@ -468,6 +510,11 @@ class Package {
         _notification
       );
       const res_message = `Successfully ${response === 'approve' ? 'approved' : 'declined'} dispatcher request`;
+      sendInterestApprovedOrDeclinedNotification(response === 'approve', package_id, dispatcher);
+      if (dispatcher.is_cooperate === true) {
+        let msg = createCompanyDispatcherApproveOrDecline(MSG_OBJ);
+        sendMail(msg);
+      }
       return res.status(200).json({
         status: 200,
         message: res_message,
@@ -516,6 +563,7 @@ class Package {
         _package.type_of_dispatch,
         new_weight,
         _package.distance,
+        _package.value
       );
       if (!new_delivery_price) {
         return res.status(400).json({
@@ -864,10 +912,12 @@ class Package {
         },
       });
 
+      const sms_charge = 50;
+      const transfer_charge = 10;
       const user_new_delivery_count = parseInt(user.deliveries, 10) + 1;
       const user_new_pending_count = parseInt(user.pending, 10) - 1;
-      const fees = Number(_package.delivery_price) * Number(process.env.PACKAGE_DELIVERY_FEE);
-      const total_amount_payable = Number(_package.delivery_price) - fees;
+      const fees = (Number(_package.delivery_price) * user.is_cooperate ? Number(process.env.COMPANY_PACKAGE_DELIVERY_FEE) : Number(process.env.PACKAGE_DELIVERY_FEE)) + sms_charge + transfer_charge;
+      const total_amount_payable = Number(_package.delivery_price) - (Math.ceil(fees));
       const dispatcher_new_balance = Number(user.virtual_balance) + total_amount_payable;
 
       const transaction_details = {
@@ -1077,6 +1127,33 @@ class Package {
         connectionId: `dispatcher:${user.email}:${user.id}`,
         event: 'unsubscribe_from_package'
       });
+      sendPackageDeliveredNotification(package_id, user, customer);
+      if (user.is_cooperate == true) {
+        const company = await Companies.findOne({
+          where: {
+            id: user.company_id,
+          }
+        });
+        let MSG_OBJ = {
+          event: 'PAYMENT',
+          company,
+          dispatcher: user,
+          _package: updated_package,
+        }
+        let msg = createCompanyDispatcherApproveOrDecline(MSG_OBJ);
+        sendMail(msg);
+      }
+
+      // send receipt to customer;
+      let receipt_obj = {
+        customer,
+        _package: updated_package,
+        dispatcher: user,
+      };
+
+      let receipt_msg = createDeliveryReceipt(receipt_obj);
+      sendMail(receipt_msg);
+
       return res.status(200).json({
         status: 200,
         message: 'Package delivered successfully',
@@ -1451,7 +1528,7 @@ class Package {
             offset,
             order: [
               [sequelize.fn('strpos', sequelize.fn('lower', sequelize.col('from_town')), from), 'DESC'],
-              ['createdAt', 'DESC'],
+              // ['createdAt', 'DESC'],
               
             ],
             where:  {
@@ -1874,7 +1951,7 @@ class Package {
         device_notify_obj,
         _notification
       );
-
+      sendDispatcherDeclinedPickupNotification(package_id, decline_cause, user)
       return res.status(200).json({
         status: 200,
         message: 'You have successfully declined this pick-up'
@@ -2073,7 +2150,7 @@ class Package {
         dispatcher_lng,
         customer_id: _package.customer_id,
       }
-
+      sendDispatcherStartsDispatchNotification(package_id, user, _package)
       return res.status(200).json({
         status: 200,
         message: 'You have successfully started this dispatch.',
@@ -2280,7 +2357,7 @@ class Package {
             try {
               const distance_in_km = result.rows[0].elements[0].distance.text;
               const distance = Math.ceil(Number(distance_in_km.split(' ')[0].replace(',', '')));
-              const delivery_price = calc_delivery_price(type, data.weight, distance);
+              const delivery_price = calc_delivery_price(type, data.weight, distance, data.value);
               if (!delivery_price) {
                 return res.status(400).json({
                   status: 400,
@@ -2457,7 +2534,7 @@ class Package {
             try { 
               const distance_in_km = result.rows[0].elements[0].distance.text;
               const distance = Math.ceil(Number(distance_in_km.split(' ')[0].replace(',', '')));
-              const delivery_price = calc_delivery_price(type, data.weight, distance);
+              const delivery_price = calc_delivery_price(type, data.weight, distance, data.value);
               if (!delivery_price) {
                 return res.status(400).json({
                   status: 400,
@@ -2615,6 +2692,67 @@ class Package {
     });
   }
 
+  /**
+   * @method sendNewPackageCreationToDispatchers
+   * @memberof Package
+   * @params req, res
+   * @description Customers new package creation to dispatcher.
+   * @return JSON object
+   */
+  static sendNewPackageCreationToDispatchers(msg, task) {
+    return Promise.try(async() => {
+      const allDispatchers = await Couriers.findAll({
+        where: {
+          is_verified: true,
+          is_active: true,
+          is_approved: true,
+          state: msg.pickup_state,
+        }
+      });
+      let timestamp_benchmark = moment().subtract(5, 'months').format();
+      allDispatchers.forEach(async (dispatcher) => {
+        let all_notifications = await Notifications.findAll({
+          where: {
+            [Op.and]: [{ email: dispatcher.email }, { type: 'courier' }],
+            created_at: {
+              [Op.gte]:timestamp_benchmark
+            }
+          }
+        });
+        const device_notify_obj = {
+          title: 'Koogah Logistics',
+          body: msg.detail,
+          click_action: 'FLUTTER_NOTIFICATION_CLICK',
+          icon: 'ic_launcher'
+        };
+        const _notification = {
+          email: dispatcher.email,
+          desc: 'CD012',
+          message: msg.detail,
+          title: 'Koogah Logistics',
+          action_link: '',
+          id: msg.notification_id,
+        };
+        await Notifier(
+          all_notifications,
+          dispatcher,
+          'dispatcher',
+          device_notify_obj,
+          _notification
+        );
+
+        if (dispatcher.id === allDispatchers[allDispatchers.length - 1].id) {
+          task.stop();
+        }
+      });
+    }).catch(err => {
+      log(err);
+      return res.status(400).json({
+       status: 400,
+        error: err,
+     });
+    });
+   }
 }
 
 

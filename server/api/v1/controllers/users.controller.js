@@ -23,8 +23,13 @@ import sendMail, {
     createVerificationMail, 
     createCourierApprovalMail,
     createApprovalMailToCourier,
-    createPasswordResetEmail
+    createPasswordResetEmail,
+    createKoogahWelcomeMailToCourier,
+    createCustomerPersonalizedMail,
+    createEmergencyContactMail,
 } from '../helpers/mail';
+
+import { sendNewCustomerNotification, sendUnApprovedDispatcherNotification } from '../helpers/slack';
 import client from '../../../redis/redis.client';
 import generate_ref from '../helpers/ref.id';
 
@@ -53,7 +58,6 @@ class UserController {
         email,
         mobile_number,
         sex,
-        bvn,
         nationality,
         identification_number,
         profile_image,
@@ -61,10 +65,8 @@ class UserController {
         state,
         town,
         address,
-        emergency_contact_one_name,
-        emergency_contact_one_phone,
-        emergency_contact_two_name,
-        emergency_contact_two_phone,
+        owns_automobile,
+        done_dispatch_before
       } = req.body;
       const { ref, fromApp } = req.query;
 
@@ -77,10 +79,11 @@ class UserController {
 
       const VERIFY_TOKEN = await jwt.sign({
         email,
-        bvn,
+        identification_number,
         first_name,
         mobile_number: `${country_code}${mobile_number}`,
-      });
+        country_code: country_code
+      }, '168h');
       // link hint: https://api.koogah.com
       // this should be the frontend link based on the registering user
       // not the SERVER_APP_URL
@@ -104,7 +107,6 @@ class UserController {
         email,
         mobile_number,
         sex,
-        bvn,
         nationality,
         verify_token: VERIFY_TOKEN,
         state,
@@ -112,10 +114,8 @@ class UserController {
         address,
         identification_number,
         profile_image,
-        emergency_contact_one_name,
-        emergency_contact_one_phone,
-        emergency_contact_two_name,
-        emergency_contact_two_phone,
+        owns_automobile: owns_automobile ? owns_automobile : false,
+        done_dispatch_before: done_dispatch_before ? done_dispatch_before : false,
         referal_id: REFERAL_ID,
         refered_by: ref ? ref : null,
       };
@@ -125,7 +125,7 @@ class UserController {
       const isFound = await Couriers.findOne({
         where: {
           [Op.or]: [
-            { email }, { bvn },
+            { email }, { identification_number },
           ],
         },
       });
@@ -133,7 +133,7 @@ class UserController {
       if (isFound) {
         return res.status(409).json({
           status: 409,
-          error: 'A user with the given email and/or bvn already exists',
+          error: 'A user with the given email and/or NIN already exists',
         });
       }
       await sendMail(MSG_OBJ);
@@ -177,7 +177,7 @@ class UserController {
   
       const verifying_user = await Couriers.findOne({
         where: {
-          [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
+          [Op.and]: [{ email: payload.email }, { identification_number: payload.identification_number }],
         },
       });
   
@@ -189,7 +189,7 @@ class UserController {
       }
       const MOBILE_VERIFY_CODE = gen_verify_code();
 
-      const SMS_MESSAGE = `Your verification code is: \n${MOBILE_VERIFY_CODE}`;
+      const SMS_MESSAGE = `Your Koogah verification code is: \n${MOBILE_VERIFY_CODE}`;
   
       const MOBILE_REDIRECT_LINK = `https://${process.env.SERVER_APP_URL}/verify/email?key=${key}&live=${!!key}`;
   
@@ -202,14 +202,14 @@ class UserController {
         });
       }
 
-      await sendSMS(payload.mobile_number, SMS_MESSAGE);
+      await sendSMS(`${payload.country_code ? payload.country_code : '+234'}${verifying_user.mobile_number}`, SMS_MESSAGE);
       await Couriers.update(
         {
           verification_code: MOBILE_VERIFY_CODE,
         },
         {
           where: {
-            [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
+            [Op.and]: [{ email: payload.email }, { identification_number: payload.identification_number }],
           },
         },
       );
@@ -255,7 +255,7 @@ class UserController {
 
     let verifying_user = await Couriers.findOne({
       where: {
-        [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
+        [Op.and]: [{ email: payload.email }, { identification_number: payload.identification_number }],
       },
     });
 
@@ -285,7 +285,7 @@ class UserController {
 
     payload = {
       email: verifying_user.email,
-      bvn: verifying_user.bvn,
+      identification_number: verifying_user.identification_number,
       first_name: verifying_user.first_name,
       mobile_number: verifying_user.mobile_number,
       is_courier: verifying_user.is_courier,
@@ -296,7 +296,7 @@ class UserController {
 
     const AWAITING_USER_OBJ = {
       first_name: payload.first_name,
-      bvn: payload.bvn,
+      bvn: `NIN: ${payload.identification_number}`,
       last_name: verifying_user.last_name,
       user_email: payload.email,
       mobile_number: payload.mobile_number,
@@ -308,6 +308,7 @@ class UserController {
     // send the user details as mail to the company.
 
     const MSG_OBJ = createCourierApprovalMail(AWAITING_USER_OBJ);
+    const emergency_contact_msg_obj = createEmergencyContactMail(payload.email, verifying_user, 'Dispatcher');
     return Promise.try(async () => {
       await Couriers.update(
         {
@@ -318,12 +319,14 @@ class UserController {
         },
         {
           where: {
-            [Op.and]: [{ email: payload.email }, { bvn: payload.bvn }],
+            [Op.and]: [{ email: payload.email }, { identification_number: payload.identification_number }],
           },
         },
       );
       await Awaitings.create(AWAITING_USER_OBJ);
       await sendMail(MSG_OBJ);
+      await sendMail(emergency_contact_msg_obj);
+      sendUnApprovedDispatcherNotification(AWAITING_USER_OBJ)
       return res.status(200).json({
         status:200,
         message: 'Registration complete, your account is now awaiting approval.',
@@ -417,7 +420,7 @@ class UserController {
         user_email: user.email,
         last_name: user.last_name
       }
-      const msg_obj = createApprovalMailToCourier(APPROVED_USER_OBJ);
+      const msg_obj = createKoogahWelcomeMailToCourier(APPROVED_USER_OBJ);
       await sendMail(msg_obj);
 
       return res.status(200).json({
@@ -477,9 +480,10 @@ class UserController {
       email,
       first_name,
       mobile_number_one: `${country_code}${mobile_number_one}`,
+      country_code: country_code,
       last_name,
       is_courier: false,
-    });
+    }, '168h');
     let VERIFY_LINK = '';
     if (fromApp && fromApp === 'web') {
       VERIFY_LINK = `https://${process.env.LANDING_PAGE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
@@ -570,14 +574,14 @@ class UserController {
     }
     const MOBILE_VERIFY_CODE = gen_verify_code();
 
-    const SMS_MESSAGE = `Your verification code is: \n${MOBILE_VERIFY_CODE}`;
+    const SMS_MESSAGE = `Your Koogah verification code is: \n${MOBILE_VERIFY_CODE}`;
 
     const MOBILE_REDIRECT_LINK = `https://${process.env.SERVER_APP_URL}/customer/verify/email?key=${key}&live=${!!key}`;
 
     // this function should redirect the user to the Mobile App page
     // That contains the form so they can insert the code sent to their mobile phones
       
-    await sendSMS(payload.mobile_number_one, SMS_MESSAGE);
+    await sendSMS(`${payload.country_code ? payload.country_code : '+234'}${verifying_user.mobile_number_one}`, SMS_MESSAGE);
     await Customers.update(
       {
         verification_code: MOBILE_VERIFY_CODE,
@@ -664,7 +668,7 @@ class UserController {
       email: verifying_user.email,
       type: 'customer',
       desc: 'CD001',
-      message: 'We are glad to have you onboard\nRemember to top-up your account and refer other users.\nReferring other users can earn you upto N200',
+      message: 'We are glad to have you onboard\nRemember to top-up your account and refer other users.\nReferring other users can earn you up to N200',
       title: 'Welcome to Koogah',
     };
     return Promise.try(async () => {
@@ -694,6 +698,14 @@ class UserController {
         refresh_token: REFRESH_TOKEN,
         ...approved_user.getSafeDataValues(),
       };
+      const user_obj = {
+        first_name: approved_user.first_name,
+        user_email: approved_user.email,
+        last_name: approved_user.last_name,
+      };
+      const MSG_OBJ = createCustomerPersonalizedMail(user_obj);
+      await sendMail(MSG_OBJ);
+      sendNewCustomerNotification(approved_user)
       res.status(200).json({
         status: 200,
         message: 'Account created successfully',
@@ -748,7 +760,7 @@ class UserController {
         first_name: isFound.first_name,
         last_name: isFound.last_name,
         email: isFound.email,
-        bvn: isFound.bvn,
+        nin: isFound.identification_number,
         is_courier: isFound.is_courier,
         is_admin: isFound.is_admin,
       };
@@ -1159,7 +1171,7 @@ class UserController {
 
         const PASSWORD_RESET_TOKEN = await jwt.sign({
           email,
-          bvn: isFound.bvn,
+          nin: isFound.identification_number,
           first_name: isFound.first_name,
           last_name: isFound.last_name,
           account_type,
@@ -1201,7 +1213,6 @@ class UserController {
         };
         const PASSWORD_RESET_TOKEN = await jwt.sign({
           email,
-          bvn: isFound.mobile_number_one,
           first_name: isFound.first_name,
           last_name: isFound.last_name,
           account_type,
@@ -1485,6 +1496,41 @@ class UserController {
     });
   }
 
+  /**
+   * @method send_approval_mail_to_courier
+   * @memberof UserController
+   * @description This method sends approval mail to courier
+   * @params req, res
+   * @return JSON object
+   */
+
+  static send_approval_mail_to_courier(req, res) {
+    return Promise.try(async () => {
+      const {
+        first_name,
+        user_email,
+        last_name,
+        approval_link,
+      } = req.body;
+      const message = createApprovalMailToCourier({
+        first_name,
+        user_email,
+        last_name,
+        approval_link,
+      });
+      await sendMail(message);
+      return res.status(200).json({
+        status: 200,
+        message: 'Approval mail sent successfully',
+      });
+    }).catch((error) => {
+      log(error);
+      return res.status(400).json({
+        status: 400,
+        error
+      });
+    })
+  }
 }
 
 export default UserController;

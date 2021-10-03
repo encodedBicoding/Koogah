@@ -1471,7 +1471,8 @@ class Package {
             },
           ],
           order: [
-            ['status', 'DESC']
+            ['status', 'DESC'],
+            ['created_at', 'DESC']
           ]
         });
       } else {

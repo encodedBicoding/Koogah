@@ -10,3 +10,4 @@ dispatcher-pickup-decline = CD009
 dispatcher-started-dispatching = CD010
 approval-decline = CD011
 new-package-creation = CD012
+promo-code-creation = CD013

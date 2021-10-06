@@ -45,6 +45,7 @@ const {
   mobile_code_email_schema,
   company_amount_schema,
   company_profile_update_schema,
+  promoSchema,
 } = Schema;
 
 /**
@@ -62,6 +63,26 @@ class Validate {
    */
   static courierSignup(req, res, next) {
     const isvalid = courierSignupSchema().validate(req.body);
+    if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      });
+    }
+    return next();
+  }
+
+
+  /**
+   * @method promoCodeSend
+   * @description This method validates the input from an admin to send promo code
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static promoCodeSend(req, res, next) {
+    const isvalid = promoSchema().validate(req.body);
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,

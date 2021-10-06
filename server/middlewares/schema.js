@@ -36,6 +36,21 @@ class Schema {
   }
 
   /**
+   * @method promoSchema
+   * @description This method return Joi object which delivers a schema for promo code sending
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static promoSchema() {
+    return Joi.object({
+      code: Joi.string().trim().required(),
+      promo_message: JOi.string().trim().required(),
+      promo_title: Joi.string().trim().required(),
+      amount: Joi.number().required(),
+    });
+  }
+  /**
    * @method courierApprovalSchema
    * @description This method return Joi object which delivers a schema when a courier tries to approve their account
    * @memberof Schema

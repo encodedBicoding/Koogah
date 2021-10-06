@@ -6,15 +6,9 @@ import { config } from 'dotenv';
 import log from 'fancy-log';
 import Sequelize from 'sequelize';
 import {
-  Packages,
-  Couriers,
   Notifications,
   Customers,
-  PackagesTrackings,
   Transactions,
-  HistoryTransactions,
-  Companies,
-  sequelize
 } from '../../../database/models';
 const cron = require('node-cron');
 import moment from 'moment';
@@ -75,7 +69,8 @@ class PromoController {
                 NEW_NOTIFICATION.title = promo_title;
                 NEW_NOTIFICATION.action_link = null;
                 NEW_NOTIFICATION.entity_id = null;
-                NEW_NOTIFICATION.is_viewable = null;
+                NEW_NOTIFICATION.is_viewable = false;
+                NEW_NOTIFICATION.type = 'customer';
                 const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
                  // get all user unread notifications;
                 let timestamp_benchmark = moment().subtract(5, 'months').format();
@@ -103,6 +98,7 @@ class PromoController {
               }
             });
             if (u.email === new_users_email[new_users_email.length - 1].email) {
+              console.log('completed tasks');
               task.stop();
             }
             return res.status(200).json({
@@ -143,7 +139,8 @@ class PromoController {
               NEW_NOTIFICATION.title = promo_title;
               NEW_NOTIFICATION.action_link = null;
               NEW_NOTIFICATION.entity_id = null;
-              NEW_NOTIFICATION.is_viewable = null;
+              NEW_NOTIFICATION.is_viewable = false;
+              NEW_NOTIFICATION.type = 'customer';
               const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
                // get all user unread notifications;
               let timestamp_benchmark = moment().subtract(5, 'months').format();
@@ -170,6 +167,7 @@ class PromoController {
               );
 
               if (u.email === all_customers[all_customers.length - 1].email) {
+                console.log('completed tasks');
                 task.stop();
               }
             }
@@ -259,11 +257,12 @@ class PromoController {
           let NEW_NOTIFICATION = {};
           NEW_NOTIFICATION.email = u.email;
           NEW_NOTIFICATION.desc = 'CD013';
-          NEW_NOTIFICATION.message = `Congratulations!. Your weekly FREE delivery credit has arrived. Use ${promo_code} to make FREE deliveries today!. Enjoy!`;
+          NEW_NOTIFICATION.message = `Congratulations!. Your weekly FREE delivery credit has arrived. Use it to make FREE deliveries today!. Enjoy!`;
           NEW_NOTIFICATION.title = 'Your FREE weekly delivery credit is here!. tap to see.';
           NEW_NOTIFICATION.action_link = null;
           NEW_NOTIFICATION.entity_id = null;
-          NEW_NOTIFICATION.is_viewable = null;
+          NEW_NOTIFICATION.is_viewable = false;
+          NEW_NOTIFICATION.type = 'customer';
           const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
           // get all user unread notifications;
           let timestamp_benchmark = moment().subtract(5, 'months').format();
@@ -324,12 +323,6 @@ class PromoController {
         status: 400,
         error: 'Promo code cannot be empty',
       });
-      if (promo_code.length > 5 || promo_code < 5) {
-        return res.status(400).json({
-          status: 400,
-          error: 'Invalid promo code',
-        });
-      }
       if (!user.promo_code) {
         return res.status(400).json({
           status: 400,
@@ -346,7 +339,7 @@ class PromoController {
       await Customers.update(
         {
           virtual_balance: new_updated_virtual_balance,
-          promo_code: null,
+          promo_code: '',
           promo_code_amount: 0.0
         },
         {

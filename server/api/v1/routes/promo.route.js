@@ -13,18 +13,18 @@ const {
 const { promoCodeSend } = Validate;
 
 promoRoute.post(
-  '/promo/global',
+  '/global',
   promoCodeSend,
   globalPromo,
 )
 
 promoRoute.post(
-  '/promo/individual',
+  '/individual',
   individualPromo,
 );
 
 promoRoute.post(
-  '/promo/use',
+  '/use',
   checkSession,
   isCustomerLoggedIn,
   usePromoCode,

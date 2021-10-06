@@ -45,7 +45,7 @@ class Schema {
   static promoSchema() {
     return Joi.object({
       code: Joi.string().trim().required(),
-      promo_message: JOi.string().trim().required(),
+      promo_message: Joi.string().trim().required(),
       promo_title: Joi.string().trim().required(),
       amount: Joi.number().required(),
     });

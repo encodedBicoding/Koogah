@@ -33,7 +33,6 @@ import {
   sendDispatcherStartsDispatchNotification,
   sendPackageDeliveredNotification
 } from '../helpers/slack';
-import company from '../../../database/models/company';
 import sendMail, { createCompanyDispatcherApproveOrDecline, createDeliveryReceipt } from '../helpers/mail';
 
 const cron = require('node-cron');
@@ -916,8 +915,13 @@ class Package {
       const transfer_charge = 10;
       const user_new_delivery_count = parseInt(user.deliveries, 10) + 1;
       const user_new_pending_count = parseInt(user.pending, 10) - 1;
-      const fees = (Number(_package.delivery_price) * user.is_cooperate ? Number(process.env.COMPANY_PACKAGE_DELIVERY_FEE) : Number(process.env.PACKAGE_DELIVERY_FEE)) + sms_charge + transfer_charge;
-      const total_amount_payable = Number(_package.delivery_price) - (Math.ceil(fees));
+      let fees = 0;
+      if (user.is_cooperate) {
+        fees = (Number(_package.delivery_price) * Number(process.env.COMPANY_PACKAGE_DELIVERY_FEE)) + sms_charge + transfer_charge;
+      } else {
+        fees = (Number(_package.delivery_price) * Number(process.env.PACKAGE_DELIVERY_FEE)) + sms_charge + transfer_charge;
+      }
+      const total_amount_payable = Number(_package.delivery_price) - Math.ceil(fees);
       const dispatcher_new_balance = Number(user.virtual_balance) + total_amount_payable;
 
       const transaction_details = {
@@ -1393,7 +1397,8 @@ class Package {
             },
           ],
           order: [
-            ['status', 'DESC']
+            ['status', 'DESC'],
+            ['created_at', 'DESC']
           ]
         });
       } else {

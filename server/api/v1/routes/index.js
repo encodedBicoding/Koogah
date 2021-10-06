@@ -9,6 +9,7 @@ import profileRoutes from './profile.route';
 import historyRoutes from './history.route';
 import verifyRoute from './verifyme.route';
 import companyRoute from './company.route';
+import promoRoute from './promo.route';
 
 const route = express();
 
@@ -31,5 +32,6 @@ route.use('/profile', profileRoutes);
 route.use('/history', historyRoutes);
 route.use('/verify', verifyRoute);
 route.use('/company', companyRoute);
+route.use('/promo', promoRoute);
 
 export default route;

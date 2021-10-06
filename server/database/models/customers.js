@@ -137,6 +137,15 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
+    promo_code: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    promo_code_amount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+      defaultValue: 0.0,
+    },
   },
   {
     underscored: true,

@@ -48,7 +48,7 @@ class PromoController {
       const task = cron.schedule('1 * * * * *', async () => {
         if (new_users_email) {
           if (new_users_email.length > 0) {
-            new_users_email.forEach((user_email) => {
+            new_users_email.forEach(async (user_email) => {
               const u = await Customers.findOne({
                 where: {
                   email: user_email,
@@ -121,7 +121,7 @@ class PromoController {
               is_active: true,
             }
           });
-          all_customers.forEach((u) => {
+          all_customers.forEach(async (u) => {
             if (u) {
               // update the user promo code
               await Customers.update(
@@ -205,7 +205,7 @@ class PromoController {
             is_active: true,
           }
         })
-        all_customers.forEach((u) => {
+        all_customers.forEach(async (u) => {
           // get their previous week top-ups
           const this_week_start = moment().clone().startOf('isoweek').format();
           const last_week_start = moment(this_week_start).subtract(1, 'week').format();

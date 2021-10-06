@@ -679,6 +679,8 @@ class UserController {
           is_verified: true,
           is_active: true,
           koogah_coin: 10,
+          promo_code: 'WELCOME',
+          promo_code_amount: 2000,
         },
         {
           where: {

@@ -8,6 +8,7 @@ import bcrypt from 'bcrypt';
 import log from 'fancy-log';
 import Sequelize from 'sequelize';
 import generate_ref from '../helpers/ref.id';
+import calculage_daterange_percentage from '../helpers/calc.date_range_percentage';
 
 import sendMail, { 
   createVerificationMail,
@@ -24,8 +25,10 @@ import {
   Couriers,
   PackagesTrackings,
   Packages,
+  Transactions,
 } from '../../../database/models';
 import { sendUnApprovedCompanyNotification } from '../helpers/slack';
+import moment from 'moment';
 
 
 const { Op } = Sequelize;
@@ -443,14 +446,14 @@ class CompanyController {
       const REFRESH_TOKEN = j_w_t.sign(SESSION_USER, process.env.SECRET_KEY);
 
       const user = isFound;
-      user.token = SESSION_TOKEN;
-      user.refresh_token = REFRESH_TOKEN;
 
       client.set(`${user.email}:COMPANY`, SESSION_TOKEN);
       return res.status(200).json({
         status: 200,
         message: 'Logged in successfully',
         data: user,
+        token: SESSION_TOKEN,
+        refresh_token: REFRESH_TOKEN
       });
     }).catch(err => {
       log(err);
@@ -788,6 +791,46 @@ class CompanyController {
   }
 
   /**
+   * @method companyGetProfile
+   * @memberof CompanyController
+   * @description This method allows a company to get own profile
+   * @params req, res
+   * @return JSON object
+   */
+  static companyGetProfile(req, res) {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      const all_dispatchers = await Couriers.findAll({
+        where: {
+          [Op.and]: [
+            { company_id: user.id },
+            {
+              virtual_balance: {
+                [Op.gt]: 0,
+              }
+            }
+          ]
+        }
+      });
+      let totalWalletAmount = all_dispatchers.reduce((acc, curr) => {
+        acc = acc + Number(curr.virtual_balance);
+        return acc;
+      }, 0);
+      user.current_wallet_balance = totalWalletAmount;
+      return res.status(200).json({
+        status: 200,
+        data:user,
+      })
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
+  }
+
+  /**
    * @method companyGetAllDispatchers
    * @memberof CompanyController
    * @description This method allows a company to get all dispatchers
@@ -811,7 +854,7 @@ class CompanyController {
       if (!field) field = 'is_active';
       if (!fieldValue) fieldValue = true;
       if (!page) page = 0;
-      if (!limit) limit = 10;
+      if (!limit) limit = 15;
       let offset = page * limit;
       const allDispatchers = await Couriers.findAndCountAll(
         {
@@ -821,6 +864,8 @@ class CompanyController {
             [Op.and]: [
               {
                 company_id: user.id,
+              },
+              {
                 [field]: fieldValue,
               }
             ]
@@ -828,22 +873,40 @@ class CompanyController {
           order: [
             [orderBy, orderDir]
           ],
-          attributes: {
-            exclude: ['password']
-          }
+          attributes: [
+            'address',
+            'created_at',
+            'deliveries',
+            'email',
+            'first_name',
+            'last_name',
+            'id',
+            'is_currently_dispatching',
+            'mobile_number',
+            'nationality',
+            'pickups',
+            'profile_image',
+            'rating',
+            'sex',
+            'referal_id',
+            'state',
+            'town',
+          ]
         }
       );
       let result = {
         count: allDispatchers.count,
-        currentPage: page + 1,
+        currentPage: Number(page) + 1,
         totalPages: Math.ceil(allDispatchers.count / limit),
-        data: allDispatchers.rows,
+        rows: allDispatchers.rows,
 
       }
       return res.status(200).json({
         status: 200,
         message: 'Data retrieved successfully',
-        ...result,
+        data: {
+          ...result,
+        }
       });
     }).catch((err) => {
       log(err);
@@ -853,6 +916,325 @@ class CompanyController {
       });
     })
   }
+
+  /**
+   * @method getSingleDispatcherTotalMoneyMade
+   * @memberof CompanyController
+   * @description This method allows a company to get a single dispatcher total money made
+   * @params req, res
+   * @return JSON object
+   */
+
+  static getSingleDispatcherTotalMoneyMade(id) {
+    return Promise.try(async () => {
+      let result = {
+        current_month: 0,
+        last_month: 0,
+        total_value: 0,
+        increased: false,
+        percent: 0.0,
+      };
+      let current_period_from;
+      let current_period_to;
+      let last_period_from;
+      let last_period_to;
+
+      current_period_from = moment().clone().startOf('month').format();
+      current_period_to = moment().clone().endOf('month').format();
+      last_period_from = moment(current_period_from).subtract(1, 'month').format();
+      last_period_to = moment(current_period_to).subtract(1, 'month').format();
+
+      const all_time_collection = await Transactions.findAll({
+        where: {
+          [Op.and]: [
+            {
+              dispatcher_id: id
+            },
+            {
+              reason: 'dispatch-payment',
+            },
+          ]
+        }
+      });
+      if (all_time_collection) {
+        const all_time_amount = all_time_collection.reduce((acc, curr) => {
+          acc = acc + Number(curr.amount_paid);
+          return acc;
+        }, 0);
+  
+        result.total_value = all_time_amount;
+  
+        const current_period_collection = await Transactions.findAll({
+          where: {
+            [Op.and]: [
+              {
+                dispatcher_id: id
+              },
+              {
+                reason: 'dispatch-payment',
+              },
+              {
+                created_at: {
+                  [Op.and]: [
+                    {
+                      [Op.gte]: current_period_from,
+                    },
+                    {
+                      [Op.lte]: current_period_to
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        });
+        const last_period_collection = await Transactions.findAll({
+          where: {
+            [Op.and]: [
+              {
+                dispatcher_id: id
+              },
+              {
+                reason: 'dispatch-payment',
+              },
+              {
+                created_at: {
+                  [Op.and]: [
+                    {
+                      [Op.gte]: last_period_from,
+                    },
+                    {
+                      [Op.lte]: last_period_to,
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        });
+        let current_period_num_value = 0;
+        let last_period_num_value = 0;
+        if (current_period_collection.length > 0 && last_period_collection.length <= 0) {
+          current_period_num_value = current_period_collection.reduce((acc, curr) => {
+            acc = acc + Number(curr.amount_paid);
+            return acc;
+          }, 0);
+          // calculate percentage.
+          let pc = calculage_daterange_percentage(current_period_num_value, 0);
+          let increased = pc > 0 ? true : pc === 0 ? false : false;
+          result = {
+            ...result,
+            current_month: current_period_num_value,
+            last_month: 0,
+            increased,
+            percent: pc,
+          };
+        }
+        if (current_period_collection.length <= 0 && last_period_collection.length > 0) {
+            last_period_num_value = last_period_collection.reduce((acc, curr) => {
+              acc = acc + Number(curr.amount_paid);
+              return acc;
+            }, 0);
+            // calculate percentage.
+            let pc = calculage_daterange_percentage(0, last_period_num_value);
+            let increased = pc > 0 ? true : pc === 0 ? false : false;
+            result = {
+              ...result,
+              current_month: 0,
+              last_month: last_period_num_value,
+              increased,
+              percent: pc,
+            };
+          }
+  
+          if (current_period_collection.length >= 0 && last_period_collection.length >= 0) {
+            current_period_num_value = current_period_collection.reduce((acc, curr) => {
+              acc = acc + Number(curr.amount_paid);
+              return acc;
+            }, 0);
+  
+            last_period_num_value = last_period_collection.reduce((acc, curr) => {
+              acc = acc + Number(curr.amount_paid);
+              return acc;
+            }, 0);
+  
+             // calculate percentage.
+             let pc = calculage_daterange_percentage(current_period_num_value, last_period_num_value);
+             let increased = pc > 0 ? true : pc === 0 ? false : false;
+              result = {
+               ...result,
+               current_month: current_period_num_value,
+               last_month: last_period_num_value,
+               increased,
+               percent: pc,
+             };
+          }
+          return result;
+      } else {
+        return result;
+      }
+
+
+    }).catch(err => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    })
+  }
+
+  /**
+   * @method getSingleDispatcherTotalDeliveries
+   * @memberof CompanyController
+   * @description This method allows a company to get a single dispatcher total delivery overview
+   * @params req, res
+   * @return JSON object
+   */
+
+  static getSingleDispatcherTotalDeliveries(id) {
+    return Promise.try(async () => {
+      let result = {
+        current_month: 0,
+        last_month: 0,
+        increased: false,
+        total_value: 0,
+        percent: 0.0,
+      };
+      let current_period_from;
+      let current_period_to;
+      let last_period_from;
+      let last_period_to;
+
+      current_period_from = moment().clone().startOf('month').format();
+      current_period_to = moment().clone().endOf('month').format();
+      last_period_from = moment(current_period_from).subtract(1, 'month').format();
+      last_period_to = moment(current_period_to).subtract(1, 'month').format();
+
+      const all_time_collection = await Packages.findAndCountAll({
+        where: {
+          [Op.and]: [
+            {
+              dispatcher_id: id,
+            },
+            {
+              status: 'delivered'
+            }
+          ]
+        }
+      });
+
+      if (all_time_collection.count > 0) {
+        result.total_value = all_time_collection.count;
+
+        const current_period_collection = await Packages.findAll({
+          where: {
+            [Op.and]: [
+              {
+                dispatcher_id: id,
+              },
+              {
+                status: 'delivered'
+              },
+              {
+                created_at: {
+                  [Op.and]: [
+                    {
+                      [Op.gte]: current_period_from,
+                    },
+                    {
+                      [Op.lte]: current_period_to
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+        });
+
+        const last_period_collection = await Packages.findAll({
+          where: {
+            [Op.and]: [
+              {
+                dispatcher_id: id,
+              },
+              {
+                status: 'delivered'
+              },
+              {
+                created_at: {
+                  [Op.and]: [
+                    {
+                      [Op.gte]: last_period_from,
+                    },
+                    {
+                      [Op.lte]: last_period_to,
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        });
+        let current_period_num_value = 0;
+        let last_period_num_value = 0;
+        if (current_period_collection.length > 0 && last_period_collection.length <= 0) {
+          current_period_num_value = current_period_collection.length;
+          // calculate percentage.
+          let pc = calculage_daterange_percentage(current_period_num_value, 0);
+          let increased = pc > 0 ? true : pc === 0 ? false : false;
+          result = {
+            ...result,
+            current_month: current_period_num_value,
+            last_month: 0,
+            increased,
+            percent: pc,
+          };
+        }
+        if (current_period_collection.length <= 0 && last_period_collection.length > 0) {
+            last_period_num_value = last_period_collection.length;
+            // calculate percentage.
+            let pc = calculage_daterange_percentage(0, last_period_num_value);
+            let increased = pc > 0 ? true : pc === 0 ? false : false;
+            result = {
+              ...result,
+              current_month: 0,
+              last_month: last_period_num_value,
+              increased,
+              percent: pc,
+            };
+          }
+  
+          if (current_period_collection.length >= 0 && last_period_collection.length >= 0) {
+            current_period_num_value = current_period_collection.length;
+  
+            last_period_num_value = last_period_collection.length;
+  
+             // calculate percentage.
+             let pc = calculage_daterange_percentage(current_period_num_value, last_period_num_value);
+             let increased = pc > 0 ? true : pc === 0 ? false : false;
+              result = {
+               ...result,
+               current_month: current_period_num_value,
+               last_month: last_period_num_value,
+               increased,
+               percent: pc,
+             };
+          }
+          return result;
+      } else {
+        return result;
+      }
+
+     }).catch((err) => {
+        log(err);
+        return res.status(400).json({
+          status: 400,
+          error: err,
+        });
+    })
+  }
+
 
   /**
    * @method companyGetSingleDispatcher
@@ -866,19 +1248,44 @@ class CompanyController {
     return Promise.try(async () => {
       const { user } = req.session;
       const dispatcher_id = req.params.id;
+      let result = {}
       const isFound = await Couriers.findOne({
         where: {
-          [Op.and]: [{id: dispatcher_id}, {company_id: user.id}]
-        }
+          [Op.and]: [
+            { id: dispatcher_id },
+            { company_id: user.id }]
+        },
+        attributes: [
+          'address',
+          'created_at',
+          'deliveries',
+          'email',
+          'first_name',
+          'last_name',
+          'id',
+          'is_currently_dispatching',
+          'mobile_number',
+          'nationality',
+          'pickups',
+          'profile_image',
+          'rating',
+          'sex',
+          'referal_id',
+          'state',
+          'town',
+        ]
       });
       if (!isFound) return res.status(404).json({
         status: 404,
         error: 'The dispatcher cannot be viewed by you, or does not exist.'
       });
+      result.dispatcher = isFound;
+      result.total_money_made_overview = await CompanyController.getSingleDispatcherTotalMoneyMade(isFound.id);
+      result.total_delivery_overview = await CompanyController.getSingleDispatcherTotalDeliveries(isFound.id);
       return res.status(200).json({
         status: 200,
         message: 'Data retrieved successfully',
-        data: isFound.getSafeDataValues(),
+        data: result,
       });
     }).catch(err => {
       log(err);
@@ -897,7 +1304,7 @@ class CompanyController {
    * @return JSON object
   */
   
-  static companyGetWalletBalance(req, res) {
+  static companyGetWithdrawableWalletBalance(req, res) {
     return Promise.try(async () => {
       const { user } = req.session;
       const all_dispatchers = await Couriers.findAll({
@@ -908,18 +1315,21 @@ class CompanyController {
               virtual_balance: {
                 [Op.gt]: 0,
               }
+            },
+            {
+              is_currently_dispatching: false,
             }
           ]
         }
       });
-      let totalWalletAmount = all_dispatchers.reduce((acc, curr) => {
+      let amount = all_dispatchers.reduce((acc, curr) => {
         acc = acc + Number(curr.virtual_balance);
         return acc;
       }, 0);
       return res.status(200).json({
         status: 200,
         data: {
-          balance: totalWalletAmount,
+          withdrawable_balance: amount,
         }
       });
     }).catch(err => {
@@ -973,21 +1383,12 @@ class CompanyController {
           dispatcher_id,
         }
       });
-      const _package = await Packages.findOne({
-        where: {
-          dispatcher_id
-        },
-        attributes: {
-            exclude: ['delivery_key']
-          }
-      });
       return res.status(200).json({
         status: 200,
         message: 'Data retrieved successfully',
         data: {
           tracking_package: tracking_package,
           dispatcher: isFound.getSafeDataValues(),
-          package: _package,
         }
       });
     }).catch(err => {
@@ -1129,6 +1530,974 @@ class CompanyController {
         error: err,
       });
     })
+  }
+
+    /**
+   * @method company_use_refresh
+   * @memberof companyController
+   * @description This method allows a company refresh their token to discourage numerous login
+   * @params req, res
+   * @return JSON object
+   */
+
+     static company_use_refresh(req, res) {
+      const { refresh_token } = req.query;
+      let isFound = undefined;
+
+      return Promise.try(async () => {
+        // verify token validity;
+        const user = j_w_t.verify(refresh_token, process.env.SECRET_KEY);
+        if (user) {
+          let { iat, ...data } = user;
+          // create a new token;
+          const SESSION_TOKEN = await jwt.sign(data, '168h');
+          isFound = await Companies.findOne({
+            where: {
+              email: user.email
+            }
+          })
+  
+          if (!isFound) {
+            return res.status(401).json({
+              status: 401,
+              error: 'User does not exist'
+            })
+          }
+  
+          const USER = isFound.getSafeDataValues();
+          const all_dispatchers = await Couriers.findAll({
+            where: {
+              [Op.and]: [
+                { company_id: USER.id },
+                {
+                  virtual_balance: {
+                    [Op.gt]: 0,
+                  }
+                }
+              ]
+            }
+          });
+          let totalWalletAmount = all_dispatchers.reduce((acc, curr) => {
+            acc = acc + Number(curr.virtual_balance);
+            return acc;
+          }, 0);
+
+          USER.current_wallet_balance = totalWalletAmount;
+          
+          client.set(`${USER.email}:COMPANY`, SESSION_TOKEN);
+          return res.status(200).json({
+            status: 200,
+            message: 'Refresh Login successful',
+            data: USER,
+            token: SESSION_TOKEN,
+            refresh_token: refresh_token
+          })
+  
+        } else {
+          return res.status(401).json({
+            status: 401,
+            error: 'Not Authorized'
+          })
+        }
+      }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+      })
+     }
+  
+  /**
+   * @method get_total_earnings
+   * @memberof companyController
+   * @description This method allows a company get their total earnings
+   * @params req, res
+   * @return JSON object
+   */
+
+  static get_total_earnings(req, res) {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      const { time_frame } = req.query;
+      let current_period_from;
+      let current_period_to;
+      let last_period_from;
+      let last_period_to;
+
+      let current_period_collection = [];
+      let last_period_collection = [];
+      let result = {
+        current_month: 0,
+        last_month: 0,
+        total_value: 0,
+        increased: false,
+        percent: 0.0,
+      };
+      // get all active dispatchers.
+      const allDispatchers = await Couriers.findAll({
+        where: {
+          company_id: user.id,
+          is_active: true,
+        }
+      });
+
+      // total earnings is total payout + current balance.
+      if (allDispatchers) {
+        let currentBalance = allDispatchers.reduce((acc, curr) => {
+          acc = acc + Number(curr.virtual_balance);
+          return acc;
+        }, 0);
+        result.total_value = Number(user.total_payouts) + currentBalance;
+
+        if (time_frame === 'days') {
+          current_period_from = moment().clone().startOf('day').format();
+          current_period_to = moment().clone().endOf('day').format();
+          last_period_from = moment(current_period_from).subtract(1, 'day').format();
+          last_period_to = moment(current_period_to).subtract(1, 'day').format();
+        }
+        if (time_frame === 'weeks') {
+          current_period_from = moment().clone().startOf('isoweek').format();
+          current_period_to = moment().clone().endOf('isoweek').format();
+          last_period_from = moment(current_period_from).subtract(1, 'week').format();
+          last_period_to = moment(current_period_to).subtract(1, 'week').format();
+        }
+        if (time_frame === 'months') {
+          current_period_from = moment().clone().startOf('month').format();
+          current_period_to = moment().clone().endOf('month').format();
+          last_period_from = moment(current_period_from).subtract(1, 'month').format();
+          last_period_to = moment(current_period_to).subtract(1, 'month').format();
+        }
+        let current_period_list= await Transactions.findAll({
+          where: {
+            [Op.and]: [
+              {
+                reason: 'dispatch-payment',
+              },
+              {
+                created_at: {
+                  [Op.and]: [
+                    {
+                      [Op.gte]: current_period_from,
+                    },
+                    {
+                      [Op.lte]: current_period_to
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        });
+      let last_period_list = await Transactions.findAll({
+          where: {
+            [Op.and]: [
+              {
+                reason: 'dispatch-payment',
+              },
+              {
+                created_at: {
+                  [Op.and]: [
+                    {
+                      [Op.gte]: last_period_from,
+                    },
+                    {
+                      [Op.lte]: last_period_to,
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        });
+
+        for(var i=0; i<allDispatchers.length; i++) {
+          for(var j=0; j<current_period_list.length; j++) {
+            if(allDispatchers[i].id == current_period_list[j].dispatcher_id) {
+              current_period_collection.push(current_period_list[j])
+            }
+          }
+        }
+
+        for(var i=0; i<allDispatchers.length; i++) {
+          for(var j=0; j<last_period_list.length; j++) {
+            if(allDispatchers[i].id == last_period_list[j].dispatcher_id) {
+              last_period_collection.push(current_period_list[j])
+            }
+          }
+        }
+        let current_period_num_value = 0;
+        let last_period_num_value = 0;
+        if (current_period_collection.length <= 0 && last_period_collection.length <=0 ) {
+          return res.status(200).json({
+            status: 200,
+            message: 'Data retrieved successfully',
+            data: result,
+          })
+        }
+        if (current_period_collection.length > 0 && last_period_collection.length <= 0) {
+          current_period_num_value = current_period_collection.reduce((acc, curr) => {
+            acc = acc + Number(curr.amount_paid);
+            return acc;
+          }, 0);
+          // calculate percentage.
+          let pc = calculage_daterange_percentage(current_period_num_value, 0);
+          let increased = pc > 0 ? true : pc === 0 ? false : false;
+          result = {
+            ...result,
+            current_month: current_period_num_value,
+            last_month: 0,
+            increased,
+            percent: pc,
+          };
+          return res.status(200).json({
+            status: 200,
+            message: 'Data retrieved successfully',
+            data: result,
+          })
+        }
+        if (current_period_collection.length <= 0 && last_period_collection.length > 0) {
+          last_period_num_value = last_period_collection.reduce((acc, curr) => {
+            acc = acc + Number(curr.amount_paid);
+            return acc;
+          }, 0);
+          // calculate percentage.
+          let pc = calculage_daterange_percentage(0, last_period_num_value);
+          let increased = pc > 0 ? true : pc === 0 ? false : false;
+          result = {
+            ...result,
+            current_month: 0,
+            last_month: last_period_num_value,
+            increased,
+            percent: pc,
+          };
+          return res.status(200).json({
+            status: 200,
+            message: 'Data retrieved successfully',
+            data: result,
+          })
+        }
+        if (current_period_collection.length >= 0 && last_period_collection.length >= 0) {
+          current_period_num_value = current_period_collection.reduce((acc, curr) => {
+            acc = acc + Number(curr.amount_paid);
+            return acc;
+          }, 0);
+
+          last_period_num_value = last_period_collection.reduce((acc, curr) => {
+            acc = acc + Number(curr.amount_paid);
+            return acc;
+          }, 0);
+
+           // calculate percentage.
+           let pc = calculage_daterange_percentage(current_period_num_value, last_period_num_value);
+           let increased = pc > 0 ? true : pc === 0 ? false : false;
+            result = {
+             ...result,
+             current_month: current_period_num_value,
+             last_month: last_period_num_value,
+             increased,
+             percent: pc,
+           };
+           return res.status(200).json({
+             status: 200,
+             message: 'Data retrieved successfully',
+             data: result,
+           })
+        }
+      } else {
+        return res.status(200).json({
+          status: 200,
+          message: 'Data retrieved successfully',
+          data: result,
+        })
+      }
+      
+    }).catch((err) => {
+        log(err);
+        return res.status(400).json({
+          status: 400,
+          error: err,
+        });
+    })
+  }
+
+  /**
+   * @method get_total_dispatchers_overview
+   * @memberof companyController
+   * @description This method allows a company get their total dispatchers overview
+   * @params req, res
+   * @return JSON object
+   */
+
+  static get_total_dispatchers_overview(req, res) {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      const { time_frame } = req.query;
+      let current_period_from;
+      let current_period_to;
+      let last_period_from;
+      let last_period_to;
+
+      let current_period_collection = [];
+      let last_period_collection = [];
+      let result = {
+        current_month: 0,
+        last_month: 0,
+        total_value: 0,
+        increased: false,
+        percent: 0.0,
+      };
+      const allDispatchers = await Couriers.findAndCountAll({
+        where: {
+          company_id: user.id,
+          is_active: true,
+        }
+      });
+
+      if (allDispatchers.count > 0) {
+        result.total_value = allDispatchers.count;
+        if (time_frame === 'days') {
+          current_period_from = moment().clone().startOf('day').format();
+          current_period_to = moment().clone().endOf('day').format();
+          last_period_from = moment(current_period_from).subtract(1, 'day').format();
+          last_period_to = moment(current_period_to).subtract(1, 'day').format();
+        }
+        if (time_frame === 'weeks') {
+          current_period_from = moment().clone().startOf('isoweek').format();
+          current_period_to = moment().clone().endOf('isoweek').format();
+          last_period_from = moment(current_period_from).subtract(1, 'week').format();
+          last_period_to = moment(current_period_to).subtract(1, 'week').format();
+        }
+        if (time_frame === 'months') {
+          current_period_from = moment().clone().startOf('month').format();
+          current_period_to = moment().clone().endOf('month').format();
+          last_period_from = moment(current_period_from).subtract(1, 'month').format();
+          last_period_to = moment(current_period_to).subtract(1, 'month').format();
+        }
+        current_period_collection = await Couriers.findAll({
+          where: {
+            [Op.and]: [
+              {
+                company_id: user.id,
+              },
+              {
+                is_active: true,
+              },
+              {
+                created_at: {
+                  [Op.and]: [
+                    {
+                      [Op.gte]: current_period_from,
+                    },
+                    {
+                      [Op.lte]: current_period_to
+                    }
+                  ],
+                }
+              }
+            ]
+          }
+        });
+        last_period_collection = await Couriers.findAll({
+          where: {
+            [Op.and]: [
+              {
+                company_id: user.id,
+              },
+              {
+                is_active: true,
+              },
+              {
+                created_at: {
+                  [Op.and]: [
+                    {
+                      [Op.gte]: last_period_from,
+                    },
+                    {
+                      [Op.lte]: last_period_to
+                    }
+                  ],
+                }
+              }
+            ]
+          }
+        });
+        let current_period_num_value = 0;
+        let last_period_num_value = 0;
+        if (current_period_collection.length <= 0 && last_period_collection.length <=0 ) {
+          return res.status(200).json({
+            status: 200,
+            message: 'Data retrieved successfully',
+            data: result,
+          })
+        }
+        if (current_period_collection.length > 0 && last_period_collection.length <= 0) {
+          current_period_num_value = current_period_collection.length;
+          // calculate percentage.
+          let pc = calculage_daterange_percentage(current_period_num_value, 0);
+          let increased = pc > 0 ? true : pc === 0 ? false : false;
+          result = {
+            ...result,
+            current_month: current_period_num_value,
+            last_month: 0,
+            increased,
+            percent: pc,
+          };
+          return res.status(200).json({
+            status: 200,
+            message: 'Data retrieved successfully',
+            data: result,
+          })
+        }
+        if (current_period_collection.length <= 0 && last_period_collection.length > 0) {
+          last_period_num_value = last_period_collection.length
+          // calculate percentage.
+          let pc = calculage_daterange_percentage(0, last_period_num_value);
+          let increased = pc > 0 ? true : pc === 0 ? false : false;
+          result = {
+            ...result,
+            current_month: 0,
+            last_month: last_period_num_value,
+            increased,
+            percent: pc,
+          };
+          return res.status(200).json({
+            status: 200,
+            message: 'Data retrieved successfully',
+            data: result,
+          })
+        }
+        if (current_period_collection.length >= 0 && last_period_collection.length >= 0) {
+          current_period_num_value = current_period_collection.length;
+          last_period_num_value = last_period_collection.length;
+
+           // calculate percentage.
+           let pc = calculage_daterange_percentage(current_period_num_value, last_period_num_value);
+           let increased = pc > 0 ? true : pc === 0 ? false : false;
+          result = {
+             ...result,
+             current_month: current_period_num_value,
+             last_month: last_period_num_value,
+             increased,
+             percent: pc,
+           };
+           return res.status(200).json({
+             status: 200,
+             message: 'Data retrieved successfully',
+             data: result,
+           })
+        }
+      } else {
+        return res.status(200).json({
+          status: 200,
+          message: 'Data retrieved successfully',
+          data: result,
+        })
+      }
+
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    })
+  }
+
+  /**
+   * @method get_total_deliveries_overview
+   * @memberof companyController
+   * @description This method allows a company get their total dispatcher deliveries
+   * @params req, res
+   * @return JSON object
+   */
+
+  static get_total_deliveries_overview(req, res) {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      const { time_frame } = req.query;
+      let current_period_from;
+      let current_period_to;
+      let last_period_from;
+      let last_period_to;
+
+      let current_period_collection = [];
+      let last_period_collection = [];
+      let result = {
+        current_month: 0,
+        last_month: 0,
+        total_value: 0,
+        increased: false,
+        percent: 0.0,
+      };
+
+      // get all active dispatchers.
+      const allDispatchers = await Couriers.findAll({
+        where: {
+          company_id: user.id,
+          is_active: true,
+        }
+      });
+
+      if (allDispatchers) {
+        result.total_value = allDispatchers.reduce((acc, curr) => {
+          acc = acc + Number(curr.deliveries);
+          return acc;
+        }, 0);
+
+        if (time_frame === 'days') {
+          current_period_from = moment().clone().startOf('day').format();
+          current_period_to = moment().clone().endOf('day').format();
+          last_period_from = moment(current_period_from).subtract(1, 'day').format();
+          last_period_to = moment(current_period_to).subtract(1, 'day').format();
+        }
+        if (time_frame === 'weeks') {
+          current_period_from = moment().clone().startOf('isoweek').format();
+          current_period_to = moment().clone().endOf('isoweek').format();
+          last_period_from = moment(current_period_from).subtract(1, 'week').format();
+          last_period_to = moment(current_period_to).subtract(1, 'week').format();
+        }
+        if (time_frame === 'months') {
+          current_period_from = moment().clone().startOf('month').format();
+          current_period_to = moment().clone().endOf('month').format();
+          last_period_from = moment(current_period_from).subtract(1, 'month').format();
+          last_period_to = moment(current_period_to).subtract(1, 'month').format();
+        }
+        let current_period_list = [];
+        let last_period_list = [];
+        current_period_collection = await Packages.findAndCountAll({
+          where: {
+            [Op.and]: [
+              {
+                status: 'delivered'
+              },
+              {
+                created_at: {
+                  [Op.and]: [
+                    {
+                      [Op.gte]: current_period_from,
+                    },
+                    {
+                      [Op.lte]: current_period_to
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        })
+        last_period_collection = await Packages.findAndCountAll({
+          where: {
+            [Op.and]: [
+              {
+                status: 'delivered'
+              },
+              {
+                created_at: {
+                  [Op.and]: [
+                    {
+                      [Op.gte]: last_period_from,
+                    },
+                    {
+                      [Op.lte]: last_period_to
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        });
+        
+        for(var i=0; i<allDispatchers.length; i++) {
+          for (var j=0; j<current_period_collection.rows.length; j++) {
+            if(allDispatchers[i].id == current_period_collection.rows[j].dispatcher_id){
+              current_period_list.push(current_period_collection.rows[j])
+            }
+          }
+        }
+
+        for(var i=0; i<allDispatchers.length; i++) {
+          for (var j=0; j<last_period_collection.rows.length; j++) {
+            if(allDispatchers[i].id == last_period_collection.rows[j].dispatcher_id){
+              last_period_list.push(last_period_collection.rows[j])
+            }
+          }
+        }
+
+        let current_period_num_value = 0;
+        let last_period_num_value = 0;
+        if (current_period_list.length <= 0 && last_period_list.length <=0 ) {
+          return res.status(200).json({
+            status: 200,
+            message: 'Data retrieved successfully',
+            data: result,
+          })
+        }
+        if (current_period_list.length > 0 && last_period_list.length <= 0) {
+          current_period_num_value = current_period_list.length;
+          // calculate percentage.
+          let pc = calculage_daterange_percentage(current_period_num_value, 0);
+          let increased = pc > 0 ? true : pc === 0 ? false : false;
+          result = {
+            ...result,
+            current_month: current_period_num_value,
+            last_month: 0,
+            increased,
+            percent: pc,
+          };
+          return res.status(200).json({
+            status: 200,
+            message: 'Data retrieved successfully',
+            data: result,
+          })
+        }
+        if (current_period_list.length <= 0 && last_period_list.length > 0) {
+          last_period_num_value = last_period_list.length;
+          // calculate percentage.
+          let pc = calculage_daterange_percentage(0, last_period_num_value);
+          let increased = pc > 0 ? true : pc === 0 ? false : false;
+          result = {
+            ...result,
+            current_month: 0,
+            last_month: last_period_num_value,
+            increased,
+            percent: pc,
+          };
+          return res.status(200).json({
+            status: 200,
+            message: 'Data retrieved successfully',
+            data: result,
+          })
+        }
+
+        if (current_period_list.length >= 0 && last_period_list.length >= 0) {
+          current_period_num_value = current_period_list.length;
+
+          last_period_num_value = last_period_list.length;
+
+           // calculate percentage.
+           let pc = calculage_daterange_percentage(current_period_num_value, last_period_num_value);
+           let increased = pc > 0 ? true : pc === 0 ? false : false;
+            result = {
+             ...result,
+             current_month: current_period_num_value,
+             last_month: last_period_num_value,
+             increased,
+             percent: pc,
+           };
+           return res.status(200).json({
+             status: 200,
+             message: 'Data retrieved successfully',
+             data: result,
+           })
+        }
+      } else {
+        return res.status(200).json({
+          status: 200,
+          message: 'Data retrieved successfully',
+          data: result,
+        })
+      }
+    }).catch((err) => {
+        log(err);
+        return res.status(400).json({
+          status: 400,
+          error: err,
+        });
+    })
+  }
+
+  /**
+   * @method get_new_dispatchers_count
+   * @memberof companyController
+   * @description This method allows a company get new dispatcher count.
+   * @params req, res
+   * @return JSON object
+   */
+
+  static get_new_dispatchers_count(req, res) {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      let timestamp_benchmark = moment().subtract(4, 'days').format();
+      const all_new_signups = await Couriers.findAndCountAll({
+        where: {
+          [Op.and]: [
+            {
+              company_id: user.id,
+            },
+            {
+              is_cooperate: true,
+            },
+            {
+              is_active: true,
+            },
+            {
+              created_at: {
+                [Op.gte]: timestamp_benchmark
+              },
+            }
+          ],
+        },
+        attributes: [
+          'address',
+          'created_at',
+          'deliveries',
+          'email',
+          'first_name',
+          'last_name',
+          'id',
+          'is_currently_dispatching',
+          'mobile_number',
+          'nationality',
+          'pickups',
+          'profile_image',
+          'rating',
+          'sex',
+          'referal_id',
+          'state',
+          'town',
+        ]
+      });
+      return res.status(200).json({
+        status: 200,
+        message: 'Data retrieved successfully',
+        data: all_new_signups,
+      });
+    }).catch(err => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
+  }
+
+  /**
+   * @method get_single_dispatcher_delivery_history
+   * @memberof companyController
+   * @description This method allows a company get a single dispatcher package delivery history.
+   * @params req, res
+   * @return JSON object
+   */
+
+  static get_single_dispatcher_delivery_history(req, res)  {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      const { id } = req.params;
+      let { page, limit } = req.query;
+      if (!page) page = 0;
+      if (!limit) limit = 15;
+      let offset = page * limit;
+      // first get the dispatcher to be sure the user owns them.
+      const dispatcher = await Couriers.findOne({
+        where: {
+          [Op.and]: [
+            { company_id: user.id },
+            {id: id}
+          ]
+        }
+      });
+      if (!dispatcher) {
+        return res.status(404).json({
+          status: 404,
+          error: 'You are not allowed to view this dispatcher profile, or this profile doesnot exist'
+        });
+      }
+      
+      const delivery_history = await Packages.findAndCountAll({
+        limit: limit,
+        offset: offset,
+        where: {
+          dispatcher_id: id,
+        },
+        order: [
+          ['status', 'DESC'],
+          ['created_at', 'DESC']
+        ],
+        attributes: [
+          'status',
+          'package_id',
+          'pickup_address',
+          'dropoff_address',
+          'description',
+          'created_at',
+          'delivery_price'
+        ]
+      });
+      let result = {
+        count: delivery_history.count,
+        currentPage: Number(page) + 1,
+        totalPages: Math.ceil(delivery_history.count / limit),
+        rows: delivery_history.rows,
+      }
+      return res.status(200).json({
+        status: 200,
+        message: 'Data retrieved successfully',
+        data: {
+          ...result,
+        }
+      });
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    })
+  }
+
+  /**
+   * @method edit_dispatcher_details
+   * @memberof companyController
+   * @description This method allows a company edit a single dispatcher details.
+   * @params req, res
+   * @return JSON object
+   */
+
+  static edit_dispatcher_details(req, res) {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      const { id } = req.params;
+      const { ...data } = req.body;
+      // first find the dispatcher...
+
+      if (data.mobile_number) {
+        var firstDigit = data.mobile_number[0].toString();
+        if (firstDigit === '0') {
+          data.mobile_number = data.mobile_number.substring(1, data.mobile_number.length);
+        }
+      }
+
+      const isFound = await Couriers.findOne({
+        where: {
+          [Op.and]: [
+            {
+              company_id: user.id,
+            },
+            {
+              id,
+            },
+            {
+              is_active: true,
+            }
+          ]
+        }
+      });
+      if (!isFound) {
+        return res.status(404).json({
+          status: 404,
+          error: 'Dispatcher not found.'
+        })
+      }
+      await Couriers.update(
+        {
+          ...data,
+        },
+        {
+          where: {
+            [Op.and]: [
+              {
+                company_id: user.id,
+              },
+              {
+                id,
+              }
+            ]
+          }
+        }
+      );
+
+      const updated_dispatcher = await Couriers.findOne({
+        where: {
+          [Op.and]: [
+            {
+              company_id: user.id,
+            },
+            {
+              id,
+            }
+          ]
+        },
+        attributes: [
+          'address',
+            'created_at',
+            'deliveries',
+            'email',
+            'first_name',
+            'last_name',
+            'id',
+            'is_currently_dispatching',
+            'mobile_number',
+            'nationality',
+            'pickups',
+            'profile_image',
+            'rating',
+            'sex',
+            'referal_id',
+            'state',
+            'town',
+        ],
+      });
+      return res.status(200).json({
+        status: 200,
+        message: 'Data updated successfully',
+        data: updated_dispatcher
+      })
+    }).catch(err => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
+  }
+
+  /**
+   * @method company_update_profile
+   * @memberof companyController
+   * @description This method allows a company to update their profile.
+   * @params req, res
+   * @return JSON object
+   */
+
+  static company_update_profile(req, res) {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      const { ...data } = req.body;
+      const isFound = await Companies.findOne({
+        where: {
+          id: user.id,
+        }
+      });
+      if (isFound) {
+        await Companies.update({ ...data }, {
+          where: {
+            id: user.id,
+          }
+        });
+        const updated_user = await Companies.findOne({
+          where: {
+            id: user.id,
+          },
+        });
+        return res.status(200).json({
+          status: 200,
+          message: 'Data updated successfully',
+          data:  updated_user.getSafeDataValues()
+        })
+      } else {
+        return res.status(400).json({
+          status: 404,
+          error: 'User not found'
+        })
+      }
+    }).catch((err) => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
   }
 
 }

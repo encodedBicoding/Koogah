@@ -153,6 +153,12 @@ class Package {
         Package.sendNewPackageCreationToDispatchers(message, task);
       });
       sendNewPackageNotification(package_detail, user, data);
+
+      // push event to all companies;
+      let comp_m = `New Package creation @ ${data.from_town} area of ${data.from_state}`;
+      eventEmitter.emit('company_new_package_creation', {
+        message: comp_m,
+      })
       return res.status(200).json({
         status: 200,
         message: 'Package created successfully. Please wait, dispatchers will reach out to you soon',
@@ -347,6 +353,7 @@ class Package {
         });
       }
       let MSG_OBJ;
+      let company;
       if (response === 'approve') {
         const date_time = new Date().toLocaleString();
         if (dispatcher.pending > 0) {
@@ -388,7 +395,7 @@ class Package {
           event: 'package_dispatch_approval'
         });
         if (dispatcher.is_cooperate === true) {
-          const company = await Companies.findOne({
+           company = await Companies.findOne({
             where: {
               id: dispatcher.company_id
             }
@@ -460,11 +467,6 @@ class Package {
         NEW_NOTIFICATION.action_link = (isProduction) ? `${process.env.SERVER_APP_URL}/package/preview/${package_id}` : `http://localhost:4000/v1/package/preview/${package_id}`; // ensure courier is logged in
 
         if (dispatcher.is_cooperate === true) {
-          const company = await Companies.findOne({
-            where: {
-              id: dispatcher.company_id
-            }
-          });
           MSG_OBJ = {
             event: 'DECLINE',
             dispatcher: dispatcher,
@@ -510,9 +512,48 @@ class Package {
       );
       const res_message = `Successfully ${response === 'approve' ? 'approved' : 'declined'} dispatcher request`;
       sendInterestApprovedOrDeclinedNotification(response === 'approve', package_id, dispatcher);
+
       if (dispatcher.is_cooperate === true) {
         let msg = createCompanyDispatcherApproveOrDecline(MSG_OBJ);
         sendMail(msg);
+        // create an inapp notification for company.
+        const COMPANY_IN_APP_NOTIFICATION = {
+          type: 'company',
+          title: NEW_NOTIFICATION.title,
+          desc: MSG_OBJ.event === 'DECLINE' ? 'CD011' : 'CD005',
+          entity_id: package_id,
+          is_viewable: true,
+          email: company.email,
+          message: `Your dispatcher: ${dispatcher.first_name} ${dispatcher.last_name} \n, has just been ${MSG_OBJ.event === 'DECLINE' ? 'Declined from delivering a package' : 'Approved to deliver a package'}`
+        }
+
+        await Notifications.create({ ...COMPANY_IN_APP_NOTIFICATION });
+
+        let all_company_notifications = await Notifications.findAll({
+          where: {
+            [Op.and]: [
+              {
+                email: company.email,
+              },
+              {
+                is_read: false,
+              },
+              {
+                type: 'company'
+              }
+            ],
+            created_at: {
+              [Op.gte]: timestamp_benchmark
+            }
+          }
+        })
+
+        eventEmitter.emit('new_company_notification', {
+          companyWSId: `company:${company.email}:${company.id}`,
+          event: 'new_company_notification',
+          data: all_company_notifications,
+        });
+
       }
       return res.status(200).json({
         status: 200,
@@ -1132,7 +1173,7 @@ class Package {
         event: 'unsubscribe_from_package'
       });
       sendPackageDeliveredNotification(package_id, user, customer);
-      if (user.is_cooperate == true) {
+      if (user.is_cooperate === true) {
         const company = await Companies.findOne({
           where: {
             id: user.company_id,
@@ -1146,6 +1187,44 @@ class Package {
         }
         let msg = createCompanyDispatcherApproveOrDecline(MSG_OBJ);
         sendMail(msg);
+
+        // create an inapp notification for company.
+        const COMPANY_IN_APP_NOTIFICATION = {
+          type: 'company',
+          title: NEW_NOTIFICATION.title,
+          desc: 'CD008',
+          entity_id: package_id,
+          is_viewable: true,
+          email: company.email,
+          message: `Your dispatcher ${user.first_name} ${user.last_name} \n, has just completed a delivery.`,
+        }
+        await Notifications.create({ ...COMPANY_IN_APP_NOTIFICATION });
+
+        let all_company_notifications = await Notifications.findAll({
+          where: {
+            [Op.and]: [
+              {
+                email: company.email,
+              },
+              {
+                is_read: false,
+              },
+              {
+                type: 'company'
+              }
+            ],
+            created_at: {
+              [Op.gte]: timestamp_benchmark
+            }
+          }
+        })
+
+        eventEmitter.emit('new_company_notification', {
+          companyWSId: `company:${company.email}:${company.id}`,
+          event: 'new_company_notification',
+          data: all_company_notifications,
+        });
+        
       }
 
       // send receipt to customer;
@@ -2038,8 +2117,12 @@ class Package {
 
       const {
         dispatcher_lat,
-        dispatcher_lng } = req.body;
+        dispatcher_lng
+      } = req.body;
+      
       const { user } = req.session;
+      let timestamp_benchmark = moment().subtract(5, 'months').format();
+
       const NEW_NOTIFICATION = {
         type: 'customer',
       }
@@ -2122,9 +2205,52 @@ class Package {
           email: user.email,
         }
       })
+      if (user.is_cooperate === true) {
+        const company = await Companies.findOne({
+          where: {
+            id: user.company_id,
+          }
+        });
+        const COMPANY_IN_APP_NOTIFICATION = {
+          type: 'company',
+          title: 'New Dispatch started',
+          desc: 'CD010',
+          entity_id: package_id,
+          is_viewable: true,
+          email: company.email,
+          message: `Your dispatcher ${user.first_name} ${user.last_name}\nJust started a new dispatch`,
+        };
+
+        await Notifications.create({ ...COMPANY_IN_APP_NOTIFICATION });
+        let all_company_notifications = await Notifications.findAll({
+          where: {
+            [Op.and]: [
+              {
+                email: company.email,
+              },
+              {
+                is_read: false,
+              },
+              {
+                type: 'company'
+              }
+            ],
+            created_at: {
+              [Op.gte]: timestamp_benchmark
+            }
+          }
+        });
+        eventEmitter.emit('new_company_notification', {
+          companyWSId: `company:${company.email}:${company.id}`,
+          data: all_company_notifications,
+        });
+
+        eventEmitter.emit('new_company_dispatcher_tracking', {
+          companyId: company.id,
+        });
+      }
       const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
       // get all user unread notifications;
-      let timestamp_benchmark = moment().subtract(5, 'months').format();
 
       let all_notifications = await Notifications.findAll({
         where: {
@@ -2559,7 +2685,7 @@ class Package {
               log(err);
               return res.status(400).json({
                status: 400,
-               error: err,
+               error: 'An error occurred, please try again',
              });
             }
           }

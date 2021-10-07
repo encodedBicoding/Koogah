@@ -1,4 +1,4 @@
-import { Customers, Couriers, PackagesTrackings, Notifications } from '../database/models';
+import { Customers, Couriers, PackagesTrackings, Notifications, Companies } from '../database/models';
 import app from '../server';
 import WebSocket from 'ws';
 import isValidUT8 from 'utf-8-validate';
@@ -39,10 +39,9 @@ if (cluster.isMaster) {
 } else {
   // server upgrade function;
   const SERVER = http.createServer(app);
-  SERVER.on('upgrade', function upgrade(request, socket, head) { 
+  SERVER.on('upgrade', function upgrade(request, socket, head) {
     console.log(`worker ${process.pid} is upgrading...`);
-  const accepted_hosts = [];
-  const accepted_path = ['/geotracking'];
+  const accepted_path = ['/geotracking', '/data_seeking'];
   const { __koogah_ws_session_secret } = request.headers;
   const { authorization } = request.headers;
   try {
@@ -55,22 +54,49 @@ if (cluster.isMaster) {
         socket.destroy();
         return;
       }
+      const { host, origin } = request.headers;
+      const accepted_web_hosts = [
+        'http://localhost:8080',
+        'http://www.koogah.com.ng',
+        'http://www.koogah.com',
+        'https://www.koogah.com.ng',
+        'https://www.koogah.com',
+        'https://koogah-web-staging.herokuapp.com'
+      ];
+      if (accepted_web_hosts.includes(origin)) {
+        var cookies = {};
+        // treat as web
+        // check for req cookie.
+        if(request.headers.cookie) request.headers.cookie.split(';').forEach(function(cookie)
+          {
+            var parts = cookie.match(/(.*?)=(.*)$/);
+            var name = parts[1].trim();
+            var value = (parts[2] || '').trim();
+            cookies[ name ] = value;
+        });
+        let found = Object.keys(cookies).find((c) => c === 'koogah_session_token');
+        if (found === -1) {
+          socket.destroy();
+          return;
+        }
+      } else {
+        if (!__koogah_ws_session_secret) {
+          socket.destroy();
+          return;
+        }
+        if (!authorization) {
+          socket.destroy();
+          return;
+        }
+  
+        if (__koogah_ws_session_secret !== process.env.KOOGAH_WS_SESSION_SECRET) {
+          socket.destroy();
+          return;
+        }
+        
+      }
 
-      if (!__koogah_ws_session_secret) {
-        socket.destroy();
-        return;
-      }
-      if (!authorization) {
-        socket.destroy();
-        return;
-      }
 
-      if (__koogah_ws_session_secret !== process.env.KOOGAH_WS_SESSION_SECRET) {
-        socket.destroy();
-        return;
-      }
-      
-      const { host } = request.headers;
       const { url } = request;
       const path = url.split('?')[0];
       if (!accepted_path.includes(path)) {
@@ -93,6 +119,48 @@ if (cluster.isMaster) {
     console.log(err);
     return;
   }
+  });
+  eventEmitter.on('company_new_package_creation', async function (d) {
+    const { message } = d;
+    WsServer.clients.forEach((c) => {
+      if (c.hasOwnProperty('companyId') && c.readyState === WebSocket.OPEN) {
+        let result = JSON.stringify({
+          event: 'company_new_package_creation',
+          payload: message,
+        });
+        c.send(result);
+      }
+    })
+  })
+  eventEmitter.on('new_company_dispatcher_tracking', async function (d) {
+    const { companyId } = d;
+    const all_tracking_dispatchers = await socketFunction.getCompanyTrackingDispatchers(companyId);
+    let result = JSON.stringify({
+      payload: all_tracking_dispatchers,
+      event: 'company_tracking_dispatchers_result',
+    });
+    WsServer.clients.forEach((c) => {
+      if (c.companyId === companyId) {
+        if (c.readyState === WebSocket.OPEN) {
+          c.send(result);
+        }
+      }
+    })
+  });
+  eventEmitter.on('new_company_notification', function (d) {
+    const { companyWSId, data } = d;
+    WsServer.clients.forEach((client) => {
+      if (client.connectionId === companyWSId) {
+        if (client.readyState === WebSocket.OPEN) {
+          let wsNotifyMsg = {
+            event: 'in_app_notification',
+            payload: data
+          }
+          wsNotifyMsg = JSON.stringify(wsNotifyMsg);
+          client.send(wsNotifyMsg);
+        }
+      }
+    })
   });
   eventEmitter.on('new_notification', function (d) {
     // here send notification message to a certain user when they
@@ -215,174 +283,267 @@ if (cluster.isMaster) {
   WsServer.on('connection', async function (ws, req, client) {
     try {
       console.log('server says connected to wss');
-      let user;
-      let ws_connected_channels;
-      let connectionId;
-      let userType;
-      const token = req.headers.authorization;
-      const payload = await jwt.verify(token);
-      if (!payload) {
-        ws.terminate();
-        return false;
-      }
-      if (payload.is_courier) {
-        try {
-          user = await Couriers.findOne({ where: { email: payload.email } });
-          ws_connected_channels = user.ws_connected_channels;
-          connectionId = `dispatcher:${user.email}:${user.id}`;
-          userType = 'dispatcher'
-        } catch (error) {
+      // check if connection is from website;
+      if (req.url === '/data_seeking') {
+        let user;
+        let connectionId;
+        // coming from landing page.
+        // company landing page.
+        // get token from cookie.
+        var cookies = {};
+        // treat as web
+        // check for req cookie.
+        if(req.headers.cookie) req.headers.cookie.split(';').forEach(function(cookie)
+          {
+            var parts = cookie.match(/(.*?)=(.*)$/);
+            var name = parts[1].trim();
+            var value = (parts[2] || '').trim();
+            cookies[ name ] = value;
+        });
+        let token = cookies['koogah_session_token'];
+        const payload = await jwt.verify(token);
+        if (!payload) {
           ws.terminate();
           return false;
         }
-      } else {
         try {
-          user = await Customers.findOne({ where: { email: payload.email } });
-          ws_connected_channels = user.ws_connected_channels;
-          connectionId = `customer:${user.email}:${user.id}`;
-          userType = 'customer'
-        } catch (error) {
-          ws.terminate();
-          return false;
-        }
-      }
-      if (!user) {
-        ws.terminate();
-        return false;
-      }
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.connectionId = connectionId;
-        ws.subscribed_channels = ws_connected_channels;
-        ws.userType = userType;
-        const firstMsg = JSON.stringify({
-          type: 'welcome',
-          data: {
-            message: `connected to the server, my id is ${ws.connectionId}`
-          }
-        })
-        ws.send(firstMsg);
-        // check if customer has tracking packages;
-        if (userType == 'customer') {
-          const all_trackings = await PackagesTrackings.findAll({
+          user = await Companies.findOne({
             where: {
-              customer_id: user.id
+              email: payload.email
             }
           });
-          
-          if (all_trackings.length > 0) {
-            const customer_updated_trackings_message = JSON.stringify({
-              event: 'tracking_update',
-              payload: all_trackings,
+          if (!user) {
+            ws.terminate();
+            return false;
+          }
+
+          connectionId = `company:${user.email}:${user.id}`;
+          ws.connectionId = connectionId;
+          ws.companyEmail = user.email;
+          ws.companyId = user.id;
+          if (ws.readyState === WebSocket.OPEN) {
+            try { 
+            let timestamp_benchmark = moment().subtract(5, 'months').format();
+            // get notificatons dedicated to company and send.
+            const all_company_notifications = await Notifications.findAll({
+              where: {
+                [Op.and]: [
+                  {
+                    email: user.email,
+                  },
+                  {
+                    is_read: false,
+                  },
+                  {
+                    type: 'company'
+                  }
+                ],
+                created_at: {
+                  [Op.gte]: timestamp_benchmark
+                }
+              },
+              order: [
+                ['created_at', 'DESC']
+              ]
             });
 
-            WsServer.clients.forEach((client) => {
-              if (
-                client.readyState === WebSocket.OPEN
-                && client.connectionId === `customer:${user.email}:${user.id}`
-              ) {
-                client.send(customer_updated_trackings_message);
+            let wsNotifyMsg = {
+              event: 'in_app_notification',
+              payload: all_company_notifications,
+            }
+            wsNotifyMsg = JSON.stringify(wsNotifyMsg);
+            ws.send(wsNotifyMsg);
+
+            ws.on('message', async function (message) {
+              let connectionId = ws.connectionId;
+              let userEmail = ws.companyEmail;
+              let companyId = ws.companyId;
+              let msg = JSON.parse(message);
+              if (msg.event === 'get_company_tracking_dispatchers') {
+                const all_tracking_dispatchers = await socketFunction.getCompanyTrackingDispatchers(companyId);
+                let result = {
+                  payload: all_tracking_dispatchers,
+                  event: 'company_tracking_dispatchers_result',
+                }
+                ws.send(JSON.stringify(result));
+              }
+
+            });
+            }catch(err) {
+              console.log(err);
+            }
+          }
+
+        } catch (err) {
+          console.log(err);
+          ws.terminate();
+          return false;
+        }
+      }
+      if (req.url === '/geotracking') {
+        // coming from app.
+        let user;
+        let ws_connected_channels;
+        let connectionId;
+        let userType;
+        const token = req.headers.authorization;
+        const payload = await jwt.verify(token);
+        if (!payload) {
+          ws.terminate();
+          return false;
+        }
+        if (payload.is_courier) {
+          try {
+            user = await Couriers.findOne({ where: { email: payload.email } });
+            ws_connected_channels = user.ws_connected_channels;
+            connectionId = `dispatcher:${user.email}:${user.id}`;
+            userType = 'dispatcher'
+          } catch (error) {
+            ws.terminate();
+            return false;
+          }
+        } else {
+          try {
+            user = await Customers.findOne({ where: { email: payload.email } });
+            ws_connected_channels = user.ws_connected_channels;
+            connectionId = `customer:${user.email}:${user.id}`;
+            userType = 'customer'
+          } catch (error) {
+            ws.terminate();
+            return false;
+          }
+        }
+        if (!user) {
+          ws.terminate();
+          return false;
+        }
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.connectionId = connectionId;
+          ws.subscribed_channels = ws_connected_channels;
+          ws.userType = userType;
+          
+          // check if customer has tracking packages;
+          if (userType == 'customer') {
+            const all_trackings = await PackagesTrackings.findAll({
+              where: {
+                customer_id: user.id
               }
             });
-          }
-      
-        }
-        ws.on('message', async function(message) {
-          let msg = JSON.parse(message);
-          // subscribe to channel
-          if (msg.event === 'subscribe') {
-            try { 
-              let response = await socketFunction.subscribe(msg);
-              if (!response) return false;
-              ws.subscribed_channels = response;
-              return true;
-            } catch (err) {
-              return false;
-            }
-          }
-          if (msg.event === 'unsubscribe_from_package') {
-            try {
-              let response = await socketFunction.unsubscribe(msg);
-              if (!response) return false;
-              ws.subscribed_channels = response;
-            } catch (err) {
-              return false;
-            }
-          }
-          if (msg.event === 'subscribe_and_send_tracking_data') {
-            try {
-              let response = await socketFunction.subscribe(msg);
-              if (!response) return false;
-              ws.subscribed_channels = response;
-              const updated_customer_trackings = await socketFunction.updateAndGetCustomerTrackings(msg);
+            
+            if (all_trackings.length > 0) {
               const customer_updated_trackings_message = JSON.stringify({
                 event: 'tracking_update',
-                payload: updated_customer_trackings,
+                payload: all_trackings,
               });
+  
               WsServer.clients.forEach((client) => {
                 if (
-                  client.subscribed_channels.includes(msg.channel)
-                  && client.connectionId === msg.receiverId
-                  && client.readyState === WebSocket.OPEN
+                  client.readyState === WebSocket.OPEN
+                  && client.connectionId === `customer:${user.email}:${user.id}`
                 ) {
                   client.send(customer_updated_trackings_message);
+                }
+              });
+            }
+        
+          }
+          ws.on('message', async function(message) {
+            let msg = JSON.parse(message);
+            // subscribe to channel
+            if (msg.event === 'subscribe') {
+              try { 
+                let response = await socketFunction.subscribe(msg);
+                if (!response) return false;
+                ws.subscribed_channels = response;
+                return true;
+              } catch (err) {
+                return false;
+              }
+            }
+            if (msg.event === 'unsubscribe_from_package') {
+              try {
+                let response = await socketFunction.unsubscribe(msg);
+                if (!response) return false;
+                ws.subscribed_channels = response;
+              } catch (err) {
+                return false;
+              }
+            }
+            if (msg.event === 'subscribe_and_send_tracking_data') {
+              try {
+                let response = await socketFunction.subscribe(msg);
+                if (!response) return false;
+                ws.subscribed_channels = response;
+                const updated_customer_trackings = await socketFunction.updateAndGetCustomerTrackings(msg);
+                const customer_updated_trackings_message = JSON.stringify({
+                  event: 'tracking_update',
+                  payload: updated_customer_trackings,
+                });
+                WsServer.clients.forEach((client) => {
+                  if (
+                    client.subscribed_channels.includes(msg.channel)
+                    && client.connectionId === msg.receiverId
+                    && client.readyState === WebSocket.OPEN
+                  ) {
+                    client.send(customer_updated_trackings_message);
+                    }
+                })
+  
+              } catch (err) {
+                return false;
+              }
+            }
+            if (msg.event === 'tracking') {
+              try {
+                const updated_customer_trackings = await socketFunction.updateAndGetCustomerTrackings(msg);
+                const customer_updated_trackings_message = JSON.stringify({
+                  event: 'tracking_update',
+                  payload: updated_customer_trackings,
+                });
+  
+                WsServer.clients.forEach((client) => {
+                  if (
+                    client.subscribed_channels.includes(msg.channel)
+                    && client.connectionId === msg.receiverId
+                    && client.readyState === WebSocket.OPEN
+                  ) {
+                    client.send(customer_updated_trackings_message);
                   }
-              })
-
-            } catch (err) {
-              return false;
+                });
+              } catch (error) {
+                return false;
+              }
             }
-          }
-          if (msg.event === 'tracking') {
-            try {
-              const updated_customer_trackings = await socketFunction.updateAndGetCustomerTrackings(msg);
-              const customer_updated_trackings_message = JSON.stringify({
-                event: 'tracking_update',
-                payload: updated_customer_trackings,
-              });
-
-              WsServer.clients.forEach((client) => {
-                if (
-                  client.subscribed_channels.includes(msg.channel)
-                  && client.connectionId === msg.receiverId
-                  && client.readyState === WebSocket.OPEN
-                ) {
-                  client.send(customer_updated_trackings_message);
-                }
-              });
-            } catch (error) {
-              return false;
+            if (msg.event === 'ws_get_all_tracking') {
+              try {
+                const updated_customer_trackings = await socketFunction.getCustomerTrackings(msg);
+                const customer_updated_trackings_message = JSON.stringify({
+                  event: 'tracking_update',
+                  payload: updated_customer_trackings,
+                });
+                WsServer.clients.forEach((client) => {
+                  if (
+                     client.connectionId === msg.receiver_id
+                    && client.readyState === WebSocket.OPEN
+                  ) {
+                    client.send(customer_updated_trackings_message);
+                  }
+                });
+              } catch (err) {
+                return false;
+              }
             }
-          }
-          if (msg.event === 'ws_get_all_tracking') {
-            try {
-              const updated_customer_trackings = await socketFunction.getCustomerTrackings(msg);
-              const customer_updated_trackings_message = JSON.stringify({
-                event: 'tracking_update',
-                payload: updated_customer_trackings,
-              });
-              WsServer.clients.forEach((client) => {
-                if (
-                   client.connectionId === msg.receiver_id
-                  && client.readyState === WebSocket.OPEN
-                ) {
-                  client.send(customer_updated_trackings_message);
-                }
-              });
-            } catch (err) {
-              return false;
+            if (msg.event === 'subscribe_to_location') {
+              try {
+                ws.current_location = msg.channel.split(' ')[0].split('/')[0];
+                console.log(ws.current_location);
+              } catch (err) {
+                return false;
+              }
             }
-          }
-          if (msg.event === 'subscribe_to_location') {
-            try {
-              ws.current_location = msg.channel.split(' ')[0].split('/')[0];
-              console.log(ws.current_location);
-            } catch (err) {
-              return false;
-            }
-          }
-        })
+          })
+        }
       }
-
     } catch (err) {
       ws.close();
       return false;

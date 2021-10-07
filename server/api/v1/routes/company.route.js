@@ -19,10 +19,19 @@ const {
   companyRegisterDispatcherStepFive,
   companyGetAllDispatchers,
   companyGetSingleDispatcher,
-  companyGetWalletBalance,
+  companyGetWithdrawableWalletBalance,
   companyGetSingleDispatcherTracking,
   company_request_password_reset,
   company_reset_password,
+  companyGetProfile,
+  company_use_refresh,
+  get_total_earnings,
+  get_total_dispatchers_overview,
+  get_total_deliveries_overview,
+  get_new_dispatchers_count,
+  get_single_dispatcher_delivery_history,
+  edit_dispatcher_details,
+  company_update_profile
 } = CompanyController;
 
 const {
@@ -40,7 +49,8 @@ const {
   check_email_and_mobile_code,
   check_company_payout_amount,
   check_profile_id,
-  check_reset_password
+  check_reset_password,
+  check_edit_dispatcher
 } = Validate;
 
 const companyRoute = express();
@@ -118,6 +128,19 @@ companyRoute.post(
 );
 
 companyRoute.get(
+  '/me',
+  passport.authenticate('bearer', { session: false }),
+  companyCheckSession,
+  isCompanyLoggedIn,
+  companyGetProfile,
+);
+companyRoute.get(
+  '/me/refresh',
+  company_use_refresh,
+);
+
+
+companyRoute.get(
   '/dispatcher/all',
   passport.authenticate('bearer', { session: false }),
   companyCheckSession,
@@ -135,11 +158,11 @@ companyRoute.get(
 );
 
 companyRoute.get(
-  '/accounts/wallet',
+  '/accounts/wallet/withdrawable',
   passport.authenticate('bearer', { session: false }),
   companyCheckSession,
   isCompanyLoggedIn,
-  companyGetWalletBalance
+  companyGetWithdrawableWalletBalance,
 );
 
 companyRoute.post(
@@ -171,5 +194,53 @@ companyRoute.post(
   company_reset_password,
 );
 
+companyRoute.get(
+  '/total_earnings',
+  companyCheckSession,
+  isCompanyLoggedIn,
+  get_total_earnings
+);
+
+companyRoute.get(
+  '/total_dispatchers/overview',
+  companyCheckSession,
+  isCompanyLoggedIn,
+  get_total_dispatchers_overview
+);
+
+companyRoute.get(
+  '/total_deliveries/overview',
+  companyCheckSession,
+  isCompanyLoggedIn,
+  get_total_deliveries_overview
+)
+companyRoute.get(
+  '/dispatchers/new',
+  companyCheckSession,
+  isCompanyLoggedIn,
+  get_new_dispatchers_count,
+)
+companyRoute.get(
+  '/dispatcher/delivery/history/:id',
+  companyCheckSession,
+  isCompanyLoggedIn,
+  check_profile_id,
+  get_single_dispatcher_delivery_history,
+)
+
+companyRoute.put(
+  '/dispatcher/edit/:id',
+  companyCheckSession,
+  isCompanyLoggedIn,
+  check_edit_dispatcher,
+  edit_dispatcher_details
+);
+
+companyRoute.put(
+  '/profile/update',
+  companyCheckSession,
+  isCompanyLoggedIn,
+  company_update_profile,
+)
 
 export default companyRoute;

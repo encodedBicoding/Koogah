@@ -45,6 +45,7 @@ const {
   mobile_code_email_schema,
   company_amount_schema,
   company_profile_update_schema,
+  edit_dispatcher_schema,
   promoSchema,
 } = Schema;
 
@@ -165,6 +166,25 @@ class Validate {
     }
     return next();
   }
+
+    /**
+   * @method check_edit_dispatcher
+   * @description This method validates the input from company edit dispatcher
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+     static check_edit_dispatcher(req, res, next) {
+      const isvalid = edit_dispatcher_schema().validate(req.body);
+      if (isvalid.hasOwnProperty('error')) {
+        return res.status(400).json({
+          status: 400,
+          error: isvalid.error.details,
+        });
+      }
+      return next();
+    }
 
   /**
    * @method create_package

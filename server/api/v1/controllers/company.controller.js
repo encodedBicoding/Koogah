@@ -1063,7 +1063,7 @@ class CompanyController {
              let increased = pc > 0 ? true : pc === 0 ? false : false;
               result = {
                ...result,
-               current_month: 0,
+               current_month: current_period_num_value,
                last_month: last_period_num_value,
                increased,
                percent: pc,
@@ -1179,10 +1179,7 @@ class CompanyController {
         let current_period_num_value = 0;
         let last_period_num_value = 0;
         if (current_period_collection.length > 0 && last_period_collection.length <= 0) {
-          current_period_num_value = current_period_collection.reduce((acc, curr) => {
-            acc = acc + Number(curr.amount_paid);
-            return acc;
-          }, 0);
+          current_period_num_value = current_period_collection.length;
           // calculate percentage.
           let pc = calculage_daterange_percentage(current_period_num_value, 0);
           let increased = pc > 0 ? true : pc === 0 ? false : false;
@@ -1195,10 +1192,7 @@ class CompanyController {
           };
         }
         if (current_period_collection.length <= 0 && last_period_collection.length > 0) {
-            last_period_num_value = last_period_collection.reduce((acc, curr) => {
-              acc = acc + Number(curr.amount_paid);
-              return acc;
-            }, 0);
+            last_period_num_value = last_period_collection.length;
             // calculate percentage.
             let pc = calculage_daterange_percentage(0, last_period_num_value);
             let increased = pc > 0 ? true : pc === 0 ? false : false;
@@ -1212,22 +1206,16 @@ class CompanyController {
           }
   
           if (current_period_collection.length >= 0 && last_period_collection.length >= 0) {
-            current_period_num_value = current_period_collection.reduce((acc, curr) => {
-              acc = acc + Number(curr.amount_paid);
-              return acc;
-            }, 0);
+            current_period_num_value = current_period_collection.length;
   
-            last_period_num_value = last_period_collection.reduce((acc, curr) => {
-              acc = acc + Number(curr.amount_paid);
-              return acc;
-            }, 0);
+            last_period_num_value = last_period_collection.length;
   
              // calculate percentage.
              let pc = calculage_daterange_percentage(current_period_num_value, last_period_num_value);
              let increased = pc > 0 ? true : pc === 0 ? false : false;
               result = {
                ...result,
-               current_month: 0,
+               current_month: current_period_num_value,
                last_month: last_period_num_value,
                increased,
                percent: pc,
@@ -1680,13 +1668,9 @@ class CompanyController {
           last_period_from = moment(current_period_from).subtract(1, 'month').format();
           last_period_to = moment(current_period_to).subtract(1, 'month').format();
         }
-        allDispatchers.forEach(async (d) => {
-        let dispatcher_tranx = await Transactions.findAll({
+        let current_period_list= await Transactions.findAll({
           where: {
             [Op.and]: [
-              {
-                dispatcher_id: d.id
-              },
               {
                 reason: 'dispatch-payment',
               },
@@ -1705,15 +1689,9 @@ class CompanyController {
             ]
           }
         });
-        current_period_collection.push(dispatcher_tranx);
-      });
-      allDispatchers.forEach(async (d) => {
-        let dispatcher_tranx = await Transactions.findAll({
+      let last_period_list = await Transactions.findAll({
           where: {
             [Op.and]: [
-              {
-                dispatcher_id: d.id
-              },
               {
                 reason: 'dispatch-payment',
               },
@@ -1732,8 +1710,22 @@ class CompanyController {
             ]
           }
         });
-        last_period_collection.push(dispatcher_tranx);
-      });
+
+        for(var i=0; i<allDispatchers.length; i++) {
+          for(var j=0; j<current_period_list.length; j++) {
+            if(allDispatchers[i].id == current_period_list[j].dispatcher_id) {
+              current_period_collection.push(current_period_list[j])
+            }
+          }
+        }
+
+        for(var i=0; i<allDispatchers.length; i++) {
+          for(var j=0; j<last_period_list.length; j++) {
+            if(allDispatchers[i].id == last_period_list[j].dispatcher_id) {
+              last_period_collection.push(current_period_list[j])
+            }
+          }
+        }
         let current_period_num_value = 0;
         let last_period_num_value = 0;
         if (current_period_collection.length <= 0 && last_period_collection.length <=0 ) {
@@ -1801,7 +1793,7 @@ class CompanyController {
            let increased = pc > 0 ? true : pc === 0 ? false : false;
             result = {
              ...result,
-             current_month: 0,
+             current_month: current_period_num_value,
              last_month: last_period_num_value,
              increased,
              percent: pc,
@@ -1984,7 +1976,7 @@ class CompanyController {
            let increased = pc > 0 ? true : pc === 0 ? false : false;
           result = {
              ...result,
-             current_month: 0,
+             current_month: current_period_num_value,
              last_month: last_period_num_value,
              increased,
              percent: pc,
@@ -2071,14 +2063,13 @@ class CompanyController {
           last_period_from = moment(current_period_from).subtract(1, 'month').format();
           last_period_to = moment(current_period_to).subtract(1, 'month').format();
         }
-        current_period_collection = await Couriers.findAll({
+        let current_period_list = [];
+        let last_period_list = [];
+        current_period_collection = await Packages.findAndCountAll({
           where: {
             [Op.and]: [
               {
-                company_id: user.id,
-              },
-              {
-                is_active: true,
+                status: 'delivered'
               },
               {
                 created_at: {
@@ -2089,20 +2080,17 @@ class CompanyController {
                     {
                       [Op.lte]: current_period_to
                     }
-                  ],
+                  ]
                 }
               }
             ]
           }
-        });
-        last_period_collection = await Couriers.findAll({
+        })
+        last_period_collection = await Packages.findAndCountAll({
           where: {
             [Op.and]: [
               {
-                company_id: user.id,
-              },
-              {
-                is_active: true,
+                status: 'delivered'
               },
               {
                 created_at: {
@@ -2113,26 +2101,40 @@ class CompanyController {
                     {
                       [Op.lte]: last_period_to
                     }
-                  ],
+                  ]
                 }
               }
             ]
           }
         });
+        
+        for(var i=0; i<allDispatchers.length; i++) {
+          for (var j=0; j<current_period_collection.rows.length; j++) {
+            if(allDispatchers[i].id == current_period_collection.rows[j].dispatcher_id){
+              current_period_list.push(current_period_collection.rows[j])
+            }
+          }
+        }
+
+        for(var i=0; i<allDispatchers.length; i++) {
+          for (var j=0; j<last_period_collection.rows.length; j++) {
+            if(allDispatchers[i].id == last_period_collection.rows[j].dispatcher_id){
+              last_period_list.push(last_period_collection.rows[j])
+            }
+          }
+        }
+
         let current_period_num_value = 0;
         let last_period_num_value = 0;
-        if (current_period_collection.length <= 0 && last_period_collection.length <=0 ) {
+        if (current_period_list.length <= 0 && last_period_list.length <=0 ) {
           return res.status(200).json({
             status: 200,
             message: 'Data retrieved successfully',
             data: result,
           })
         }
-        if (current_period_collection.length > 0 && last_period_collection.length <= 0) {
-          current_period_num_value = current_period_collection.reduce((acc, curr) => {
-            acc = acc + Number(curr.deliveries);
-            return acc;
-          }, 0);
+        if (current_period_list.length > 0 && last_period_list.length <= 0) {
+          current_period_num_value = current_period_list.length;
           // calculate percentage.
           let pc = calculage_daterange_percentage(current_period_num_value, 0);
           let increased = pc > 0 ? true : pc === 0 ? false : false;
@@ -2149,11 +2151,8 @@ class CompanyController {
             data: result,
           })
         }
-        if (current_period_collection.length <= 0 && last_period_collection.length > 0) {
-          last_period_num_value = last_period_collection.reduce((acc, curr) => {
-            acc = acc + Number(curr.deliveries);
-            return acc;
-          }, 0);
+        if (current_period_list.length <= 0 && last_period_list.length > 0) {
+          last_period_num_value = last_period_list.length;
           // calculate percentage.
           let pc = calculage_daterange_percentage(0, last_period_num_value);
           let increased = pc > 0 ? true : pc === 0 ? false : false;
@@ -2171,23 +2170,17 @@ class CompanyController {
           })
         }
 
-        if (current_period_collection.length >= 0 && last_period_collection.length >= 0) {
-          current_period_num_value = current_period_collection.reduce((acc, curr) => {
-            acc = acc + Number(curr.deliveries);
-            return acc;
-          }, 0);
+        if (current_period_list.length >= 0 && last_period_list.length >= 0) {
+          current_period_num_value = current_period_list.length;
 
-          last_period_num_value = last_period_collection.reduce((acc, curr) => {
-            acc = acc + Number(curr.deliveries);
-            return acc;
-          }, 0);
+          last_period_num_value = last_period_list.length;
 
            // calculate percentage.
            let pc = calculage_daterange_percentage(current_period_num_value, last_period_num_value);
            let increased = pc > 0 ? true : pc === 0 ? false : false;
             result = {
              ...result,
-             current_month: 0,
+             current_month: current_period_num_value,
              last_month: last_period_num_value,
              increased,
              percent: pc,

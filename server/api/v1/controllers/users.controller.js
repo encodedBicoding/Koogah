@@ -680,7 +680,7 @@ class UserController {
           is_active: true,
           koogah_coin: 10,
           promo_code: 'WELCOME',
-          promo_code_amount: 2000,
+          promo_code_amount: 1500,
         },
         {
           where: {

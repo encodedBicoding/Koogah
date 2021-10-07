@@ -341,7 +341,10 @@ if (cluster.isMaster) {
                 created_at: {
                   [Op.gte]: timestamp_benchmark
                 }
-              }
+              },
+              order: [
+                ['created_at', 'DESC']
+              ]
             });
 
             let wsNotifyMsg = {

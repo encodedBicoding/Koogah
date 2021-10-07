@@ -170,7 +170,7 @@ class WebSocketFunctions {
             {
               is_currently_dispatching: true,
             }
-          ]
+          ],
         },
         attributes: [
           'address',
@@ -190,6 +190,9 @@ class WebSocketFunctions {
           'referal_id',
           'state',
           'town',
+        ],
+        order: [
+          ['created_at', 'DESC']
         ]
       });
       return all_tracking_dispatchers;

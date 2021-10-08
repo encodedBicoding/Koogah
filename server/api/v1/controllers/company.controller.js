@@ -419,7 +419,7 @@ class CompanyController {
       if (!isFound) {
         return res.status(404).json({
           status: 404,
-          error: 'Found no dispatcher with the given email address',
+          error: 'Found no company with the given email address',
         });
       }
       if (isFound.is_active == false) {
@@ -1737,8 +1737,12 @@ class CompanyController {
         }
         if (current_period_collection.length > 0 && last_period_collection.length <= 0) {
           current_period_num_value = current_period_collection.reduce((acc, curr) => {
-            acc = acc + Number(curr.amount_paid);
-            return acc;
+            if (curr) {
+              acc = acc + Number(curr.amount_paid);
+              return acc;
+            } else {
+              return acc;
+            }
           }, 0);
           // calculate percentage.
           let pc = calculage_daterange_percentage(current_period_num_value, 0);
@@ -1758,8 +1762,12 @@ class CompanyController {
         }
         if (current_period_collection.length <= 0 && last_period_collection.length > 0) {
           last_period_num_value = last_period_collection.reduce((acc, curr) => {
-            acc = acc + Number(curr.amount_paid);
-            return acc;
+            if (curr) {
+              acc = acc + Number(curr.amount_paid);
+              return acc;
+            } else {
+              return acc;
+            }
           }, 0);
           // calculate percentage.
           let pc = calculage_daterange_percentage(0, last_period_num_value);
@@ -1779,13 +1787,21 @@ class CompanyController {
         }
         if (current_period_collection.length >= 0 && last_period_collection.length >= 0) {
           current_period_num_value = current_period_collection.reduce((acc, curr) => {
-            acc = acc + Number(curr.amount_paid);
-            return acc;
+            if (curr) {
+              acc = acc + Number(curr.amount_paid);
+              return acc;
+            } else {
+              return acc;
+            }
           }, 0);
 
           last_period_num_value = last_period_collection.reduce((acc, curr) => {
-            acc = acc + Number(curr.amount_paid);
-            return acc;
+            if (curr) {
+              acc = acc + Number(curr.amount_paid);
+              return acc;
+            } else {
+              return acc;
+            }
           }, 0);
 
            // calculate percentage.

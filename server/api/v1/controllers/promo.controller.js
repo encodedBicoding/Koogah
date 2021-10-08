@@ -50,6 +50,81 @@ class PromoController {
               });
               if (u) {
                 // update the user promo code
+                if (!u.promo_code) {
+                  await Customers.update(
+                    {
+                      promo_code: code,
+                      promo_code_amount: amount
+                    },
+                    {
+                      where: {
+                        email: u.email,
+                      }
+                    }
+                  );
+
+                // send the user notifications.
+                let NEW_NOTIFICATION = {};
+                NEW_NOTIFICATION.email = u.email;
+                NEW_NOTIFICATION.desc = 'CD013';
+                NEW_NOTIFICATION.message = promo_message;
+                NEW_NOTIFICATION.title = promo_title;
+                NEW_NOTIFICATION.action_link = null;
+                NEW_NOTIFICATION.entity_id = null;
+                NEW_NOTIFICATION.is_viewable = false;
+                NEW_NOTIFICATION.type = 'customer';
+                const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
+                 // get all user unread notifications;
+                let timestamp_benchmark = moment().subtract(5, 'months').format();
+                let all_notifications = await Notifications.findAll({
+                  where: {
+                    [Op.and]: [{ email: u.email }, { type: 'customer' }],
+                    created_at: {
+                      [Op.gte]: timestamp_benchmark
+                    }
+                  }
+                });
+                const device_notify_obj = {
+                  title: `${NEW_NOTIFICATION.title}`,
+                  body: `${NEW_NOTIFICATION.message}`,
+                  click_action: 'FLUTTER_NOTIFICATION_CLICK',
+                  icon: 'ic_launcher'
+                };
+                await Notifier(
+                  all_notifications,
+                  u,
+                  'customer',
+                  device_notify_obj,
+                  _notification,
+                );
+                  
+                }
+              }
+              if (u.email === new_users_email[new_users_email.length - 1].email) {
+                console.log('completed tasks');
+                task.stop();
+              }
+            });
+            return res.status(200).json({
+              status: 200,
+              message: 'Promo message scheduled for sending'
+            })
+          } else {
+            return res.status(400).json({
+              status: 400,
+              message: 'Please insert proper data, or contact someone who can'
+            })
+          }
+        }else {
+          const all_customers = await Customers.findAll({
+            where: {
+              is_active: true,
+            }
+          });
+          all_customers.forEach(async (u) => {
+            if (u) {
+              // update the user promo code
+              if (!u.promo_code) {
                 await Customers.update(
                   {
                     promo_code: code,
@@ -96,76 +171,6 @@ class PromoController {
                   _notification,
                 );
               }
-            });
-            if (u.email === new_users_email[new_users_email.length - 1].email) {
-              console.log('completed tasks');
-              task.stop();
-            }
-            return res.status(200).json({
-              status: 200,
-              message: 'Promo message scheduled for sending'
-            })
-          } else {
-            return res.status(400).json({
-              status: 400,
-              message: 'Please insert proper data, or contact someone who can'
-            })
-          }
-        }else {
-          const all_customers = await Customers.findAll({
-            where: {
-              is_active: true,
-            }
-          });
-          all_customers.forEach(async (u) => {
-            if (u) {
-              // update the user promo code
-              await Customers.update(
-                {
-                  promo_code: code,
-                  promo_code_amount: amount
-                },
-                {
-                  where: {
-                    email: u.email,
-                  }
-                }
-              );
-              // send the user notifications.
-              let NEW_NOTIFICATION = {};
-              NEW_NOTIFICATION.email = u.email;
-              NEW_NOTIFICATION.desc = 'CD013';
-              NEW_NOTIFICATION.message = promo_message;
-              NEW_NOTIFICATION.title = promo_title;
-              NEW_NOTIFICATION.action_link = null;
-              NEW_NOTIFICATION.entity_id = null;
-              NEW_NOTIFICATION.is_viewable = false;
-              NEW_NOTIFICATION.type = 'customer';
-              const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
-               // get all user unread notifications;
-              let timestamp_benchmark = moment().subtract(5, 'months').format();
-              let all_notifications = await Notifications.findAll({
-                where: {
-                  [Op.and]: [{ email: u.email }, { type: 'customer' }],
-                  created_at: {
-                    [Op.gte]: timestamp_benchmark
-                  }
-                }
-              });
-              const device_notify_obj = {
-                title: `${NEW_NOTIFICATION.title}`,
-                body: `${NEW_NOTIFICATION.message}`,
-                click_action: 'FLUTTER_NOTIFICATION_CLICK',
-                icon: 'ic_launcher'
-              };
-              await Notifier(
-                all_notifications,
-                u,
-                'customer',
-                device_notify_obj,
-                _notification,
-              );
-
               if (u.email === all_customers[all_customers.length - 1].email) {
                 console.log('completed tasks');
                 task.stop();
@@ -204,93 +209,95 @@ class PromoController {
           }
         })
         all_customers.forEach(async (u) => {
-          // get their previous week top-ups
-          const this_week_start = moment().clone().startOf('isoweek').format();
-          const last_week_start = moment(this_week_start).subtract(1, 'week').format();
-          let total_amount_paid = 0;
-          const prev_week_top_ups = await Transactions.findAll({
-            where: {
-              [Op.and]: [
+          if (!u.promo_code) {
+            // get their previous week top-ups
+            const this_week_start = moment().clone().startOf('isoweek').format();
+            const last_week_start = moment(this_week_start).subtract(1, 'week').format();
+            let total_amount_paid = 0;
+            const prev_week_top_ups = await Transactions.findAll({
+              where: {
+                [Op.and]: [
+                  {
+                    customer_id: u.id,
+                  },
+                  {
+                    reason: 'top-up'
+                  },
+                  {
+                    created_at: {
+                      [Op.and]: [
+                        {
+                          [Op.gte]: last_week_start
+                        },
+                        {
+                          [Op.lt]: this_week_start,
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            });
+            if (prev_week_top_ups.length > 0) {
+              total_amount_paid = prev_week_top_ups.reduce((acc, curr) => {
+                acc += Number(curr.amount_paid);
+                return acc;
+              }, 0)
+              // get % off
+              const promo_amount = total_amount_paid * process.env.INDIVIDUAL_PROMO_PERCENT_OFF;
+              const promo_code = generatePromoCode();
+
+              await Customers.update(
                 {
-                  customer_id: u.id,
+                  promo_code: promo_code,
+                  promo_code_amount: promo_amount,
                 },
                 {
-                  reason: 'top-up'
-                },
-                {
-                  created_at: {
-                    [Op.and]: [
-                      {
-                        [Op.gte]: last_week_start
-                      },
-                      {
-                        [Op.lt]: this_week_start,
-                      }
-                    ]
+                  where: {
+                    email: u.email,
                   }
                 }
-              ]
-            }
-          });
-          if (prev_week_top_ups.length > 0) {
-            total_amount_paid = prev_week_top_ups.reduce((acc, curr) => {
-              acc += Number(curr.amount_paid);
-              return acc;
-            }, 0)
-            // get % off
-            const promo_amount = total_amount_paid * process.env.INDIVIDUAL_PROMO_PERCENT_OFF;
-            const promo_code = generatePromoCode();
+              );
 
-            await Customers.update(
-              {
-                promo_code: promo_code,
-                promo_code_amount: promo_amount,
-              },
-              {
+              // send the user notifications.
+              let NEW_NOTIFICATION = {};
+              NEW_NOTIFICATION.email = u.email;
+              NEW_NOTIFICATION.desc = 'CD013';
+              NEW_NOTIFICATION.message = `Congratulations!. Your weekly FREE delivery credit has arrived. Use it to make FREE deliveries today!. Enjoy!`;
+              NEW_NOTIFICATION.title = 'Your weekly FREE delivery credit is here!. tap to see.';
+              NEW_NOTIFICATION.action_link = null;
+              NEW_NOTIFICATION.entity_id= null;
+              NEW_NOTIFICATION.is_viewable = false;
+              NEW_NOTIFICATION.type = 'customer';
+              const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
+              // get all user unread notifications;
+              let timestamp_benchmark = moment().subtract(5, 'months').format();
+              let all_notifications = await Notifications.findAll({
                 where: {
-                  email: u.email,
+                  [Op.and]: [{ email: u.email }, { type: 'customer' }],
+                  created_at: {
+                    [Op.gte]: timestamp_benchmark
+                  }
                 }
-              }
-            );
-
-          // send the user notifications.
-          let NEW_NOTIFICATION = {};
-          NEW_NOTIFICATION.email = u.email;
-          NEW_NOTIFICATION.desc = 'CD013';
-          NEW_NOTIFICATION.message = `Congratulations!. Your weekly FREE delivery credit has arrived. Use it to make FREE deliveries today!. Enjoy!`;
-          NEW_NOTIFICATION.title = 'Your FREE weekly delivery credit is here!. tap to see.';
-          NEW_NOTIFICATION.action_link = null;
-          NEW_NOTIFICATION.entity_id = null;
-          NEW_NOTIFICATION.is_viewable = false;
-          NEW_NOTIFICATION.type = 'customer';
-          const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
-          // get all user unread notifications;
-          let timestamp_benchmark = moment().subtract(5, 'months').format();
-          let all_notifications = await Notifications.findAll({
-            where: {
-              [Op.and]: [{ email: u.email }, { type: 'customer' }],
-              created_at: {
-                [Op.gte]: timestamp_benchmark
+              });
+              const device_notify_obj = {
+                title: `${NEW_NOTIFICATION.title}`,
+                body: `${NEW_NOTIFICATION.message}`,
+                click_action: 'FLUTTER_NOTIFICATION_CLICK',
+                icon: 'ic_launcher'
+              };
+              await Notifier(
+                all_notifications,
+                u,
+                'customer',
+                device_notify_obj,
+                _notification,
+              );
+            
+              if (u.email === all_customers[all_customers.length - 1].email) {
+                task.stop();
               }
             }
-          });
-          const device_notify_obj = {
-            title: `${NEW_NOTIFICATION.title}`,
-            body: `${NEW_NOTIFICATION.message}`,
-            click_action: 'FLUTTER_NOTIFICATION_CLICK',
-            icon: 'ic_launcher'
-          };
-          await Notifier(
-            all_notifications,
-            u,
-            'customer',
-            device_notify_obj,
-            _notification,
-          );
-            
-          if (u.email === all_customers[all_customers.length - 1].email) {
-            task.stop();
-          }
           }
         })
       })

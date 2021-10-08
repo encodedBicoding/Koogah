@@ -33,9 +33,13 @@ Sentry.startTransaction({
 
 const accepted_urls = [
   'https://www.koogah.com',
+  'https://www.koogah.com.ng',
   'http://www.koogah.com',
+  'http://www.koogah.com.ng',
   'https://koogah.com',
+  'https://koogah.com.ng',
   'http://koogah.com',
+  'http://koogah.com.ng',
   'http://localhost:8081',
   'http://localhost:8080',
   'http://10.0.2.2:8081',

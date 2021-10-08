@@ -89,7 +89,7 @@ class UserController {
       // not the SERVER_APP_URL
       let VERIFY_LINK = '';
       if (fromApp && fromApp === 'web') {
-        VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${process.env.LANDING_PAGE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=COURIER`;
+        VERIFY_LINK = `${isProduction ? 'https' : 'http'}://www.${process.env.LANDING_PAGE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=COURIER`;
       } else {
         VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${process.env.DISPATCHER_MOBILE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=COURIER`;
       }
@@ -486,7 +486,7 @@ class UserController {
     }, '168h');
     let VERIFY_LINK = '';
     if (fromApp && fromApp === 'web') {
-      VERIFY_LINK = `https://${process.env.LANDING_PAGE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
+      VERIFY_LINK = `https://www.${process.env.LANDING_PAGE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
     } else {
       VERIFY_LINK = `https://${process.env.CUSTOMER_MOBILE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
     }

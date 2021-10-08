@@ -547,7 +547,7 @@ export const createKoogahWelcomeMailToCompany = function sendWelcomMailToCourier
                         <li>Your dispatchers deliver packages for customers within the Koogah network</li>
                         <li>Track your dispatchers in real-time</li>
                         <li>Get notified of all your dispatcher activities via email</li>
-                        <li>After a successful delivery, payment are stored on the dispatcher wallet, which you can withdraw into your bank account instantly</li>
+                        <li>After a successful delivery, payments are stored in the dispatcher wallet, which you can withdraw into your bank account instantly</li>
                       </ul>
                       <br/>
                       <br/>

@@ -6,10 +6,11 @@ module.exports = {
       queryInterface.addColumn('Customers', 'promo_code', {
         type: Sequelize.STRING,
         allowNull: true,
+        defaultValue: '',
       }),
       queryInterface.addColumn('Customers', 'promo_code_amount', {
         type: Sequelize.DECIMAL(10, 2),
-        allowNull: true,
+        allowNull: false,
         defaultValue: 0.0
       }),
     ]);

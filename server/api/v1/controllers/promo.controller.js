@@ -22,6 +22,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 /**
  * @class PromoController
  */
+// also used for global customer notification sending.
 class PromoController {
   /**
    * @method globalPromo
@@ -33,12 +34,22 @@ class PromoController {
 
   static globalPromo(req, res) {
     return Promise.try(async () => {
-      const {
+      let {
         new_users_email,
         code,
         promo_message,
         promo_title,
+        type, // promo or broadcast
         amount } = req.body;
+      if (!type) {
+        type = 'promo';
+      }
+      if (!code) {
+        code = '';
+      }
+      if (!amount) {
+        amount = 0.0;
+      }
       const task = cron.schedule('1 * * * * *', async () => {
         if (new_users_email) {
           if (new_users_email.length > 0) {
@@ -50,55 +61,90 @@ class PromoController {
               });
               if (u) {
                 // update the user promo code
-                if (!u.promo_code) {
-                  await Customers.update(
-                    {
-                      promo_code: code,
-                      promo_code_amount: amount
-                    },
-                    {
+                if (type === 'promo') {
+                  if (!u.promo_code) {
+                    await Customers.update(
+                      {
+                        promo_code: code,
+                        promo_code_amount: amount
+                      },
+                      {
+                        where: {
+                          email: u.email,
+                        }
+                      }
+                    );
+                    // send the user notifications.
+                    let NEW_NOTIFICATION = {};
+                    NEW_NOTIFICATION.email = u.email;
+                    NEW_NOTIFICATION.desc = 'CD013';
+                    NEW_NOTIFICATION.message = `Hello ${u.first_name.toUpperCase()}, ${promo_message}`;
+                    NEW_NOTIFICATION.title = promo_title;
+                    NEW_NOTIFICATION.action_link = null;
+                    NEW_NOTIFICATION.entity_id = null;
+                    NEW_NOTIFICATION.is_viewable = false;
+                    NEW_NOTIFICATION.type = 'customer';
+                    const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
+                    // get all user unread notifications;
+                    let timestamp_benchmark = moment().subtract(5, 'months').format();
+                    let all_notifications = await Notifications.findAll({
                       where: {
-                        email: u.email,
+                        [Op.and]: [{ email: u.email }, { type: 'customer' }],
+                        created_at: {
+                          [Op.gte]: timestamp_benchmark
+                        }
+                      }
+                    });
+                    const device_notify_obj = {
+                      title: `${NEW_NOTIFICATION.title}`,
+                      body: `${NEW_NOTIFICATION.message}`,
+                      click_action: 'FLUTTER_NOTIFICATION_CLICK',
+                      icon: 'ic_launcher'
+                    };
+                    await Notifier(
+                      all_notifications,
+                      u,
+                      'customer',
+                      device_notify_obj,
+                      _notification,
+                    );
+                  }
+                } else {
+                  // send the user notifications.
+                  let NEW_NOTIFICATION = {};
+                  NEW_NOTIFICATION.email = u.email;
+                  NEW_NOTIFICATION.desc = 'CD013';
+                  NEW_NOTIFICATION.message = `Hello ${u.first_name.toUpperCase()}, ${promo_message}`;
+                  NEW_NOTIFICATION.title = promo_title;
+                  NEW_NOTIFICATION.action_link = null;
+                  NEW_NOTIFICATION.entity_id = null;
+                  NEW_NOTIFICATION.is_viewable = false;
+                  NEW_NOTIFICATION.type = 'customer';
+                  const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
+                    // get all user unread notifications;
+                  let timestamp_benchmark = moment().subtract(5, 'months').format();
+                  let all_notifications = await Notifications.findAll({
+                    where: {
+                      [Op.and]: [{ email: u.email }, { type: 'customer' }],
+                      created_at: {
+                        [Op.gte]: timestamp_benchmark
                       }
                     }
+                  });
+                  const device_notify_obj = {
+                    title: `${NEW_NOTIFICATION.title}`,
+                    body: `${NEW_NOTIFICATION.message}`,
+                    click_action: 'FLUTTER_NOTIFICATION_CLICK',
+                    icon: 'ic_launcher'
+                  };
+                  await Notifier(
+                    all_notifications,
+                    u,
+                    'customer',
+                    device_notify_obj,
+                    _notification,
                   );
-
-                // send the user notifications.
-                let NEW_NOTIFICATION = {};
-                NEW_NOTIFICATION.email = u.email;
-                NEW_NOTIFICATION.desc = 'CD013';
-                NEW_NOTIFICATION.message = promo_message;
-                NEW_NOTIFICATION.title = promo_title;
-                NEW_NOTIFICATION.action_link = null;
-                NEW_NOTIFICATION.entity_id = null;
-                NEW_NOTIFICATION.is_viewable = false;
-                NEW_NOTIFICATION.type = 'customer';
-                const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
-                 // get all user unread notifications;
-                let timestamp_benchmark = moment().subtract(5, 'months').format();
-                let all_notifications = await Notifications.findAll({
-                  where: {
-                    [Op.and]: [{ email: u.email }, { type: 'customer' }],
-                    created_at: {
-                      [Op.gte]: timestamp_benchmark
-                    }
                   }
-                });
-                const device_notify_obj = {
-                  title: `${NEW_NOTIFICATION.title}`,
-                  body: `${NEW_NOTIFICATION.message}`,
-                  click_action: 'FLUTTER_NOTIFICATION_CLICK',
-                  icon: 'ic_launcher'
-                };
-                await Notifier(
-                  all_notifications,
-                  u,
-                  'customer',
-                  device_notify_obj,
-                  _notification,
-                );
-                  
-                }
               }
               if (u.email === new_users_email[new_users_email.length - 1].email) {
                 console.log('completed tasks');
@@ -124,52 +170,89 @@ class PromoController {
           all_customers.forEach(async (u) => {
             if (u) {
               // update the user promo code
-              if (!u.promo_code) {
-                await Customers.update(
-                  {
-                    promo_code: code,
-                    promo_code_amount: amount
-                  },
-                  {
+              if (type === 'promo') {
+                if (!u.promo_code) {
+                  await Customers.update(
+                    {
+                      promo_code: code,
+                      promo_code_amount: amount
+                    },
+                    {
+                      where: {
+                        email: u.email,
+                      }
+                    }
+                  );
+                  // send the user notifications.
+                  let NEW_NOTIFICATION = {};
+                  NEW_NOTIFICATION.email = u.email;
+                  NEW_NOTIFICATION.desc = 'CD013';
+                  NEW_NOTIFICATION.message = `Hello ${u.first_name.toUpperCase()}, ${promo_message}`;
+                  NEW_NOTIFICATION.title = promo_title;
+                  NEW_NOTIFICATION.action_link = null;
+                  NEW_NOTIFICATION.entity_id = null;
+                  NEW_NOTIFICATION.is_viewable = false;
+                  NEW_NOTIFICATION.type = 'customer';
+                  const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
+                  // get all user unread notifications;
+                  let timestamp_benchmark = moment().subtract(5, 'months').format();
+                  let all_notifications = await Notifications.findAll({
                     where: {
-                      email: u.email,
+                      [Op.and]: [{ email: u.email }, { type: 'customer' }],
+                      created_at: {
+                        [Op.gte]: timestamp_benchmark
+                      }
                     }
+                  });
+                  const device_notify_obj = {
+                    title: `${NEW_NOTIFICATION.title}`,
+                    body: `${NEW_NOTIFICATION.message}`,
+                    click_action: 'FLUTTER_NOTIFICATION_CLICK',
+                    icon: 'ic_launcher'
+                  };
+                  await Notifier(
+                    all_notifications,
+                    u,
+                    'customer',
+                    device_notify_obj,
+                    _notification,
+                  );
+                }
+              } else {
+              // send the user notifications.
+              let NEW_NOTIFICATION = {};
+              NEW_NOTIFICATION.email = u.email;
+              NEW_NOTIFICATION.desc = 'CD013';
+              NEW_NOTIFICATION.message = `Hello ${u.first_name.toUpperCase()}, ${promo_message}`;
+              NEW_NOTIFICATION.title = promo_title;
+              NEW_NOTIFICATION.action_link = null;
+              NEW_NOTIFICATION.entity_id = null;
+              NEW_NOTIFICATION.is_viewable = false;
+              NEW_NOTIFICATION.type = 'customer';
+              const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
+              // get all user unread notifications;
+              let timestamp_benchmark = moment().subtract(5, 'months').format();
+              let all_notifications = await Notifications.findAll({
+                where: {
+                  [Op.and]: [{ email: u.email }, { type: 'customer' }],
+                  created_at: {
+                    [Op.gte]: timestamp_benchmark
                   }
-                );
-                // send the user notifications.
-                let NEW_NOTIFICATION = {};
-                NEW_NOTIFICATION.email = u.email;
-                NEW_NOTIFICATION.desc = 'CD013';
-                NEW_NOTIFICATION.message = promo_message;
-                NEW_NOTIFICATION.title = promo_title;
-                NEW_NOTIFICATION.action_link = null;
-                NEW_NOTIFICATION.entity_id = null;
-                NEW_NOTIFICATION.is_viewable = false;
-                NEW_NOTIFICATION.type = 'customer';
-                const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
-                 // get all user unread notifications;
-                let timestamp_benchmark = moment().subtract(5, 'months').format();
-                let all_notifications = await Notifications.findAll({
-                  where: {
-                    [Op.and]: [{ email: u.email }, { type: 'customer' }],
-                    created_at: {
-                      [Op.gte]: timestamp_benchmark
-                    }
-                  }
-                });
-                const device_notify_obj = {
-                  title: `${NEW_NOTIFICATION.title}`,
-                  body: `${NEW_NOTIFICATION.message}`,
-                  click_action: 'FLUTTER_NOTIFICATION_CLICK',
-                  icon: 'ic_launcher'
-                };
-                await Notifier(
-                  all_notifications,
-                  u,
-                  'customer',
-                  device_notify_obj,
-                  _notification,
-                );
+                }
+              });
+              const device_notify_obj = {
+                title: `${NEW_NOTIFICATION.title}`,
+                body: `${NEW_NOTIFICATION.message}`,
+                click_action: 'FLUTTER_NOTIFICATION_CLICK',
+                icon: 'ic_launcher'
+              };
+              await Notifier(
+                all_notifications,
+                u,
+                'customer',
+                device_notify_obj,
+                _notification,
+              );
               }
               if (u.email === all_customers[all_customers.length - 1].email) {
                 console.log('completed tasks');

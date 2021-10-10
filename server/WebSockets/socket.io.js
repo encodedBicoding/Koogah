@@ -296,6 +296,7 @@ if (cluster.isMaster) {
         var cookies = {};
         // treat as web
         // check for req cookie.
+        console.log(req.headers.cookie);
         if(req.headers.cookie) req.headers.cookie.split(';').forEach(function(cookie)
           {
             var parts = cookie.match(/(.*?)=(.*)$/);

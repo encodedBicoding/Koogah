@@ -85,7 +85,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 app.use(session({
   secret: process.env.SESSION_SECRET,
-  cookie: { maxAge: 60000, secure: isProduction ? true : false, path: "/", httpOnly: true, sameSite: 'none' },
+  cookie: { secure: isProduction ? true : false, path: "/", httpOnly: true, sameSite: 'none' },
   name: '__KoogahSess__',
   resave: false,
   saveUninitialized: true,

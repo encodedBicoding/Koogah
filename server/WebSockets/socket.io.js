@@ -286,7 +286,6 @@ if (cluster.isMaster) {
     try {
       console.log('server says connected to wss');
       // check if connection is from website;
-      console.log(req.url);
       if (req.url === '/data_seeking') {
         let user;
         let connectionId;
@@ -296,7 +295,7 @@ if (cluster.isMaster) {
         var cookies = {};
         // treat as web
         // check for req cookie.
-        console.log(req.headers.cookie);
+        console.log(req.headers);
         if(req.headers.cookie) req.headers.cookie.split(';').forEach(function(cookie)
           {
             var parts = cookie.match(/(.*?)=(.*)$/);

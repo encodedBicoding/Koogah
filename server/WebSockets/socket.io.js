@@ -286,6 +286,7 @@ if (cluster.isMaster) {
     try {
       console.log('server says connected to wss');
       // check if connection is from website;
+      console.log(req.url);
       if (req.url === '/data_seeking') {
         let user;
         let connectionId;
@@ -304,6 +305,7 @@ if (cluster.isMaster) {
         });
         let token = cookies['koogah_session_token'];
         const payload = await jwt.verify(token);
+        console.log(payload);
         if (!payload) {
           ws.terminate();
           return false;
@@ -323,6 +325,8 @@ if (cluster.isMaster) {
           ws.connectionId = connectionId;
           ws.companyEmail = user.email;
           ws.companyId = user.id;
+          console.log('ready state is...: ');
+          console.log(ws.readyState);
           if (ws.readyState === WebSocket.OPEN) {
             try { 
             let timestamp_benchmark = moment().subtract(5, 'months').format();

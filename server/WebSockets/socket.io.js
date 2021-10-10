@@ -38,6 +38,7 @@ if (cluster.isMaster) {
 
 } else {
   // server upgrade function;
+  let web_user_token = '';
   const SERVER = http.createServer(app);
   SERVER.on('upgrade', function upgrade(request, socket, head) {
     console.log(`worker ${process.pid} is upgrading...`);
@@ -77,9 +78,13 @@ if (cluster.isMaster) {
             cookies[ name ] = value;
         });
         let found = Object.keys(cookies).find((c) => c === 'koogah_session_token');
+        console.log('cookies')
+        console.log(cookies[found]);
         if (found === -1) {
           socket.destroy();
           return;
+        } else {
+          web_user_token = cookies[found];
         }
       } else {
         if (!__koogah_ws_session_secret) {
@@ -305,8 +310,8 @@ if (cluster.isMaster) {
         });
         let token = cookies['koogah_session_token'];
         console.log('session token');
-        console.log(token);
-        const payload = await jwt.verify(token);
+        console.log(web_user_token);
+        const payload = await jwt.verify(web_user_token);
         console.log(payload);
         if (!payload) {
           ws.terminate();

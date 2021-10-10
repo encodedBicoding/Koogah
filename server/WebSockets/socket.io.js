@@ -304,6 +304,8 @@ if (cluster.isMaster) {
             cookies[ name ] = value;
         });
         let token = cookies['koogah_session_token'];
+        console.log('session token');
+        console.log(token);
         const payload = await jwt.verify(token);
         console.log(payload);
         if (!payload) {

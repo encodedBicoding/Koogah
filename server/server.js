@@ -68,6 +68,10 @@ app.enable('trust proxy');
 
 const isProduction = app.get('env') === 'production';
 
+if (isProduction) {
+  app.set('trust proxy', 1)
+}
+
 const apiLimiter = new RateLimit({
   store: new RedisStore({
     client,
@@ -110,9 +114,6 @@ app.use('*', apiLimiter);
 app.use('/v1', RouteV1);
 
 app.set('title', 'Koogah');
-if (isProduction) {
-  app.set('trust proxy', 1)
-}
 
 app.use((req, res, next) => {
   const err = new Error('Resource does not exist');

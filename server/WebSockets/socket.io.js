@@ -67,6 +67,8 @@ if (cluster.isMaster) {
         'https://koogah-web-staging.herokuapp.com'
       ];
       if (accepted_web_hosts.includes(origin)) {
+        console.log('called');
+        console.log(request.headers);
         var cookies = {};
         // treat as web
         // check for req cookie.
@@ -300,7 +302,6 @@ if (cluster.isMaster) {
         var cookies = {};
         // treat as web
         // check for req cookie.
-        console.log(req.headers);
         if(req.headers.cookie) req.headers.cookie.split(';').forEach(function(cookie)
           {
             var parts = cookie.match(/(.*?)=(.*)$/);

@@ -19,7 +19,6 @@ import client from './redis/redis.client';
 import RouteV1 from './api/v1/routes';
 import Auth from './middlewares/auth';
 import * as Sentry from '@sentry/node';
-import * as Tracing from '@sentry/tracing';
 
 Sentry.init({
   dsn: "https://8a2cb24ac17c481db14713ae1649a627@o816982.ingest.sentry.io/5810631",
@@ -55,6 +54,7 @@ const corsOption = {
     }
     return cb(null, false);
   },
+  credentials: true,
   optionsSuccessStatus: 200
 };
 
@@ -67,6 +67,10 @@ const SessionStore = connectRedis(session);
 app.enable('trust proxy');
 
 const isProduction = app.get('env') === 'production';
+
+if (isProduction) {
+  app.set('trust proxy', 1)
+}
 
 const apiLimiter = new RateLimit({
   store: new RedisStore({
@@ -85,9 +89,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 app.use(session({
   secret: process.env.SESSION_SECRET,
-  cookie: { maxAge: 60000, secure: isProduction ? true : false, path: "/" },
+  cookie: { secure: isProduction ? true : false, path: "/", httpOnly: true, sameSite: 'none' },
   name: '__KoogahSess__',
   resave: false,
+  proxy: true,
   saveUninitialized: true,
   store: new SessionStore({ client, ttl: 60 * 60 * 24 }),
 }));
@@ -110,9 +115,6 @@ app.use('*', apiLimiter);
 app.use('/v1', RouteV1);
 
 app.set('title', 'Koogah');
-if (isProduction) {
-  app.set('trust proxy', 1)
-}
 
 app.use((req, res, next) => {
   const err = new Error('Resource does not exist');

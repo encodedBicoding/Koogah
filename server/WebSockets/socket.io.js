@@ -66,18 +66,9 @@ if (cluster.isMaster) {
         'https://koogah-web-staging.herokuapp.com'
       ];
       if (accepted_web_hosts.includes(origin)) {
-        var cookies = {};
-        // treat as web
-        // check for req cookie.
-        if(request.headers.cookie) request.headers.cookie.split(';').forEach(function(cookie)
-          {
-            var parts = cookie.match(/(.*?)=(.*)$/);
-            var name = parts[1].trim();
-            var value = (parts[2] || '').trim();
-            cookies[ name ] = value;
-        });
-        let found = Object.keys(cookies).find((c) => c === 'koogah_session_token');
-        if (found === -1) {
+        const user_search = new URLSearchParams(request.url);
+        const has_token = user_search.get('/data_seeking?token')
+        if (!has_token) {
           socket.destroy();
           return;
         }
@@ -286,29 +277,15 @@ if (cluster.isMaster) {
     try {
       console.log('server says connected to wss');
       // check if connection is from website;
-      console.log(req.url);
-      if (req.url === '/data_seeking') {
+      if (req.url.split('?')[0] === '/data_seeking') {
+        const user_search = new URLSearchParams(req.url);
+        const web_user_token = user_search.get('/data_seeking?token')
         let user;
         let connectionId;
         // coming from landing page.
         // company landing page.
         // get token from cookie.
-        var cookies = {};
-        // treat as web
-        // check for req cookie.
-        console.log(req.headers.cookie);
-        if(req.headers.cookie) req.headers.cookie.split(';').forEach(function(cookie)
-          {
-            var parts = cookie.match(/(.*?)=(.*)$/);
-            var name = parts[1].trim();
-            var value = (parts[2] || '').trim();
-            cookies[ name ] = value;
-        });
-        let token = cookies['koogah_session_token'];
-        console.log('session token');
-        console.log(token);
-        const payload = await jwt.verify(token);
-        console.log(payload);
+        const payload = await jwt.verify(web_user_token);
         if (!payload) {
           ws.terminate();
           return false;
@@ -328,8 +305,6 @@ if (cluster.isMaster) {
           ws.connectionId = connectionId;
           ws.companyEmail = user.email;
           ws.companyId = user.id;
-          console.log('ready state is...: ');
-          console.log(ws.readyState);
           if (ws.readyState === WebSocket.OPEN) {
             try { 
             let timestamp_benchmark = moment().subtract(5, 'months').format();
@@ -545,7 +520,6 @@ if (cluster.isMaster) {
             if (msg.event === 'subscribe_to_location') {
               try {
                 ws.current_location = msg.channel.split(' ')[0].split('/')[0];
-                console.log(ws.current_location);
               } catch (err) {
                 return false;
               }

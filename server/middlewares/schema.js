@@ -47,7 +47,9 @@ class Schema {
       code: Joi.string().trim().required(),
       promo_message: Joi.string().trim().required(),
       promo_title: Joi.string().trim().required(),
-      amount: Joi.number().required(),
+      amount: Joi.number(),
+      type: Joi.string().valid('promo', 'broadcast'),
+      new_users_email: Joi.array(),
     });
   }
   /**

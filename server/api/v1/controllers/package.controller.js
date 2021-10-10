@@ -147,7 +147,7 @@ class Package {
        });
       const message = {
         pickup_state: data.from_state.split(',')[0],
-        detail: `New Package creation @ ${data.from_town} area of ${data.from_state}. You might want to pick it up, do check it out!.`
+        detail: `new package creation @ ${data.from_town} area of ${data.from_state}. You might want to pick it up, do check it out!.`
       };
       const task = cron.schedule('1 * * * * *', () => {
         Package.sendNewPackageCreationToDispatchers(message, task);
@@ -2859,8 +2859,8 @@ class Package {
         const _notification = {
           email: dispatcher.email,
           desc: 'CD012',
-          message: msg.detail,
-          title: 'Koogah Logistics',
+          message: `Hi ${dispatcher.first_name.trim().toUpperCase()}, ${msg.detail}`,
+          title: 'Koogah',
           action_link: '',
           id: msg.notification_id,
         };

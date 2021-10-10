@@ -19,7 +19,6 @@ import client from './redis/redis.client';
 import RouteV1 from './api/v1/routes';
 import Auth from './middlewares/auth';
 import * as Sentry from '@sentry/node';
-import * as Tracing from '@sentry/tracing';
 
 Sentry.init({
   dsn: "https://8a2cb24ac17c481db14713ae1649a627@o816982.ingest.sentry.io/5810631",
@@ -55,6 +54,7 @@ const corsOption = {
     }
     return cb(null, false);
   },
+  credentials: true,
   optionsSuccessStatus: 200
 };
 
@@ -92,6 +92,7 @@ app.use(session({
   cookie: { secure: isProduction ? true : false, path: "/", httpOnly: true, sameSite: 'none' },
   name: '__KoogahSess__',
   resave: false,
+  proxy: true,
   saveUninitialized: true,
   store: new SessionStore({ client, ttl: 60 * 60 * 24 }),
 }));

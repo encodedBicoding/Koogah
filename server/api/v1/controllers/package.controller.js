@@ -147,6 +147,7 @@ class Package {
        });
       const message = {
         pickup_state: data.from_state.split(',')[0],
+        notification_id: Math.floor(Math.random() * 1234 * 60),
         detail: `new package creation @ ${data.from_town} area of ${data.from_state}. You might want to pick it up, do check it out!.`
       };
       const task = cron.schedule('1 * * * * *', () => {
@@ -2851,8 +2852,8 @@ class Package {
           }
         });
         const device_notify_obj = {
-          title: 'Koogah Logistics',
-          body: msg.detail,
+          title: 'Koogah',
+          body: `Hi ${dispatcher.first_name.trim().toUpperCase()}, ${msg.detail}`,
           click_action: 'FLUTTER_NOTIFICATION_CLICK',
           icon: 'ic_launcher'
         };
@@ -2871,8 +2872,8 @@ class Package {
           device_notify_obj,
           _notification
         );
-
         if (dispatcher.id === allDispatchers[allDispatchers.length - 1].id) {
+          console.log('done');
           task.stop();
         }
       });

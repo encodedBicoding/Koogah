@@ -144,9 +144,9 @@ class PromoController {
                     device_notify_obj,
                     _notification,
                   );
-                  }
+                }
               }
-              if (u.email === new_users_email[new_users_email.length - 1].email) {
+              if (u.email === new_users_email[new_users_email.length - 1]) {
                 console.log('completed tasks');
                 task.stop();
               }

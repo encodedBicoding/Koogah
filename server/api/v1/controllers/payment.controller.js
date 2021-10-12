@@ -673,6 +673,26 @@ class Payment {
     });
   }
 
+  /**
+   * @method top_up_with_flutterwave 
+   * @memberof Payment
+   * @params req, res
+   * @description this method allows a customer to topup their account with flutterwave. BEGIN
+   * @return JSON object
+   */
+
+  static top_up_with_flutterwave(req, res) {
+    return Promise.try(async () => {
+      
+    }).catch(err => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    });
+  }
+
 }
 
 export default Payment;

@@ -376,11 +376,10 @@ class PromoController {
                 device_notify_obj,
                 _notification,
               );
-            
-              if (u.email === all_customers[all_customers.length - 1].email) {
-                task.stop();
-              }
             }
+          }
+          if (u.email === all_customers[all_customers.length - 1].email) {
+            task.stop();
           }
         })
       })

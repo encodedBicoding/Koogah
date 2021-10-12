@@ -2852,7 +2852,7 @@ class Package {
           }
         });
         const device_notify_obj = {
-          title: 'Koogah',
+          title: 'New Pickup - Koogah',
           body: `Hi ${dispatcher.first_name.trim().toUpperCase()}, ${msg.detail}`,
           click_action: 'FLUTTER_NOTIFICATION_CLICK',
           icon: 'ic_launcher'
@@ -2861,7 +2861,7 @@ class Package {
           email: dispatcher.email,
           desc: 'CD012',
           message: `Hi ${dispatcher.first_name.trim().toUpperCase()}, ${msg.detail}`,
-          title: 'Koogah',
+          title: 'New Pickup - Koogah',
           action_link: '',
           id: msg.notification_id,
         };

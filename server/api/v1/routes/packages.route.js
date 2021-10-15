@@ -32,7 +32,8 @@ const {
   getEstimate,
   singleTracking,
   allTrackingPackages,
-  sendDeliverySMSAction
+  sendDeliverySMSAction,
+  create_reverse_delivery,
 } = Package;
 
 const {
@@ -60,7 +61,15 @@ packageRoute.route('/:type')
     check_delivery_type,
     create_package,
     request_dispatch,
-  );
+);
+
+packageRoute.post(
+  '/reorder/reverse',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  create_reverse_delivery
+)
 packageRoute.patch(
   '/courier/interest/:package_id',
   passport.authenticate('bearer', { session: false }),

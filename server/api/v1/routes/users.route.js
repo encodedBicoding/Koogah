@@ -6,6 +6,7 @@ import UserController from '../controllers/users.controller';
 import checkSession, { isCustomerLoggedIn, isCourierLoggedIn } from '../../../middlewares/session';
 import Validate from '../../../middlewares/validate';
 import validateEmail from '../../../middlewares/email-validator';
+import { saveDBToSpreadSheet } from '../helpers/spreadsheet.save';
 
 const {
   signUpCourier_StepOne,
@@ -205,4 +206,9 @@ userRoute.post(
   '/courier/send/approval',
   send_approval_mail_to_courier,
 )
+
+userRoute.post(
+  '/spreadsheet/save',
+  saveDBToSpreadSheet,
+);
 export default userRoute;

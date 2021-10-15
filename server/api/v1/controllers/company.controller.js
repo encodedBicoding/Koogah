@@ -29,6 +29,7 @@ import {
 } from '../../../database/models';
 import { sendUnApprovedCompanyNotification } from '../helpers/slack';
 import moment from 'moment';
+import { saveToSpreadsheet } from '../helpers/spreadsheet.save';
 
 
 const { Op } = Sequelize;
@@ -119,6 +120,14 @@ class CompanyController {
       }
       await sendMail(MSG_OBJ);
       await Companies.create(NEW_COMPANY);
+      const spreadsheet_data = {
+        FirstName: NEW_COMPANY.first_name,
+        LastName: NEW_COMPANY.last_name,
+        EmailAddress: NEW_COMPANY.email,
+        PhoneNumber: NEW_COMPANY.phone,
+        BusinessName: NEW_COMPANY.business_name,
+      };
+      await saveToSpreadsheet('company', spreadsheet_data);
       return res.status(200).json({
         status: 200,
         message: 'You will receive a verification link in your provided email shortly.',
@@ -776,6 +785,19 @@ class CompanyController {
           }
         }
       );
+      const NEW_COMPANY_DISPATCHER = await Couriers.findOne({
+        where: {
+          company_id: user.id,
+          email,
+        }
+      });
+      const spreadsheet_data = {
+        FirstName: NEW_COMPANY_DISPATCHER.first_name,
+        LastName: NEW_COMPANY_DISPATCHER.last_name,
+        EmailAddress: NEW_COMPANY_DISPATCHER.email,
+        PhoneNumber: NEW_COMPANY_DISPATCHER.mobile_number,
+      };
+      await saveToSpreadsheet('courier', spreadsheet_data);
       return res.status(200).json({
         status: 200,
         message: 'Dispatcher created successfully, they can now log in',

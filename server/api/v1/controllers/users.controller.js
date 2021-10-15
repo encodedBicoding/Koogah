@@ -32,6 +32,7 @@ import sendMail, {
 import { sendNewCustomerNotification, sendUnApprovedDispatcherNotification } from '../helpers/slack';
 import client from '../../../redis/redis.client';
 import generate_ref from '../helpers/ref.id';
+import { saveToSpreadsheet } from '../helpers/spreadsheet.save';
 
 const { Op } = Sequelize;
 
@@ -137,7 +138,14 @@ class UserController {
         });
       }
       await sendMail(MSG_OBJ);
-      await  Couriers.create(NEW_USER);
+      await Couriers.create(NEW_USER);
+      const spreadsheet_data = {
+        FirstName: NEW_USER.first_name,
+        LastName: NEW_USER.last_name,
+        EmailAddress: NEW_USER.email,
+        PhoneNumber: NEW_USER.mobile_number,
+      };
+      await saveToSpreadsheet('courier', spreadsheet_data);
 
       return res.status(200).json({
         status: 200,
@@ -510,7 +518,7 @@ class UserController {
       last_name: last_name.toLowerCase(),
       mobile_number_one,
       email: email.toLowerCase(),
-      password,
+      password: password.trim(),
       nationality: user_nationality,
       verify_token: VERIFY_TOKEN,
       referal_id: REFERAL_ID,
@@ -522,6 +530,13 @@ class UserController {
     return Promise.try(async () => {
       await sendMail(MSG_OBJ);
       await Customers.create(NEW_USER);
+      const spreadsheet_data = {
+        FirstName: NEW_USER.first_name,
+        LastName: NEW_USER.last_name,
+        EmailAddress: NEW_USER.email,
+        PhoneNumber: NEW_USER.mobile_number_one,
+      };
+      await saveToSpreadsheet('customer', spreadsheet_data);
       return res.status(200).json({
         status: 200,
         message: 'You will receive a verification link in your provided email shortly.',

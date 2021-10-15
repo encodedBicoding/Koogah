@@ -61,5 +61,4 @@ typings/
 
 # next.js build output
 .next
-
-hidden/
+private_key.text

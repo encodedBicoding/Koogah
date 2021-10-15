@@ -7,6 +7,8 @@ import {
   Companies,
 } from '../../../database/models';
 
+const cron = require('node-cron');
+
 config();
 
 
@@ -35,7 +37,7 @@ export async function saveToSpreadsheet(userType, data) {
     }
     data.FirstName = toSentenceCase(data.FirstName);
     data.LastName = toSentenceCase(data.LastName);
-    
+
     await sheet.addRow(data);
   }).catch(err => {
     log(err);
@@ -80,19 +82,19 @@ export async function saveDBToSpreadSheet(req, res) {
     if (userType === 'company') {
       table = await Companies.findAll();
     }
-
-    table.forEach(async (user) => {
-      let data = {};
-      data.FirstName = toSentenceCase(user.first_name);
-      data.LastName = toSentenceCase(user.last_name);
-      data.EmailAddress = user.email;
-      data.PhoneNumber = user.phone || user.mobile_number_one || user.mobile_number;
-
-      if (userType === 'company') {
-        data.BusinessName = user.business_name
-      }
-      await sheet.addRow(data);
-    });
+    const data = table.map((user) => {
+       let d = {};
+        d.FirstName = toSentenceCase(user.first_name);
+        d.LastName = toSentenceCase(user.last_name);
+        d.EmailAddress = user.email;
+        d.PhoneNumber = user.phone || user.mobile_number_one || user.mobile_number;
+  
+        if (userType === 'company') {
+          d.BusinessName = user.business_name
+        }
+      return d;
+    })
+    sheet.addRows(data);
     return res.status(200).json({
       status: 200,
       message: 'Data uploaded'

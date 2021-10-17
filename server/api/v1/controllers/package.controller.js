@@ -148,7 +148,7 @@ class Package {
       const message = {
         pickup_state: data.from_state.split(',')[0],
         notification_id: Math.floor(Math.random() * 1234 * 60),
-        detail: `new package creation @ ${data.from_town} area of ${data.from_state}. You might want to pick it up, do check it out!.`
+        detail: `new ${data.is_express_delivery ? 'EXPRESS' : ''} pickup @ ${data.from_town} area of ${data.from_state}. You might want to pick it up, do check it out!.`
       };
       const task = cron.schedule('1 * * * * *', () => {
         Package.sendNewPackageCreationToDispatchers(message, task);
@@ -156,7 +156,7 @@ class Package {
       sendNewPackageNotification(package_detail, user, data);
 
       // push event to all companies;
-      let comp_m = `New Package creation @ ${data.from_town} area of ${data.from_state}`;
+      let comp_m = `New ${data.is_express_delivery ? 'EXPRESS' : ''} pickup @ ${data.from_town} area of ${data.from_state}`;
       eventEmitter.emit('company_new_package_creation', {
         message: comp_m,
       })
@@ -2666,7 +2666,7 @@ class Package {
             try { 
               const distance_in_km = result.rows[0].elements[0].distance.text;
               const distance = Math.ceil(Number(distance_in_km.split(' ')[0].replace(',', '')));
-              const delivery_price = calc_delivery_price(type, data.weight, distance, data.value);
+              const delivery_price = data.is_express_delivery ? Math.ceil(calc_delivery_price(type, data.weight, distance, data.value) * 2.5) : calc_delivery_price(type, data.weight, distance, data.value);
               if (!delivery_price) {
                 return res.status(400).json({
                   status: 400,

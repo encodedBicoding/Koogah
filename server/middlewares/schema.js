@@ -138,7 +138,8 @@ class Schema {
       contact_phone: Joi.string(),
       receiver_contact_fullname: Joi.string(),
       receiver_contact_phone: Joi.string(),
-      type_of_dispatch: Joi.string()
+      type_of_dispatch: Joi.string(),
+      is_express_delivery: Joi.boolean(),
     });
   }
 
@@ -184,6 +185,7 @@ class Schema {
       receiver_contact_phone: Joi.string().required(),
       delivery_price: Joi.string().required(),
       distance: Joi.string().required(),
+      is_express_delivery: Joi.boolean(),
     });
   }
 

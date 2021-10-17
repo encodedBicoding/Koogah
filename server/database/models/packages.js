@@ -151,6 +151,11 @@ module.exports = (sequelize, DataTypes) => {
     value: {
       type: DataTypes.STRING,
       allowNull: true
+    },
+    is_express_delivery: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     }
   },
   {

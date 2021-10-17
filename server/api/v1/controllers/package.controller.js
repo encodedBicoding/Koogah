@@ -148,7 +148,7 @@ class Package {
       const message = {
         pickup_state: data.from_state.split(',')[0],
         notification_id: Math.floor(Math.random() * 1234 * 60),
-        detail: `new package creation @ ${data.from_town} area of ${data.from_state}. You might want to pick it up, do check it out!.`
+        detail: `new ${data.is_express_delivery ? 'EXPRESS' : ''} pickup @ ${data.from_town} area of ${data.from_state}. You might want to pick it up, do check it out!.`
       };
       const task = cron.schedule('1 * * * * *', () => {
         Package.sendNewPackageCreationToDispatchers(message, task);
@@ -156,7 +156,7 @@ class Package {
       sendNewPackageNotification(package_detail, user, data);
 
       // push event to all companies;
-      let comp_m = `New Package creation @ ${data.from_town} area of ${data.from_state}`;
+      let comp_m = `New ${data.is_express_delivery ? 'EXPRESS' : ''} pickup @ ${data.from_town} area of ${data.from_state}`;
       eventEmitter.emit('company_new_package_creation', {
         message: comp_m,
       })
@@ -174,157 +174,6 @@ class Package {
     })
   }
   
-  /**
-   * @method create_reverse_delivery
-   * @memberof Package
-   * @params req, res
-   * @description this method allows a customer to create reverse delivery of an already delivered package.
-   * @return JSON object
-   */
-
-  static create_reverse_delivery(req, res) {
-    return Promise.try(async () => {
-      const { user } = req.session;
-      const { delivery } = req.body;
-      if (delivery.payment_mode === 'virtual_balance') {
-        if (Number(delivery.delivery_price) > Number(user.virtual_balance)) {
-          return res.status(400).json({
-            status: 400,
-            error: `You must top-up your account with at least ₦${Number(delivery.delivery_price) - Number(user.virtual_balance)} before requesting this dispatch`
-          })
-        }
-        if ((Number(user.virtual_balance) - Number(user.virtual_allocated_balance)) < Number(delivery.delivery_price)) {
-          return res.status(400).json({
-            status: 400,
-            error: 'Package limit exceeded for the amount in your wallet, \nTop-up your wallet or delete a package that has not been picked-up'
-          })
-        }
-        const updated_V_A_B = Number(user.virtual_allocated_balance) + Number(delivery.delivery_price)
-        await Customers.update({
-          virtual_allocated_balance: updated_V_A_B
-        }, {
-          where: {
-            id: user.id
-          }
-        });
-      } else if (delivery.payment_mode === 'koogah_coin') {
-        // convert koogah coin to determine value;
-        // in Naira, it is worth 10 Naira.
-       const KOOGAH_COIN_WORTH = process.env.KOOGAH_COIN_WORTH;
-        const user_koogah_coin_balance = Number(KOOGAH_COIN_WORTH) * Number(user.koogah_coin);
-        // convert virtual allocated kc balance
-       const user_allocated_kc_balance = Number(KOOGAH_COIN_WORTH) * Number(user.virtual_allocated_kc_balance);
-       if (Number(delivery.delivery_price) > Number(user_koogah_coin_balance)) {
-        return res.status(400).json({
-          status: 400,
-          error: 'Sorry, you have insufficient KC balance'
-        })
-       }
-       if ((Number(user_koogah_coin_balance) - Number(user_allocated_kc_balance)) < Number(delivery.delivery_price)) {
-        return res.status(400).json({
-          status: 400,
-          error: 'Sorry, you have reached your package koogah coin balance threshhold,\n please select a different means of payment'
-        })
-       }
-      // before saving, convert it back.
-       let updated_V_A_KC_B = Number(user_allocated_kc_balance) + Number(delivery.delivery_price);
-       updated_V_A_KC_B = updated_V_A_KC_B / KOOGAH_COIN_WORTH;
-        
-        await Customers.update({
-          virtual_allocated_kc_balance: updated_V_A_KC_B
-        }, {
-          where: {
-            id: user.id
-          }
-        });
-    } else {
-      return res.status(400).json({
-        status: 400,
-        error: 'Invalid payment mode'
-      })
-      }
-      
-      const package_id = uuid();
-      const delivery_key = generate_ref('delivery');
-      let new_to_town = delivery.from_town;
-      let new_from_town = delivery.to_town;
-      let new_from_state = delivery.to_state;
-      let new_to_state = delivery.from_state;
-      let new_from_country = delivery.to_country;
-      let new_to_country = delivery.from_country;
-      let new_pickup_address = delivery.dropoff_address;
-      let new_dropoff_address = delivery.new_pickup_address;
-      let new_dropoff_landmark = delivery.pickup_landmark;
-      let new_pickup_landmark = delivery.landmark;
-
-      let new_sender_contact_name = delivery.receiver_contact_fullname;
-      let new_sender_contact_phone = delivery.receiver_contact_phone;
-
-      let new_receiver_contact_name = delivery.contact_name;
-      let new_receiver_contact_phone = delivery.contact_phone;
-
-      delivery.delivery_key = delivery_key;
-      delivery.package_id = package_id;
-      delivery.id = null;
-      delivery.dispatcher_id = null;
-      delivery.pending_dispatchers = [];
-      delivery.pending_delivery_price = null;
-      delivery.is_currently_dispatching = false;
-      delivery.pending_weight = null;
-      // delivery.from_town = new_from_town;
-      // delivery.to_town = new_to_town;
-      // delivery.from_state = new_from_state;
-      // delivery.to_state = new_to_state;
-      // delivery.from_country = new_from_country;
-      // delivery.to_country = new_to_country;
-      // delivery.pickup_address = new_pickup_address;
-      // delivery.dropoff_address = new_dropoff_address;
-      // delivery.landmark = new_dropoff_landmark;
-      // delivery.pickup_landmark = new_pickup_landmark;
-      // delivery.status = 'not-picked';
-      delivery.pickup_time = null;
-      delivery.dropoff_time = null;
-      delivery.is_paid_for = false;
-      // delivery.contact_name = new_sender_contact_name;
-      // delivery.contact_phone = new_sender_contact_phone;
-      // delivery.receiver_contact_fullname = new_receiver_contact_name;
-      // delivery.receiver_contact_phone = new_receiver_contact_phone;
-
-      const package_detail = await Packages.create({
-        ...delivery,
-      });
-
-      const message = {
-        pickup_state: delivery.from_state.split(',')[0],
-        notification_id: Math.floor(Math.random() * 1234 * 60),
-        detail: `new package creation @ ${delivery.from_town} area of ${delivery.from_state}. You might want to pick it up, do check it out!.`
-      };
-
-      const task = cron.schedule('1 * * * * *', () => {
-        Package.sendNewPackageCreationToDispatchers(message, task);
-      });
-      sendNewPackageNotification(package_detail, user, delivery);
-      // push event to all companies;
-      let comp_m = `New Package creation @ ${delivery.from_town} area of ${delivery.from_state}`;
-      eventEmitter.emit('company_new_package_creation', {
-        message: comp_m,
-      })
-      return res.status(200).json({
-        status: 200,
-        message: 'Package created successfully. Please wait, dispatchers will reach out to you soon',
-        data: package_detail,
-      });
-
-    }).catch(err => {
-      log(err);
-      return res.status(400).json({
-       status: 400,
-       error: err,
-     });
-    })
-  }
-
-
   /**
    * @method show_interest
    * @memberof Package
@@ -2817,7 +2666,7 @@ class Package {
             try { 
               const distance_in_km = result.rows[0].elements[0].distance.text;
               const distance = Math.ceil(Number(distance_in_km.split(' ')[0].replace(',', '')));
-              const delivery_price = calc_delivery_price(type, data.weight, distance, data.value);
+              const delivery_price = data.is_express_delivery ? Math.ceil(calc_delivery_price(type, data.weight, distance, data.value) * 2.5) : calc_delivery_price(type, data.weight, distance, data.value);
               if (!delivery_price) {
                 return res.status(400).json({
                   status: 400,

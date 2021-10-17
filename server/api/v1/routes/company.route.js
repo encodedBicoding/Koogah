@@ -31,7 +31,8 @@ const {
   get_new_dispatchers_count,
   get_single_dispatcher_delivery_history,
   edit_dispatcher_details,
-  company_update_profile
+  company_update_profile,
+  company_get_single_package,
 } = CompanyController;
 
 const {
@@ -196,6 +197,7 @@ companyRoute.post(
 
 companyRoute.get(
   '/total_earnings',
+  passport.authenticate('bearer', { session: false }),
   companyCheckSession,
   isCompanyLoggedIn,
   get_total_earnings
@@ -203,6 +205,7 @@ companyRoute.get(
 
 companyRoute.get(
   '/total_dispatchers/overview',
+  passport.authenticate('bearer', { session: false }),
   companyCheckSession,
   isCompanyLoggedIn,
   get_total_dispatchers_overview
@@ -210,18 +213,21 @@ companyRoute.get(
 
 companyRoute.get(
   '/total_deliveries/overview',
+  passport.authenticate('bearer', { session: false }),
   companyCheckSession,
   isCompanyLoggedIn,
   get_total_deliveries_overview
 )
 companyRoute.get(
   '/dispatchers/new',
+  passport.authenticate('bearer', { session: false }),
   companyCheckSession,
   isCompanyLoggedIn,
   get_new_dispatchers_count,
 )
 companyRoute.get(
   '/dispatcher/delivery/history/:id',
+  passport.authenticate('bearer', { session: false }),
   companyCheckSession,
   isCompanyLoggedIn,
   check_profile_id,
@@ -230,6 +236,7 @@ companyRoute.get(
 
 companyRoute.put(
   '/dispatcher/edit/:id',
+  passport.authenticate('bearer', { session: false }),
   companyCheckSession,
   isCompanyLoggedIn,
   check_edit_dispatcher,
@@ -238,9 +245,17 @@ companyRoute.put(
 
 companyRoute.put(
   '/profile/update',
+  passport.authenticate('bearer', { session: false }),
   companyCheckSession,
   isCompanyLoggedIn,
   company_update_profile,
-)
+);
+companyRoute.get(
+  '/package/single',
+  passport.authenticate('bearer', { session: false }),
+  companyCheckSession,
+  isCompanyLoggedIn,
+  company_get_single_package,
+);
 
 export default companyRoute;

@@ -2355,6 +2355,7 @@ class CompanyController {
         attributes: [
           'status',
           'package_id',
+          'dispatcher_id',
           'pickup_address',
           'dropoff_address',
           'description',
@@ -2490,7 +2491,7 @@ class CompanyController {
     });
   }
 
-  /**
+   /**
    * @method company_update_profile
    * @memberof companyController
    * @description This method allows a company to update their profile.
@@ -2536,6 +2537,70 @@ class CompanyController {
         error: err,
       });
     });
+  }
+
+  /**
+   * @method company_get_single_package
+   * @memberof companyController
+   * @description This method allows a company to get a package associated with their dispatchers.
+   * @params req, res
+   * @return JSON object
+   */
+
+  static company_get_single_package(req, res) {
+    return Promise.try(async () => {
+      const { package_id, dispatcher_id } = req.query;
+      const _p = await Packages.findOne({
+        where: {
+          [Op.and]: [
+            {
+              package_id
+            },
+            {
+              dispatcher_id
+            }
+          ]
+        },
+        attributes: [
+          'image_urls',
+          'from_town',
+          'to_town',
+          'from_state',
+          'to_state',
+          'id',
+          'package_id',
+          'dispatcher_id',
+          'pickup_address',
+          'dropoff_address',
+          'description',
+          'is_express_delivery',
+          'pickup_time',
+          'status',
+          'type_of_dispatch',
+          'weight',
+          'value',
+          'distance',
+          'delivery_price',
+        ]
+      });
+      if (!_p) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Oops, this package does not exist anymore.',
+        })
+      }
+      return res.status(200).json({
+        status: 200,
+        data: _p,
+        message: 'package retrieved successfully',
+      })
+    }).catch(err => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    })
   }
 
 }

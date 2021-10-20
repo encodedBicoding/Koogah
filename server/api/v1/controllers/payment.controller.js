@@ -697,7 +697,7 @@ class Payment {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.FLUTTERWAVE_TEST_SECRET_KEY}`
+            Authorization: `Bearer ${process.env.FLUTTERWAVE_LIVE_SECRET_KEY}`
           },
           body: JSON.stringify(data),
         })
@@ -743,15 +743,15 @@ class Payment {
           // validate transaction
           // save to transaction table
           // update user wallet
-          var request_json = JSON.parse(req.body);
+          var request_json = req.body;
           // verify the transaction
           const response = await fetch(
-            `https://api.flutterwave.com/v3/transactions/${request_json.data.tx_ref}/verify`,
+            `https://api.flutterwave.com/v3/transactions/${request_json.data.id}/verify`,
             {
               method: 'GET',
               headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${process.env.FLUTTERWAVE_TEST_SECRET_KEY}`
+                Authorization: `Bearer ${process.env.FLUTTERWAVE_LIVE_SECRET_KEY}`
               }
             }
           ).then((resp) => resp.json()).then(res => res);
@@ -764,10 +764,11 @@ class Payment {
             });
             if (user) {
               let reference = response.data.tx_ref;
-              const amount = await client.get(reference);
+              let amount = await client.get(reference);
               if (!amount) {
-                return res.send(400);
+                return res.sendStatus(400);
               }
+              amount = Number(response.data.amount);
               const top_up_data = {
                 customer_id: user.id,
                 amount_paid: amount,
@@ -782,7 +783,7 @@ class Payment {
                 },
               });
               if (isFound) {
-                return res.send(400);
+                return res.sendStatus(400);
               }
               let refering_user;
               let virtual_balance;
@@ -899,15 +900,14 @@ class Payment {
                 device_notify_obj,
                 _notification
               );
-              return res.send(200);
-
+              res.sendStatus(200);
             }
           }
         } else {
-          res.send(400);
+          res.sendStatus(400);
         }
       } else {
-        res.send(400);
+        res.sendStatus(400);
       }
     }).catch(err => {
       log(err);

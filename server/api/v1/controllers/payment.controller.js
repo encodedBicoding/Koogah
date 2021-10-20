@@ -674,16 +674,241 @@ class Payment {
   }
 
   /**
-   * @method top_up_with_flutterwave 
+   * @method pay_with_flutter_wave_step_one
+   * @memberof Payment
+   * @params req, res
+   * @description this method allows a customer to topup their account with flutterwave. BEGIN
+   * @return JSON object
+   */
+  static pay_with_flutter_wave_step_one(req, res) {
+    return Promise.try(async () => {
+      const { user } = req.session;
+      if (Number(req.body.amount) < 500.00) {
+        return res.status(400).json({
+          status: 400,
+          error: 'You cannot deposit amount below 500 Naira',
+        });
+      }
+      const data = {
+        ...req.body,
+      }
+      return Promise.try(() => {
+        fetch('https://api.flutterwave.com/v3/payments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.FLUTTERWAVE_TEST_SECRET_KEY}`
+          },
+          body: JSON.stringify(data),
+        })
+          .then((resp) => resp.json())
+          .then((result) => {
+            client.set(`${data.tx_ref}`, data.amount);
+            return res.status(200).json({
+              status: 200,
+              message: 'Authorization URL created',
+              data: {
+                amount: data.amount,
+                customer_email: user.email,
+                ...result.data,
+              },
+            });
+          })
+      });
+    }).catch(err => {
+      log(err);
+      return res.status(400).json({
+        status: 400,
+        error: err,
+      });
+    })
+  }
+
+  /**
+   * @method flutterwave_top_up_webhook
    * @memberof Payment
    * @params req, res
    * @description this method allows a customer to topup their account with flutterwave. BEGIN
    * @return JSON object
    */
 
-  static top_up_with_flutterwave(req, res) {
+  static flutterwave_top_up_webhook(req, res) {
     return Promise.try(async () => {
-      
+      // retrieve the signature from the header
+      const hash = req.headers["verif-hash"];
+      if (hash) {
+        const secret_hash = process.env['FLUTTERWAVE_SECRET_HASH'];
+        if (secret_hash === hash) {
+          // get user
+          // validate transaction
+          // save to transaction table
+          // update user wallet
+          var request_json = JSON.parse(req.body);
+          // verify the transaction
+          const response = await fetch(
+            `https://api.flutterwave.com/v3/transactions/${request_json.data.tx_ref}/verify`,
+            {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${process.env.FLUTTERWAVE_TEST_SECRET_KEY}`
+              }
+            }
+          ).then((resp) => resp.json()).then(res => res);
+          if (response.data.status === 'successful') {
+            // get the user;
+            const user = await Customers.findOne({
+              where: {
+                email: response.data.customer.email
+              }
+            });
+            if (user) {
+              let reference = response.data.tx_ref;
+              const amount = await client.get(reference);
+              if (!amount) {
+                return res.send(400);
+              }
+              const top_up_data = {
+                customer_id: user.id,
+                amount_paid: amount,
+                reason: 'top-up',
+                fees: 0.00,
+                reference_id: reference,
+              };
+               // check if the transaction already exists
+              const isFound = await Transactions.findOne({
+                where: {
+                  reference_id: reference,
+                },
+              });
+              if (isFound) {
+                return res.send(400);
+              }
+              let refering_user;
+              let virtual_balance;
+              const total_user_balance = Number(user.virtual_balance) + Number(amount);
+              const coin = Math.floor(Number(amount) * 0.001);
+              const customer_coin_balance = Number(user.koogah_coin) + Number(coin);
+
+              // if the customer was referred by another user
+              // first check if the user is a customer
+              // if not, check if the user is a courier
+              if (user.refered_by !== null) {
+                refering_user = await Customers.findOne({
+                  where: {
+                    referal_id: user.refered_by,
+                  },
+                });
+                if (!refering_user) {
+                  refering_user = await Couriers.findOne({
+                    where: {
+                      referal_id: user.refered_by,
+                    },
+                  });
+                  if (refering_user) {
+                    virtual_balance = Number(refering_user.virtual_balance) + 200.00;
+                    await Couriers.update({
+                      virtual_balance,
+                    },
+                    {
+                      where: {
+                        referal_id: user.refered_by,
+                      },
+                    });
+                    await Customers.update({
+                      refered_by: null,
+                    },
+                    {
+                      where: {
+                        email: user.email,
+                      },
+                    });
+                  }
+                } else {
+                  virtual_balance = Number(refering_user.virtual_balance) + 200.00;
+                  await Customers.update({
+                    virtual_balance,
+                  },
+                  {
+                    where: {
+                      referal_id: user.refered_by,
+                    },
+                  });
+                  await Customers.update({
+                    refered_by: null,
+                  },
+                  {
+                    where: {
+                      email: user.email,
+                    },
+                  });
+                }
+              }
+
+              // update virtual balance of customer who paid in money
+              await Customers.update({
+                virtual_balance: total_user_balance,
+                koogah_coin: customer_coin_balance,
+              }, {
+                where: {
+                  email: user.email,
+                },
+              });
+              const transaction_detail = await Transactions.create({ ...top_up_data });
+              // send a notification to koogah business email address
+              // informing them a customer just paid to their paystack account
+              const history = {
+                amount,
+                type: 'credit',
+                title: 'Account Top up',
+                description: `Trans refID: (${reference}), SUCCESSFUL TOPUP`,
+                user_type: 'customer',
+                user_id: user.id,
+                transaction_id: transaction_detail.id,
+                image_url: 'https://www.pngrepo.com/png/262721/512/wallet.png',
+              };
+
+              await HistoryTransactions.create({ ...history });
+              const NEW_NOTIFICATION = {
+                type: 'customer',
+                email: user.email,
+                desc: 'CD002',
+                message: `Your top-up of ${amount} was successful.`,
+                title: 'New successful topup',
+              };
+              const _notification = await Notifications.create({ ...NEW_NOTIFICATION });
+              let timestamp_benchmark = moment().subtract(5, 'months').format();
+              let all_notifications = await Notifications.findAll({
+                where: {
+                  [Op.and]: [{ email: user.email }, { type: 'customer' }],
+                  created_at: {
+                    [Op.gte]: timestamp_benchmark
+                  }
+                }
+              });
+              const device_notify_obj = {
+                title: NEW_NOTIFICATION.title,
+                body: NEW_NOTIFICATION.message,
+                click_action: 'FLUTTER_NOTIFICATION_CLICK',
+                icon: 'ic_launcher'
+              };
+              await Notifier(
+                all_notifications,
+                user,
+                'customer',
+                device_notify_obj,
+                _notification
+              );
+              return res.send(200);
+
+            }
+          }
+        } else {
+          res.send(400);
+        }
+      } else {
+        res.send(400);
+      }
     }).catch(err => {
       log(err);
       return res.status(400).json({

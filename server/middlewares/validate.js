@@ -47,6 +47,7 @@ const {
   company_profile_update_schema,
   edit_dispatcher_schema,
   promoSchema,
+  price_change_schema,
 } = Schema;
 
 /**
@@ -300,6 +301,25 @@ class Validate {
     }
     return next();
   }
+
+    /**
+   * @method check_price
+   * @description This method validates new weight set by dispatcher
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+     static check_price(req, res, next) {
+      const isvalid = price_change_schema().validate(req.body);
+      if (isvalid.hasOwnProperty('error')) {
+        return res.status(400).json({
+          status: 400,
+          error: isvalid.error.details,
+        });
+      }
+      return next();
+    }
 
   /**
    * @method check_top_up_amount

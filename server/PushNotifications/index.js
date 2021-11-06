@@ -25,22 +25,30 @@ class PushNotification {
   }
 
   sendMessageCustomer(msg, tokens) {
-    this.senderCustomer.send(msg, { registrationTokens: [tokens] }, function (err, result) { 
-      if (err) {
-        throw new Error(err);
-      } else {
-        return result
-      }
-    });
+    try {
+      this.senderCustomer.send(msg, { registrationTokens: Array.isArray(tokens) ? tokens : [tokens]  }, function (err, result) { 
+        if (err) {
+          throw new Error(err);
+        } else {
+          return result
+        }
+      });
+    } catch (err) {
+      console.log(err);
+    }
   }
   sendMessageDispatcher(msg, tokens) {
-    this.senderDispatcher.send(msg, { registrationTokens: [tokens] }, function (err, result) { 
-      if (err) {
-        throw new Error(err);
-      } else {
-        return result
-      }
-    });
+    try {
+      this.senderDispatcher.send(msg, { registrationTokens: Array.isArray(tokens) ? tokens : [tokens] }, function (err, result) { 
+        if (err) {
+          throw new Error(err);
+        } else {
+          return result
+        }
+      });
+    } catch (err) {
+      console.log(err);
+    }
   }
 }
 

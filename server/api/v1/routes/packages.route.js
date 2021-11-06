@@ -8,7 +8,6 @@ import {
   multiple_upload,
   multipleMulter,
 } from '../helpers/upload.image';
-import sendDeliverySMS from '../helpers/delivery_sms';
 
 const {
   request_dispatch,

@@ -20,6 +20,7 @@ import {
   Companies,
   sequelize
 } from '../../../database/models';
+import PushNotify from '../../../PushNotifications';
 
 import geoPackageDestination from '../helpers/geo-package-destination';
 import Notifier from '../helpers/notifier';
@@ -1448,11 +1449,16 @@ class Package {
 
   static customer_view_all_package(req, res) {
     const { user } = req.session;
-    const { status } = req.query;
+    let { status, offset } = req.query;
     return Promise.try(async () => {
       let all_packages;
+      if (!offset) {
+        offset = 0;
+      }
       if (status === undefined  || status == 'all') {
         all_packages = await Packages.findAll({
+          limit: 5,
+          offset,
           where: {
             customer_id: user.id,
           },
@@ -1609,11 +1615,10 @@ class Package {
        if (dispatch_type === 'intra-state') {
         if (!to) { 
           all_package_in_marketplace = await Packages.findAll({
-            limit: 20,
+            limit: 10,
             offset,
             order: [
-              [sequelize.fn('strpos', sequelize.fn('lower', sequelize.col('from_town')), from), 'DESC'],
-              // ['createdAt', 'DESC'],
+              ['createdAt', 'DESC'],
               
             ],
             where:  {
@@ -2656,6 +2661,7 @@ class Package {
       if (type === 'intra-state') {
         data.to_state = data.from_state;
       }
+
       const origins = checkType('from', data, type);
       const destinations = checkType('to', data, type);
       distanceApi.matrix([origins], [destinations] , async function (err, result) { 
@@ -2879,10 +2885,6 @@ class Package {
       });
     }).catch(err => {
       log(err);
-      return res.status(400).json({
-       status: 400,
-        error: err,
-     });
     });
    }
 }

@@ -20,7 +20,11 @@ module.exports = (sequelize, DataTypes) => {
     platform: {
       type: DataTypes.STRING,
       allowNull: false
-    }
+    },
+    current_state_location: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
     {
     underscored: true,

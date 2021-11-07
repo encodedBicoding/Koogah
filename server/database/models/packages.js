@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     weight: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     pending_weight: {
       type: DataTypes.STRING,
@@ -156,7 +156,12 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
-    }
+    },
+    transport_mode_category: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'sm',
+    },
   },
   {
     underscored: true,

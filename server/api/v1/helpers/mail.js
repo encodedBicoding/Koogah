@@ -109,10 +109,17 @@ export const createVerificationMail = function createVerificationMail(user_email
           </ul>
           <p>
             Click the link below to verify email.
-            <p>
-              ${verify_link}
-            </p>
           </p>
+          <i style="font-size: 12px">If the Button doesn't open up the Koogah Application, press-hold the button and click on "Open in Browser" or "Open Link"</i>
+          <br/>
+          <br/>
+          <br/>
+
+          <div>
+              <a rel="noopener noreferrer" href=${verify_link} style="text-decoration: none; text-transform: uppercase; padding: 5px; border-radius: 4px; color: #fff; background-color: #f29b38"; font-weight: 800;>Verify Email</a>
+          </div>
+          <br/>
+
 
         </section>
         <section class='email_footer' style='margin-top: 40px;'>
@@ -159,10 +166,18 @@ export const createVerificationMail = function createVerificationMail(user_email
         </ul>
         <p>
           Click the link below to verify email.
-          <p>
-            ${verify_link}
-          </p>
         </p>
+        <i style="font-size: 12px">If the Button doesn't open up the Koogah Application, press-hold the button and click on "Open in Browser" or "Open Link"</i>
+        <br/>
+        <br/>
+        <br/>
+
+        <div>
+            <a rel="noopener noreferrer" href=${verify_link} style="text-decoration: none; text-transform: uppercase; padding: 5px; border-radius: 4px; color: #fff; background-color: #f29b38"; font-weight: 800;>Verify Email</a>
+        </div>
+        <br/>
+
+
 
       </section>
       <section class='email_footer' style='margin-top: 40px;'>
@@ -197,11 +212,19 @@ export const createVerificationMail = function createVerificationMail(user_email
         <br/>
         <h3>Please open this email with the phone you installed the Koogah Customer app on</h2>
         <p>
-          Click the link below to proceed.
-          <p>
-            ${verify_link}
-          </p>
+        Click the link below to verify proceed.
         </p>
+        <i style="font-size: 12px">If the Button doesn't open up the Koogah Application, press-hold the button and click on "Open in Browser" or "Open Link"</i>
+        <br/>
+        <br/>
+        <br/>
+
+        <div>
+            <a rel="noopener noreferrer" href=${verify_link} style="text-decoration: none; text-transform: uppercase; padding: 5px; border-radius: 4px; color: #fff; background-color: #f29b38"; font-weight: 800;>Verify Email</a>
+        </div>
+        <br/>
+
+
         </section>
         <section class='email_footer' style='margin-top: 40px;'>
           <p style='font-size: 50%; text-align: center;'>

@@ -187,7 +187,7 @@ class Schema {
       delivery_price: Joi.string().required(),
       distance: Joi.string().required(),
       is_express_delivery: Joi.boolean(),
-      transport_mode_category: Joi.string().valid('sm', 'm', 'l', 'xl', 'xxl').required(),
+      transport_mode_category: Joi.string().valid('sm', 'm', 'l', 'xl', 'xxl'),
     });
   }
 
@@ -217,7 +217,7 @@ class Schema {
       receiver_contact_fullname: Joi.string().required(),
       receiver_contact_phone: Joi.string().required(),
       delivery_price: Joi.string().required(),
-      transport_mode_category: Joi.string().valid('m', 'l', 'xl', 'xxl').required(),
+      transport_mode_category: Joi.string().valid('m', 'l', 'xl', 'xxl'),
 
     });
   }
@@ -250,7 +250,7 @@ class Schema {
       receiver_contact_fullname: Joi.string().required(),
       receiver_contact_phone: Joi.string().required(),
       delivery_price: Joi.string().required(),
-      transport_mode_category: Joi.string().valid('m', 'l', 'xl', 'xxl').required(),
+      transport_mode_category: Joi.string().valid('m', 'l', 'xl', 'xxl'),
     });
   }
 

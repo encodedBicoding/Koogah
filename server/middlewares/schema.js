@@ -119,6 +119,7 @@ class Schema {
   static edit_package_schema() {
     return Joi.object({
       weight: Joi.string(),
+      transport_mode_category: Joi.string().valid('sm', 'm', 'l', 'xl', 'xxl'),
       value: Joi.string().valid('0-999', '1000-9999', '10000-99999', '100000-999999', '1000000'),
       description: Joi.string(),
       payment_mode: Joi.string().valid('virtual_balance', 'koogah_coin'),
@@ -167,13 +168,13 @@ class Schema {
    */
   static intra_package_schema() {
     return Joi.object({
-      weight: Joi.string().required(),
+      weight: Joi.string(),
       value: Joi.string().valid('0-999', '1000-9999', '10000-99999', '100000-999999', '1000000'),
       description: Joi.string().required(),
       payment_mode: Joi.string().valid('virtual_balance', 'koogah_coin').required(),
       from_state: Joi.string().required(),
-      from_town: Joi.string().required(),
-      to_town: Joi.string().required(),
+      from_town: Joi.string(),
+      to_town: Joi.string(), 
       pickup_address: Joi.string().required(),
       dropoff_address: Joi.string().required(),
       image_urls: Joi.array().required(),
@@ -186,6 +187,7 @@ class Schema {
       delivery_price: Joi.string().required(),
       distance: Joi.string().required(),
       is_express_delivery: Joi.boolean(),
+      transport_mode_category: Joi.string().valid('sm', 'm', 'l', 'xl', 'xxl'),
     });
   }
 
@@ -215,6 +217,8 @@ class Schema {
       receiver_contact_fullname: Joi.string().required(),
       receiver_contact_phone: Joi.string().required(),
       delivery_price: Joi.string().required(),
+      transport_mode_category: Joi.string().valid('m', 'l', 'xl', 'xxl'),
+
     });
   }
 
@@ -246,6 +250,7 @@ class Schema {
       receiver_contact_fullname: Joi.string().required(),
       receiver_contact_phone: Joi.string().required(),
       delivery_price: Joi.string().required(),
+      transport_mode_category: Joi.string().valid('m', 'l', 'xl', 'xxl'),
     });
   }
 
@@ -287,6 +292,19 @@ class Schema {
       new_weight: Joi.string().required(),
     });
   }
+
+   /**
+   * @method price_change_schema
+   * @description This method return Joi object which delivers a schema when a dispatcher changes weight of a package
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+    static price_change_schema() {
+      return Joi.object({
+        new_price: Joi.number().required(),
+      });
+    }
   /**
    * @method amount_schema
    * @description This method return Joi object which delivers a schema to validate amount on topup
@@ -452,6 +470,7 @@ class Schema {
   static package_status_schema() {
     return Joi.object({
       status: Joi.string().valid('picked-up', 'not-picked', 'delivered', 'tracking', 'all'),
+      
     });
   }
   

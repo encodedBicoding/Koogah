@@ -17,6 +17,7 @@ import RedisStore from 'rate-limit-redis';
 import morgan from 'morgan';
 import client from './redis/redis.client';
 import RouteV1 from './api/v1/routes';
+import RouteV2 from './api/v2/routes';
 import Auth from './middlewares/auth';
 import * as Sentry from '@sentry/node';
 
@@ -113,6 +114,7 @@ app.get('/', (req, res) => res.redirect('/v1'));
 app.use(morgan('dev'));
 app.use('*', apiLimiter);
 app.use('/v1', RouteV1);
+app.use('/v2', RouteV2);
 
 app.set('title', 'Koogah');
 

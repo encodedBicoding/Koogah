@@ -247,14 +247,14 @@ export const sendNewPackageNotification = function sendNewPackageNotification(pa
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "• Package Id: `" + package_detail.package_id + "` \n• Description: `" + package_detail.description + "`\n• Weight: `" + package_detail.weight + "`\n• Value: `" + package_detail.value + "`\n• Price: `" + package_detail.delivery_price + "`\n• Delivery Key: `" + package_detail.delivery_key + " \n• Is Express Delivery: `" + package_detail.is_express_delivery + "` "
+        "text": "• Package Id: `" + package_detail.package_id + "` \n• Description: `" + package_detail.description + "`\n• Preferred Transport Mode: `" + package_detail.transport_mode_category + "`\n• Value: `" + package_detail.value + "`\n• Price: `" + package_detail.delivery_price + "`\n• Delivery Key: `" + package_detail.delivery_key + " \n• Is Express Delivery: `" + package_detail.is_express_delivery + "` "
       }
     },
     {
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "• From: `" + other.from_town + ", " + other.from_state + "` \n• To: `" + other.to_town + ", " + other.to_state + "`"
+        "text": "• From: `" + other.pickup_address + ", " + other.from_state + "` \n• To: `" + other.dropoff_address + ", " + other.to_state + "`"
       }
     }
   ])

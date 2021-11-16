@@ -206,7 +206,7 @@ class PackageV2 {
       const message = {
         pickup_state: data.from_state,
         notification_id: Math.floor(Math.random() * 1234 * 60),
-        detail: `new ${data.is_express_delivery ? 'EXPRESS' : ''} pickup @ ${data.pickup_address} to ${data.dropoff_address} for ₦${new Intl.NumberFormat('en-US').format(Number(data.delivery_price))}. You might want to pick it up, do check it out!.`
+        detail: `new ${data.is_express_delivery ? 'EXPRESS' : ''} pickup @ ${data.pickup_address} to ${data.dropoff_address} for ₦${new Intl.NumberFormat('en-US').format(Number(delivery_price))}. You might want to pick it up, do check it out!.`
       };
       const task = cron.schedule('1 * * * * *', () => {
         PackageV2.sendNewPackageCreationToDispatchersV2(message, task);
@@ -840,6 +840,7 @@ class PackageV2 {
           }
         );
         PushNotify.sendMessageDispatcher(notification_message, all_tokens);
+        task.stop();
       }).catch(err => {
         log(err);
       });

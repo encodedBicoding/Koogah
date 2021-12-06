@@ -64,7 +64,7 @@ class PackageV2 {
           } else {
             const distance_in_km = result.rows[0].elements[0].distance.text;
             const distance = Math.ceil(Number(distance_in_km.split(' ')[0].replace(',', '')));
-            const delivery_price = data.is_expresss_delivery ? Math.ceil(calc_delivery_price_v2(type, data.transport_mode_category, distance, data.value) * 2.2) : calc_delivery_price_v2(type, data.transport_mode_category, distance, data.value);
+            const delivery_price = data.is_express_delivery ? Math.ceil(calc_delivery_price_v2(type, data.transport_mode_category, distance, data.value) * 2.2) : calc_delivery_price_v2(type, data.transport_mode_category, distance, data.value);
             if (!delivery_price) {
               return res.status(400).json({
                 status: 400,

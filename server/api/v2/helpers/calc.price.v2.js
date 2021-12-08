@@ -26,7 +26,8 @@ function calc_delivery_price_v2(type, mode_category, distance, value) {
   var net_price = Math.ceil(Number(base_price) + (process.env.KOOGAH_PRICE_WEIGHT_BASE * mode_value) + (process.env.KOOGAH_PRICE_DISTANCE_BASE * Number(distance)) + (package_value === 1000 ? package_value / 100 : package_value === 10000000 ? package_value / 10000 : package_value / 1000) + sms_charge + transfer_charge);
   // add flutterwave_transfer_charge.
   const flutter_wave_transfer_charge = Math.ceil(net_price * 0.02);
-  const total_price = net_price + flutter_wave_transfer_charge;
+  const referral_percent_charge = Math.ceil(net_price * 0.08);
+  const total_price = net_price + flutter_wave_transfer_charge + referral_percent_charge;
   return total_price;
 }
 

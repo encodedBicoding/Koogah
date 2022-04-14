@@ -80,7 +80,7 @@ class CompanyController {
         first_name,
         phone: `${country_code}${phone}`,
         country_code: country_code
-      }, '168h');
+      }, undefined);
 
       let VERIFY_LINK = `${isProduction ? 'https' : 'http'}://${isProduction ? `www.${process.env.LANDING_PAGE_APP_HOST}` : 'localhost:8080'}/company/verify/email?key=${VERIFY_TOKEN}&code=COMPANY`;
 
@@ -269,7 +269,7 @@ class CompanyController {
         last_name: verifying_user.last_name,
         phone: verifying_user.phone,
       }
-      const APPROVAL_TOKEN = await jwt.sign(payload, '9000h');
+      const APPROVAL_TOKEN = await jwt.sign(payload, undefined);
       const APPROVAL_LINK = (isProduction) ? `https://www.${process.env.LANDING_PAGE_APP_HOST}/company/approval?key=${APPROVAL_TOKEN}&code=APPROVED` : `http://localhost:4000/company/approval?key=${APPROVAL_TOKEN}&code=APPROVED&type=COMPANY`;
 
       const AWAITING_COMPANY_OBJ = {
@@ -1448,7 +1448,7 @@ class CompanyController {
         email,
         first_name: isFound.first_name,
         last_name: isFound.last_name,
-      });
+      },undefined);
       const PASSWORD_RESET_LINK = `${isProduction ? 'https' : 'http'}://${process.env.LANDING_PAGE_APP_HOST}/customer/password_reset?token=${PASSWORD_RESET_TOKEN}&code=COMPANY`;
 
       const user_msg_obj = {

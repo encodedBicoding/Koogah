@@ -84,7 +84,7 @@ class UserController {
         first_name,
         mobile_number: `${country_code}${mobile_number}`,
         country_code: country_code
-      }, '168h');
+      }, undefined);
       // link hint: https://api.koogah.com
       // this should be the frontend link based on the registering user
       // not the SERVER_APP_URL
@@ -299,7 +299,7 @@ class UserController {
       is_courier: verifying_user.is_courier,
     };
 
-    const APPROVAL_TOKEN = await jwt.sign(payload, '9000h');
+    const APPROVAL_TOKEN = await jwt.sign(payload, undefined);
     const APPROVAL_LINK = (isProduction) ? `https://${process.env.DISPATCHER_MOBILE_APP_HOST}/approval?key=${APPROVAL_TOKEN}&code=APPROVED` : `http://localhost:4000/approval?key=${APPROVAL_TOKEN}&code=APPROVED`;
 
     const AWAITING_USER_OBJ = {
@@ -491,7 +491,7 @@ class UserController {
       country_code: country_code,
       last_name,
       is_courier: false,
-    }, '168h');
+    }, undefined);
     let VERIFY_LINK = '';
     if (fromApp && fromApp === 'web') {
       VERIFY_LINK = `https://www.${process.env.LANDING_PAGE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
@@ -677,7 +677,7 @@ class UserController {
     const { iat, exp, ...data } = payload;
     const SESSION_TOKEN = await jwt.sign({
       ...data,
-    });
+    }, '168h');
     const REFRESH_TOKEN = j_w_t.sign(data, process.env.SECRET_KEY);
     const NEW_NOTIFICATION = {
       email: verifying_user.email,
@@ -1192,7 +1192,7 @@ class UserController {
           first_name: isFound.first_name,
           last_name: isFound.last_name,
           account_type,
-        });
+        }, undefined);
 
         // based on the account type, 
         // determine what frontend application to send the user to.
@@ -1233,7 +1233,7 @@ class UserController {
           first_name: isFound.first_name,
           last_name: isFound.last_name,
           account_type,
-        });
+        }, undefined);
         // based on the account type, 
         // determine what frontend application to send the user to.
         const PASSWORD_RESET_LINK = `${isProduction ? 'https' : 'http'}://${process.env.CUSTOMER_MOBILE_APP_HOST}/password_reset?token=${PASSWORD_RESET_TOKEN}&code=CUSTOMER`;

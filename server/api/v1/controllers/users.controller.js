@@ -492,18 +492,17 @@ class UserController {
       last_name,
       is_courier: false,
     }, undefined);
+
     let VERIFY_LINK = '';
+    const VERIFY_CODE = generate_ref('verification').toUpperCase();
     if (fromApp && fromApp === 'web') {
       VERIFY_LINK = `https://www.${process.env.LANDING_PAGE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
     } else {
-      VERIFY_LINK = `https://${process.env.CUSTOMER_MOBILE_APP_HOST}/verify_email?key=${VERIFY_TOKEN}&code=CUSTOMER`;
+      VERIFY_LINK = VERIFY_CODE;
     }
-    const USR_OBJ = {
-      first_name,
-      last_name,
-      verify_link: VERIFY_LINK,
-    };
+
     const REFERAL_ID = generate_ref('referal');
+
 
     const codes = [
       {
@@ -511,6 +510,12 @@ class UserController {
         value: 'nigeria'
       }
     ]
+    const USR_OBJ = {
+      first_name,
+      last_name,
+      from: fromApp,
+      verify_link: VERIFY_LINK,
+    };
     const user_nationality = codes.find((c) => c.code === country_code).value;
 
     const NEW_USER = {
@@ -520,7 +525,7 @@ class UserController {
       email: email.toLowerCase(),
       password: password.trim(),
       nationality: user_nationality,
-      verify_token: VERIFY_TOKEN,
+      verify_token: VERIFY_LINK,
       referal_id: REFERAL_ID,
       refered_by: ref ? ref : null,
     };
@@ -539,8 +544,8 @@ class UserController {
       await saveToSpreadsheet('customer', spreadsheet_data);
       return res.status(200).json({
         status: 200,
-        message: 'You will receive a verification link in your provided email shortly.',
-      });s
+        message: `You will receive a verification ${fromApp && fromApp === 'web' ? 'link' : 'code'} in your provided email shortly.`,
+      });
     }).catch((err) => {
       log(err);
       return res.status(400).json({
@@ -548,6 +553,70 @@ class UserController {
         error: err,
       });
     });
+  }
+
+  /**
+   * @method signUpCustomer_StepTwo_Mobile
+   * @description This method sends verification code to the user's mobile number
+   * @memberof UserController
+   * @params req, res
+   * @return JSON object
+   */
+
+  static async signUpCustomer_StepTwo_Mobile(req, res) {
+    return Promise.try(async () => { 
+      const { code, email, country_code } = req.query;
+      const verifying_user = await Customers.findOne({
+        where: {
+          email: email
+        },
+      });
+
+      if (!verifying_user) {
+        return res.status(404).json({
+          status: 404,
+          error: 'You currently cannot perform this action. Please contact our help support and report the scenario to them. mailto:support@koogah.com',
+        });
+      }
+      if (!verifying_user.verify_token) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Oops, seems you have already verified your email and mobile number.',
+        });
+      }
+
+      if (verifying_user.verify_token !== code) { 
+        return res.status(400).json({
+          status: 400,
+          error: 'Incorrect verification code. Please try again',
+        });
+      }
+      const MOBILE_VERIFY_CODE = gen_verify_code();
+      const SMS_MESSAGE = `Your Koogah verification code is: \n${MOBILE_VERIFY_CODE}`;
+      await sendSMS(`${country_code ? country_code : '+234'}${verifying_user.mobile_number_one}`, SMS_MESSAGE);
+      await Customers.update(
+        {
+          verification_code: MOBILE_VERIFY_CODE,
+        },
+        {
+          where: {
+            email: email,
+          },
+        },
+      );
+
+      return res.status(200).json({
+        status: 200,
+        message: 'Please insert the verification code sent to the mobile number you provided on registration',
+      })
+
+     }).catch((err) => { 
+        log(err);
+        return res.status(400).json({
+          status: 400,
+          error: err,
+        });
+      })
   }
 
   /**
@@ -624,6 +693,110 @@ class UserController {
       });
     })
   }
+
+  /**
+   * @method signUpCustomer_StepThree_Mobile
+   * @description This method allows a user confirm the code sent to their mobile device.
+   * @memberof UserController
+   * @params req, res
+   * @return JSON object
+   */
+
+  static async signUpCustomer_StepThree_Mobile(req, res) { 
+    return Promise.try(async () => { 
+      const { code } = req.body;
+      const { email } = req.query;
+      const verifying_user = await Customers.findOne({
+        where: {
+          email: email,
+        },
+      });
+      if (!verifying_user) {
+        return res.status(404).json({
+          status: 404,
+          error: 'You currently cannot perform this action. Please contact our help support and report the scenerio to them. mailto:support@koogah.com',
+        });
+      }
+      if (!verifying_user.verification_code) {
+        return res.status(400).json({
+          status: 400,
+          error: 'Oops, seems you have already verified your email and mobile number.',
+        });
+      }
+      if (verifying_user.verification_code !== code) {
+        return res.status(400).json({
+          status: 400,
+          error: 'The code you supplied do not match the code you received. Please try again or resend code',
+        });
+      }
+      const data = {
+        email: verifying_user.email,
+        first_name: verifying_user.first_name,
+        last_name: verifying_user.last_name,
+        is_courier: false,
+      };
+
+      const SESSION_TOKEN = await jwt.sign({
+        ...data,
+      }, '168h');
+      const REFRESH_TOKEN = j_w_t.sign(data, process.env.SECRET_KEY);
+      const NEW_NOTIFICATION = {
+        email: verifying_user.email,
+        type: 'customer',
+        desc: 'CD001',
+        message: 'We are glad to have you onboard\nRemember to top-up your account and refer other users.\nReferring other users can earn you up to N200',
+        title: 'Welcome to Koogah',
+      };
+      await Customers.update(
+        {
+          verification_code: null,
+          verify_token: null,
+          is_verified: true,
+          is_active: true,
+          koogah_coin: 10,
+          promo_code: 'WELCOME',
+          promo_code_amount: 1500,
+        },
+        {
+          where: {
+            email: email,
+          },
+        },
+      );
+      await Notifications.create({ ...NEW_NOTIFICATION });
+      const approved_user = await Customers.findOne({
+        where: {
+          email: email,
+        },
+      });
+      client.set(`${approved_user.email}:CUSTOMER`, SESSION_TOKEN);
+      const user = {
+        token: SESSION_TOKEN,
+        refresh_token: REFRESH_TOKEN,
+        ...approved_user.getSafeDataValues(),
+      };
+      const user_obj = {
+        first_name: approved_user.first_name,
+        user_email: approved_user.email,
+        last_name: approved_user.last_name,
+      };
+      const MSG_OBJ = createCustomerPersonalizedMail(user_obj);
+      await sendMail(MSG_OBJ);
+      sendNewCustomerNotification(approved_user)
+      res.status(200).json({
+        status: 200,
+        message: 'Account created successfully',
+        data: user,
+      });
+    }).catch((err) => { 
+        log(err);
+        return res.status(400).json({
+          status: 400,
+          error: err,
+        });
+      });
+  }
+
 
   /**
    * @method signUpCustomer_StepThree
@@ -1548,6 +1721,55 @@ class UserController {
       });
     })
   }
+
+  /**
+   * @method covert_coin_to_balance
+   * @memberof UserController
+   * @description This method allows a customer covert their koogah coin to their mai balance
+   * @params req, res
+   * @return JSON object
+   */
+
+  static covert_coin_to_balance(req, res) { 
+    return Promise.try(async () => { 
+      const { user } = req.session;
+      const KOOGAH_COIN_WORTH = process.env.KOOGAH_COIN_WORTH;
+      if (Number(user.koogah_coin) > 0.00) {
+        const user_koogah_coin_balance = Number(KOOGAH_COIN_WORTH) * Number(user.koogah_coin);
+        await Customers.update({
+          virtual_balance: user_koogah_coin_balance,
+          koogah_coin: 0.00,
+        }, {
+          where: {
+            id: user.id,
+          }
+        });
+        const updated_user = await Customers.findOne({
+          where: {
+            id: user.id,
+          }
+        })
+        return res.status(200).json({
+          status: 400,
+          message: 'Coin converted successfully',
+          data: updated_user.getSafeDataValues(),
+        });
+      } else { 
+        return res.status(400).json({
+          status: 400,
+          error: 'You do not have enough koogah coin to be converted'
+        });
+      }
+
+    }).catch((error) => { 
+      log(error);
+      return res.status(400).json({
+        status: 400,
+        error
+      });
+    })
+  }
+
 }
 
 export default UserController;

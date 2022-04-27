@@ -25,6 +25,12 @@ function generate_ref(type) {
       ref += path[rand];
     }
   }
+  if (type === 'verification') { 
+    for (let i = 0; i < 5; ++i) {
+      const rand = Math.floor(Math.random() * path.length);
+      ref += path[rand];
+    }
+  }
   return ref;
 }
 

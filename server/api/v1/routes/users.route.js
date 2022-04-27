@@ -29,6 +29,9 @@ const {
   change_password,
   has_rated_dispatcher,
   send_approval_mail_to_courier,
+  signUpCustomer_StepThree_Mobile,
+  signUpCustomer_StepTwo_Mobile,
+  covert_coin_to_balance,
 } = UserController;
 
 const {
@@ -73,6 +76,10 @@ userRoute.post(
   '/customer/verify/email',
   signUpCustomer_StepTwo,
 );
+userRoute.post(
+  '/customer/verify/email/app',
+  signUpCustomer_StepTwo_Mobile,
+);
 
 userRoute.post(
   '/verify/mobile',
@@ -84,6 +91,11 @@ userRoute.post(
   '/customer/verify/mobile',
   validateMobileCode,
   signupCustomer_StepThree,
+);
+userRoute.post(
+  '/customer/verify/mobile/app',
+  validateMobileCode,
+  signUpCustomer_StepThree_Mobile,
 );
 
 userRoute.post(
@@ -210,5 +222,13 @@ userRoute.post(
 userRoute.post(
   '/spreadsheet/save',
   saveDBToSpreadSheet,
+);
+
+userRoute.post(
+  '/customer/coin/convert',
+  passport.authenticate('bearer', { session: false }),
+  checkSession,
+  isCustomerLoggedIn,
+  covert_coin_to_balance,
 );
 export default userRoute;

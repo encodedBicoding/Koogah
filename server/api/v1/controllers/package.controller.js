@@ -96,37 +96,7 @@ class Package {
             id: user.id
           }
         });
-      }else if (data.payment_mode === 'koogah_coin') {
-        // convert koogah coin to determine value;
-        // in Naira, it is worth 10 Naira.
-       const KOOGAH_COIN_WORTH = process.env.KOOGAH_COIN_WORTH;
-       const user_koogah_coin_balance = Number(KOOGAH_COIN_WORTH) * Number(user.koogah_coin);
-       // convert virtual allocated kc balance
-       const user_allocated_kc_balance = Number(KOOGAH_COIN_WORTH) * Number(user.virtual_allocated_kc_balance);
-       if (Number(delivery_price) > Number(user_koogah_coin_balance)) {
-         return res.status(400).json({
-           status: 400,
-           error: 'Sorry, you have insufficient KC balance'
-         })
-       }
-       if ((Number(user_koogah_coin_balance) - Number(user_allocated_kc_balance)) < Number(delivery_price)) {
-         return res.status(400).json({
-           status: 400,
-           error: 'Sorry, you have reached your package koogah coin balance threshhold,\n please select a different means of payment'
-         })
-       }
-       // before saving, convert it back.
-       let updated_V_A_KC_B = Number(user_allocated_kc_balance) + Number(delivery_price);
-       updated_V_A_KC_B = updated_V_A_KC_B / KOOGAH_COIN_WORTH;
-
-       await Customers.update({
-         virtual_allocated_kc_balance: updated_V_A_KC_B
-       }, {
-           where: {
-           id: user.id
-         }
-       })
-     } else {
+      }else {
        return res.status(400).json({
          status: 400,
          error: 'Invalid payment mode'

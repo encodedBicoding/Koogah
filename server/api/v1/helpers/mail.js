@@ -65,7 +65,7 @@ export function createCompanyDispatcherVerificationMail(user_email, company_obj,
  }
 
 export const createVerificationMail = function createVerificationMail(user_email, user_obj, type) {
-  let { first_name, last_name, verify_link } = user_obj;
+  let { first_name, last_name, verify_link, from } = user_obj;
   first_name = toSentenceCase.call(null, first_name);
   last_name = toSentenceCase.call(null, last_name);
   let html;
@@ -108,15 +108,14 @@ export const createVerificationMail = function createVerificationMail(user_email
               <li>If we deem you certified, you will receive an email from us</li>
           </ul>
           <p>
-            Click the link below to verify email.
+          ${'Click the link below to verify your email'}
           </p>
-          <i style="font-size: 12px">If the Button doesn't open up the Koogah Application, press-hold the button and click on "Open in Browser" or "Open Link"</i>
-          <br/>
+          ${`<i style="font-size: 12px">If the Button doesn't open up the Koogah Application, press-hold the button and click on "Open in Browser" or "Open Link"</i>`}
           <br/>
           <br/>
 
           <div>
-              <a rel="noopener noreferrer" href=${verify_link} style="text-decoration: none; text-transform: uppercase; padding: 5px; border-radius: 4px; color: #fff; background-color: #f29b38"; font-weight: 800;>Verify Email</a>
+            <a rel="noopener noreferrer" href=${verify_link} style="text-decoration: none; text-transform: uppercase; padding: 5px; border-radius: 4px; color: #fff; background-color: #f29b38"; font-weight: 800;>Verify Email</a>
           </div>
           <br/>
 
@@ -165,15 +164,14 @@ export const createVerificationMail = function createVerificationMail(user_email
             <li>Fill up our emergency contact form</li>
         </ul>
         <p>
-          Click the link below to verify email.
+        ${'Click the link below to verify your email'}
         </p>
-        <i style="font-size: 12px">If the Button doesn't open up the Koogah Application, press-hold the button and click on "Open in Browser" or "Open Link"</i>
-        <br/>
+        ${`<i style="font-size: 12px">If the Button doesn't open up the Koogah Application, press-hold the button and click on "Open in Browser" or "Open Link"</i>`}
         <br/>
         <br/>
 
         <div>
-            <a rel="noopener noreferrer" href=${verify_link} style="text-decoration: none; text-transform: uppercase; padding: 5px; border-radius: 4px; color: #fff; background-color: #f29b38"; font-weight: 800;>Verify Email</a>
+          <a rel="noopener noreferrer" href=${verify_link} style="text-decoration: none; text-transform: uppercase; padding: 5px; border-radius: 4px; color: #fff; background-color: #f29b38"; font-weight: 800;>Verify Email</a>
         </div>
         <br/>
 
@@ -207,20 +205,17 @@ export const createVerificationMail = function createVerificationMail(user_email
           <p>Thank you for joining our community. We make our dispatchers go through lots of procedures, and also taken lots of precautions,</p>
           <span> to ensure you get the most out of this platform</span>
         </section>
-        <h2>Did you register through our website?</h2>
-        <p>Please ensure you install the Koogah Customer application on your phone before clicking the link below.</p>
-        <br/>
-        <h3>Please open this email with the phone you installed the Koogah Customer app on</h2>
         <p>
-        Click the link below to verify proceed.
+        ${from && from === 'web' ? 'Click the link below to verify your email' : 'Use the code below to verify your email'}
         </p>
-        <i style="font-size: 12px">If the Button doesn't open up the Koogah Application, press-hold the button and click on "Open in Browser" or "Open Link"</i>
-        <br/>
+        ${from && from === 'web' ? `<i style="font-size: 12px">If the Button doesn't open up the Koogah Application, press-hold the button and click on "Open in Browser" or "Open Link"</i>`:''}
         <br/>
         <br/>
 
         <div>
-            <a rel="noopener noreferrer" href=${verify_link} style="text-decoration: none; text-transform: uppercase; padding: 5px; border-radius: 4px; color: #fff; background-color: #f29b38"; font-weight: 800;>Verify Email</a>
+          ${from && from === 'web'
+            ?  `<a rel="noopener noreferrer" href=${verify_link} style="text-decoration: none; text-transform: uppercase; padding: 5px; border-radius: 4px; color: #fff; background-color: #f29b38"; font-weight: 800;>Verify Email</a>`
+            : `<p style="font-weight: bolder, font-size: 1.5rem">${verify_link}</p>`}
         </div>
         <br/>
 
@@ -438,9 +433,8 @@ export const createCustomerPersonalizedMail = function createCustomerPersonalize
                   <p>We are building a community to support the ever growing e-commerce market in Nigeria, and we believe we can achieve this by providing a better logistics/delivery experience for you.</p>
                   <p>I want to thank you for joining us on this journey, and also let you know that we are here to serve you.</p>
                   <br/>
-                  <br/>
                   <h2><br>Our Dispatchers</br></h2>
-                  <p>Our aim is to decentralize the delivery system, and provide you with the finest dispatchers to fulfil all of your delivery needs.</p>
+                  <p>Our aim is to decentralize the delivery system, and provide you with the finest dispatchers to fulfill all of your delivery needs.</p>
                   <p>Our partnership with <b>VerifyMe Nigeria</br> and our <b>Rating system</br> ensures that we provide you with only the best people to fulfill your delivery needs.</p>
                   <b>Our dispatchers can be anyone with a bike, a car, a truck or other means of transportation, as long as they can deliver your package intact and on time.</b>
                   <br/>

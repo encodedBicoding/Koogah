@@ -582,7 +582,7 @@ class PackageV2 {
                 distance,
                 delivery_price,
                 payment_mode,
-                ...data
+                ...data,
               }, {
                 where: {
                   package_id,

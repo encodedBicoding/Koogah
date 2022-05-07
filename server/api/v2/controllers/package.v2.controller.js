@@ -582,7 +582,7 @@ class PackageV2 {
                 distance,
                 delivery_price,
                 payment_mode,
-                ...data
+                ...data,
               }, {
                 where: {
                   package_id,
@@ -590,7 +590,7 @@ class PackageV2 {
               })
               const updated_package = await Packages.findOne({
                 where: {
-                  package_id
+                  package_id,
                 }
               });
               return res.status(200).json({

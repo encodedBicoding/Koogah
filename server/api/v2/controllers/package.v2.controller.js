@@ -153,37 +153,7 @@ class PackageV2 {
             id: user.id
           }
         });
-      }else if (data.payment_mode === 'koogah_coin') {
-        // convert koogah coin to determine value;
-        // in Naira, it is worth 10 Naira.
-       const KOOGAH_COIN_WORTH = process.env.KOOGAH_COIN_WORTH;
-       const user_koogah_coin_balance = Number(KOOGAH_COIN_WORTH) * Number(user.koogah_coin);
-       // convert virtual allocated kc balance
-       const user_allocated_kc_balance = Number(KOOGAH_COIN_WORTH) * Number(user.virtual_allocated_kc_balance);
-       if (Number(delivery_price) > Number(user_koogah_coin_balance)) {
-         return res.status(400).json({
-           status: 400,
-           error: 'Sorry, you have insufficient KC balance'
-         })
-       }
-       if ((Number(user_koogah_coin_balance) - Number(user_allocated_kc_balance)) < Number(delivery_price)) {
-         return res.status(400).json({
-           status: 400,
-           error: 'Sorry, you have reached your package koogah coin balance threshhold,\n please select a different means of payment'
-         })
-       }
-       // before saving, convert it back.
-       let updated_V_A_KC_B = Number(user_allocated_kc_balance) + Number(delivery_price);
-       updated_V_A_KC_B = updated_V_A_KC_B / KOOGAH_COIN_WORTH;
-
-       await Customers.update({
-         virtual_allocated_kc_balance: updated_V_A_KC_B
-       }, {
-           where: {
-           id: user.id
-         }
-       })
-     } else {
+      } else {
        return res.status(400).json({
          status: 400,
          error: 'Invalid payment mode'
@@ -419,42 +389,6 @@ class PackageV2 {
             }
           })
         } 
-
-        if (_package.payment_mode === 'koogah_coin') {
-          // convert koogah coin to determine value;
-          // in Naira, it is worth 10 Naira
-          const KOOGAH_COIN_WORTH = process.env.KOOGAH_COIN_WORTH;
-          const user_koogah_coin_balance = Number(KOOGAH_COIN_WORTH) * Number(user.koogah_coin);
-
-          let user_allocated_kc_balance = Number(KOOGAH_COIN_WORTH) * Number(user.virtual_allocated_kc_balance);
-          if (Number(_package.pending_delivery_price) > Number(user_koogah_coin_balance)) {
-            return res.status(400).json({
-              status: 400,
-              error: 'Sorry, you have insufficient KC balance to approve this weight change',
-            })
-          }
-          // subtract the user alloc kc balance from the delivery price
-          if (user_allocated_kc_balance > 0) {
-            user_allocated_kc_balance = Number(user_allocated_kc_balance) - Number(_package.delivery_price);
-          } 
-          if ((Number(user_koogah_coin_balance) - Number(user_allocated_kc_balance)) < Number(_package.pending_delivery_price)) {
-            return res.status(400).json({
-              status: 400,
-              error: 'Sorry, you cannot complete this dispatch with Koogah coin, please use another payment mode'
-            })
-          }
-          let updated_V_A_KC_B = Number(user_allocated_kc_balance) + Number(_package.pending_delivery_price);
-          updated_V_A_KC_B = updated_V_A_KC_B / KOOGAH_COIN_WORTH;
-          
-          await Customers.update({
-            virtual_allocated_kc_balance: updated_V_A_KC_B
-          }, {
-              where: {
-              id: user.id
-            }
-          })
-
-        }
         await Packages.update({
           delivery_price: _package.pending_delivery_price,
           pending_delivery_price: null,
@@ -638,51 +572,7 @@ class PackageV2 {
                 }
 
                
-              } else if (payment_mode === 'koogah_coin') {
-                  // convert koogah coin to determine value;
-                  // in Naira, it is worth 10 Naira.
-                  const KOOGAH_COIN_WORTH = process.env.KOOGAH_COIN_WORTH;
-                  const user_koogah_coin_balance = Number(KOOGAH_COIN_WORTH) * Number(user.koogah_coin);
-                  let user_allocated_kc_balance = Number(KOOGAH_COIN_WORTH) * Number(user.virtual_allocated_kc_balance);
-                  if (Number(delivery_price) > Number(user_koogah_coin_balance)) {
-                    return res.status(400).json({
-                      status: 400,
-                      error: 'Sorry, you have insufficient KC balance to edit this package',
-                    })
-                  }
-                  // subtract the user alloc kc balance from the delivery price
-                  if (user_allocated_kc_balance > 0) {
-                    user_allocated_kc_balance = Number(user_allocated_kc_balance) - Number(_package.delivery_price);
-                  } 
-                  if ((Number(user_koogah_coin_balance) - Number(user_allocated_kc_balance)) < Number(delivery_price)) {
-                    return res.status(400).json({
-                      status: 400,
-                      error: 'Sorry, you cannot complete this dispatch with Koogah coin, please use another payment mode'
-                    })
-                  }
-                  let updated_V_A_KC_B = Number(user_allocated_kc_balance) + Number(delivery_price);
-                  updated_V_A_KC_B = updated_V_A_KC_B / KOOGAH_COIN_WORTH;
-                await Customers.update({
-                  virtual_allocated_kc_balance: updated_V_A_KC_B
-                }, {
-                  where: {
-                    id: user.id
-                  }
-                });
-                if (
-                  payment_mode !== _package.payment_mode
-                  && _package.payment_mode === 'virtual_balance'
-                ) {
-                  let updated_V_A_B = Number(user.virtual_allocated_balance) - Number(_package.delivery_price);
-                  await Customers.update({
-                    virtual_allocated_balance: updated_V_A_B
-                  }, {
-                    where: {
-                      id: user.id
-                    }
-                  });
-                }
-              } else {
+              }else {
                 return res.status(400).json({
                   status: 400,
                   error: 'Invalid payment mode'

@@ -1737,7 +1737,7 @@ class UserController {
       if (Number(user.koogah_coin) > 0.00) {
         const user_koogah_coin_balance = Number(KOOGAH_COIN_WORTH) * Number(user.koogah_coin);
         await Customers.update({
-          virtual_balance: user_koogah_coin_balance,
+          virtual_balance: Number(user.virtual_balance) + user_koogah_coin_balance,
           koogah_coin: 0.00,
         }, {
           where: {

@@ -479,10 +479,12 @@ class UserController {
     });
 
     if (isFound) {
-      return res.status(400).json({
-        status: 400,
-        error: 'A user with the given email already exists',
-      });
+      if (isFound.is_verified) {
+        return res.status(400).json({
+          status: 400,
+          error: 'A user with the given email already exists',
+        });
+      }
     }
     const VERIFY_TOKEN = await jwt.sign({
       email,
@@ -534,14 +536,25 @@ class UserController {
 
     return Promise.try(async () => {
       await sendMail(MSG_OBJ);
-      await Customers.create(NEW_USER);
-      const spreadsheet_data = {
-        FirstName: NEW_USER.first_name,
-        LastName: NEW_USER.last_name,
-        EmailAddress: NEW_USER.email,
-        PhoneNumber: NEW_USER.mobile_number_one,
-      };
-      await saveToSpreadsheet('customer', spreadsheet_data);
+      if (isFound) { 
+        // update
+        await Customers.update({
+          verify_token: VERIFY_LINK,
+        }, {
+          where: {
+            email: isFound.email
+          }
+        })
+      } else {
+        await Customers.create(NEW_USER);
+        const spreadsheet_data = {
+          FirstName: NEW_USER.first_name,
+          LastName: NEW_USER.last_name,
+          EmailAddress: NEW_USER.email,
+          PhoneNumber: NEW_USER.mobile_number_one,
+        };
+        await saveToSpreadsheet('customer', spreadsheet_data);
+      }
       return res.status(200).json({
         status: 200,
         message: `You will receive a verification ${fromApp && fromApp === 'web' ? 'link' : 'code'} in your provided email shortly.`,

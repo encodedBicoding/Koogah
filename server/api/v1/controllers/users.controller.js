@@ -144,6 +144,7 @@ class UserController {
         LastName: NEW_USER.last_name,
         EmailAddress: NEW_USER.email,
         PhoneNumber: NEW_USER.mobile_number,
+        State: NEW_USER.state,
       };
       await saveToSpreadsheet('courier', spreadsheet_data);
 
@@ -521,6 +522,7 @@ class UserController {
     const user_nationality = codes.find((c) => c.code === country_code).value;
 
     const NEW_USER = {
+      ...req.body,
       first_name: first_name.toLowerCase(),
       last_name: last_name.toLowerCase(),
       mobile_number_one,
@@ -552,6 +554,7 @@ class UserController {
           LastName: NEW_USER.last_name,
           EmailAddress: NEW_USER.email,
           PhoneNumber: NEW_USER.mobile_number_one,
+          State: NEW_USER.state,
         };
         await saveToSpreadsheet('customer', spreadsheet_data);
       }

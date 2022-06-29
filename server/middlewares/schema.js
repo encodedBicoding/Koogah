@@ -96,6 +96,7 @@ class Schema {
       email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
       password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
       mobile_number_one: Joi.string().min(10).max(11).required(),
+      state: Joi.string(),
     });
   }
   /**

@@ -35,6 +35,7 @@ import {
   sendPackageDeliveredNotification
 } from '../helpers/slack';
 import sendMail, { createCompanyDispatcherApproveOrDecline, createDeliveryReceipt } from '../helpers/mail';
+import { getCorporatePriceSlashed, getIndividualPriceSlashed } from '../helpers/slashed_delivery_price';
 
 const cron = require('node-cron');
 
@@ -1277,10 +1278,16 @@ class Package {
           error: 'You are not authorized to view this package details',
         });
       }
+      // work on delivery price response;
+      const packageRes = {
+        ..._package.dataValues,
+        main_delivery_price: _package.delivery_price,
+        delivery_price: user.is_cooperate ? getCorporatePriceSlashed(_package.delivery_price) : getIndividualPriceSlashed(_package.delivery_price),
+      }
       return res.status(200).json({
         status: 200,
         message: 'Package retreived successfully',
-        data: _package,
+        data: packageRes,
       });
     }).catch((err) => {
       log(err);
@@ -1893,7 +1900,6 @@ class Package {
           })
          }
        }
-
        return res.status(200).json({
          status: 200,
          message: 'packages retrieved successfully',

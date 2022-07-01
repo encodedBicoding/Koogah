@@ -1449,7 +1449,7 @@ class CompanyController {
         first_name: isFound.first_name,
         last_name: isFound.last_name,
       },undefined);
-      const PASSWORD_RESET_LINK = `${isProduction ? 'https' : 'http'}://${process.env.LANDING_PAGE_APP_HOST}/customer/password_reset?token=${PASSWORD_RESET_TOKEN}&code=COMPANY`;
+      const PASSWORD_RESET_LINK = `${isProduction ? 'https' : 'http'}://${process.env.LANDING_PAGE_APP_HOST}/company/password_reset?token=${PASSWORD_RESET_TOKEN}&code=COMPANY&screen=2`;
 
       const user_msg_obj = {
         first_name: isFound.first_name,
@@ -1504,7 +1504,7 @@ class CompanyController {
       const isFound = await Companies.findOne(
         {
           where: {
-            email: isFound.email
+            email: USER.email
           }
         }
       );

@@ -1449,7 +1449,7 @@ class CompanyController {
         first_name: isFound.first_name,
         last_name: isFound.last_name,
       },undefined);
-      const PASSWORD_RESET_LINK = `${isProduction ? 'https' : 'http'}://${process.env.LANDING_PAGE_APP_HOST}/company/password_reset?token=${PASSWORD_RESET_TOKEN}&code=COMPANY&screen=2`;
+      const PASSWORD_RESET_LINK = `${isProduction ? 'https://www.' : 'http://'}${process.env.LANDING_PAGE_APP_HOST}/company/password_reset?token=${PASSWORD_RESET_TOKEN}&screen=2`;
 
       const user_msg_obj = {
         first_name: isFound.first_name,
@@ -1542,7 +1542,7 @@ class CompanyController {
       );
       return res.status(200).json({
         status: 200,
-        message: 'Password reset successful'
+        message: 'Password reset successful, please login'
       })
 
     }).catch((err) => {

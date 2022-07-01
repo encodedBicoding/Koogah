@@ -23,6 +23,7 @@ import {
   PushDevices,
 } from '../../../database/models';
 import PushNotify from '../../../PushNotifications';
+import { getCorporatePriceSlashed, getIndividualPriceSlashed } from '../../v1/helpers/slashed_delivery_price';
 
 config();
 distanceApi.key(process.env.GOOGLE_API_KEY);
@@ -1069,11 +1070,25 @@ class PackageV2 {
         })
       }
     }
+    const {count, rows} = all_package_in_marketplace;
+
+
+    const packagesRes = rows.map((row) => {
+      const rowData = row.dataValues;
+      return {
+        main_delivery_price: rowData.delivery_price,
+        ...rowData,
+        delivery_price: user.is_cooperate ? getCorporatePriceSlashed(rowData.delivery_price) : getIndividualPriceSlashed(rowData.delivery_price)
+      }
+    })
 
     return res.status(200).json({
       status: 200,
       message: 'packages retrieved successfully',
-      data: all_package_in_marketplace,
+      data:{
+        count,
+        rows: packagesRes, 
+      },
     })
   }).catch((error) => {
     log(error);

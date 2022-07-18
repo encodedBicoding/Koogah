@@ -207,12 +207,15 @@ if (cluster.isMaster) {
   eventEmitter.on('unsubscribe', async function (msg) {
     try {
       const m = JSON.stringify(msg);
-      WsServer.clients.forEach((client) => {
+      WsServer.clients.forEach( async (client) => {
         if (
           client.connectionId === msg.connectionId
           && client.readyState == WebSocket.OPEN
         ) {
           client.send(m);
+          let response = await socketFunction.unsubscribe(msg);
+          if (!response) return false;
+          client.subscribed_channels = response;
         }
       })
 

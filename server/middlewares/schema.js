@@ -119,7 +119,7 @@ class Schema {
    */
   static edit_package_schema() {
     return Joi.object({
-      weight: Joi.string(),
+      weight: Joi.string().optional(),
       transport_mode_category: Joi.string().valid('sm', 'm', 'l', 'xl', 'xxl'),
       value: Joi.string().valid('0-999', '1000-9999', '10000-99999', '100000-999999', '1000000'),
       description: Joi.string(),

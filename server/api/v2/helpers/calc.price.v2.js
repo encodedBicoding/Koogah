@@ -58,7 +58,6 @@ export class PriceCalculator {
     const referral_percent_charge = Math.ceil(net_price * 0.08)
     const total_price =
       net_price + flutter_wave_transfer_charge + referral_percent_charge
-    console.log('total', total_price)
     return Math.round(total_price / 10) * 10
   }
   async lagosPrice(
@@ -94,9 +93,8 @@ export class PriceCalculator {
   ) {
     let netPrice = 0
     let distance =
-      Math.ceil(
-        Number(dist_ance) > 10 ? Number(dist_ance) * 0.25 : Number(dist_ance),
-      ) * process.env.KOOGAH_PRICE_DISTANCE_BASE
+      Math.ceil(Number(dist_ance) * 0.23) *
+      process.env.KOOGAH_PRICE_DISTANCE_BASE
     let package_value =
       package__value === 1000
         ? package__value / 100

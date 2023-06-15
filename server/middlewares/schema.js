@@ -1,7 +1,6 @@
 /* eslint-disable camelcase */
 /* eslint-disable max-len */
-import Joi from '@hapi/joi';
-
+import Joi from '@hapi/joi'
 
 /**
  * @class Schema
@@ -16,11 +15,12 @@ class Schema {
    */
   static courierSignupSchema() {
     return Joi.object({
-      first_name: Joi.string().trim().min(2).max(30)
+      first_name: Joi.string().trim().min(2).max(30).required(),
+      last_name: Joi.string().trim().min(2).max(30).required(),
+      email: Joi.string()
+        .trim()
+        .email({minDomainSegments: 2, tlds: {allow: ['com', 'net']}})
         .required(),
-      last_name: Joi.string().trim().min(2).max(30)
-        .required(),
-      email: Joi.string().trim().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
       mobile_number: Joi.string().min(10).max(11).required(),
       identification_number: Joi.string().required(),
       sex: Joi.string().valid('M', 'F').required(),
@@ -32,7 +32,7 @@ class Schema {
       owns_automobile: Joi.boolean(),
       done_dispatch_before: Joi.boolean(),
       profile_image: Joi.string().required(),
-    });
+    })
   }
 
   /**
@@ -50,7 +50,7 @@ class Schema {
       amount: Joi.number(),
       type: Joi.string().valid('promo', 'broadcast'),
       new_users_email: Joi.array(),
-    });
+    })
   }
   /**
    * @method courierApprovalSchema
@@ -61,12 +61,13 @@ class Schema {
 
   static courierApprovalSchema() {
     return Joi.object({
-      password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
+      password: Joi.string()
+        .pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/)
+        .required(),
       bank_name: Joi.string().required(),
       account_number: Joi.string().required(),
-    });
+    })
   }
-
 
   /**
    * @method courierMobileCodeSchema
@@ -78,7 +79,7 @@ class Schema {
   static courierMobileCodeSchema() {
     return Joi.object({
       code: Joi.number().integer().required(),
-    });
+    })
   }
 
   /**
@@ -93,11 +94,15 @@ class Schema {
       first_name: Joi.string().min(2).max(30).required(),
       last_name: Joi.string().min(2).max(30).required(),
       country_code: Joi.string().required(),
-      email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-      password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
+      email: Joi.string()
+        .email({minDomainSegments: 2, tlds: {allow: ['com', 'net']}})
+        .required(),
+      password: Joi.string()
+        .pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/)
+        .required(),
       mobile_number_one: Joi.string().min(10).max(11).required(),
       state: Joi.string(),
-    });
+    })
   }
   /**
    * @method delivery_type_schema
@@ -108,7 +113,7 @@ class Schema {
   static delivery_type_schema() {
     return Joi.object({
       type: Joi.string().valid('intra', 'inter', 'international').required(),
-    });
+    })
   }
 
   /**
@@ -121,7 +126,13 @@ class Schema {
     return Joi.object({
       weight: Joi.string().optional(),
       transport_mode_category: Joi.string().valid('sm', 'm', 'l', 'xl', 'xxl'),
-      value: Joi.string().valid('0-999', '1000-9999', '10000-99999', '100000-999999', '1000000'),
+      value: Joi.string().valid(
+        '0-999',
+        '1000-9999',
+        '10000-99999',
+        '100000-999999',
+        '1000000',
+      ),
       description: Joi.string(),
       payment_mode: Joi.string().valid('virtual_balance', 'koogah_coin'),
       from_country: Joi.string(),
@@ -142,7 +153,7 @@ class Schema {
       receiver_contact_phone: Joi.string(),
       type_of_dispatch: Joi.string(),
       is_express_delivery: Joi.boolean(),
-    });
+    })
   }
 
   /**
@@ -157,9 +168,8 @@ class Schema {
       first_name: Joi.string(),
       last_name: Joi.string(),
       mobile_number: Joi.string(),
-    });
+    })
   }
-
 
   /**
    * @method intra_package_schema
@@ -170,12 +180,20 @@ class Schema {
   static intra_package_schema() {
     return Joi.object({
       weight: Joi.string(),
-      value: Joi.string().valid('0-999', '1000-9999', '10000-99999', '100000-999999', '1000000'),
+      value: Joi.string().valid(
+        '0-999',
+        '1000-9999',
+        '10000-99999',
+        '100000-999999',
+        '1000000',
+      ),
       description: Joi.string().required(),
-      payment_mode: Joi.string().valid('virtual_balance', 'koogah_coin').required(),
+      payment_mode: Joi.string()
+        .valid('virtual_balance', 'koogah_coin')
+        .required(),
       from_state: Joi.string().required(),
       from_town: Joi.string(),
-      to_town: Joi.string(), 
+      to_town: Joi.string(),
       pickup_address: Joi.string().required(),
       dropoff_address: Joi.string().required(),
       image_urls: Joi.array().required(),
@@ -189,7 +207,7 @@ class Schema {
       distance: Joi.string().required(),
       is_express_delivery: Joi.boolean(),
       transport_mode_category: Joi.string().valid('sm', 'm', 'l', 'xl', 'xxl'),
-    });
+    })
   }
 
   /**
@@ -201,9 +219,17 @@ class Schema {
   static inter_package_schema() {
     return Joi.object({
       weight: Joi.string().required(),
-      value: Joi.string().valid('0-999', '1000-9999', '10000-99999', '100000-999999', '1000000'),
+      value: Joi.string().valid(
+        '0-999',
+        '1000-9999',
+        '10000-99999',
+        '100000-999999',
+        '1000000',
+      ),
       description: Joi.string().required(),
-      payment_mode: Joi.string().valid('virtual_balance', 'koogah_coin').required(),
+      payment_mode: Joi.string()
+        .valid('virtual_balance', 'koogah_coin')
+        .required(),
       from_state: Joi.string().required(),
       to_state: Joi.string().required(),
       from_town: Joi.string().required(),
@@ -219,8 +245,7 @@ class Schema {
       receiver_contact_phone: Joi.string().required(),
       delivery_price: Joi.string().required(),
       transport_mode_category: Joi.string().valid('m', 'l', 'xl', 'xxl'),
-
-    });
+    })
   }
 
   /**
@@ -232,9 +257,17 @@ class Schema {
   static international_package_schema() {
     return Joi.object({
       weight: Joi.string().required(),
-      value: Joi.string().valid('0-999', '1000-9999', '10000-99999', '100000-999999', '1000000'),
+      value: Joi.string().valid(
+        '0-999',
+        '1000-9999',
+        '10000-99999',
+        '100000-999999',
+        '1000000',
+      ),
       description: Joi.string().required(),
-      payment_mode: Joi.string().valid('virtual_balance', 'koogah_coin').required(),
+      payment_mode: Joi.string()
+        .valid('virtual_balance', 'koogah_coin')
+        .required(),
       from_country: Joi.string().required(),
       to_country: Joi.string().required(),
       from_state: Joi.string().required(),
@@ -252,7 +285,7 @@ class Schema {
       receiver_contact_phone: Joi.string().required(),
       delivery_price: Joi.string().required(),
       transport_mode_category: Joi.string().valid('m', 'l', 'xl', 'xxl'),
-    });
+    })
   }
 
   /**
@@ -265,7 +298,7 @@ class Schema {
   static package_id_schema() {
     return Joi.object({
       package_id: Joi.string().required(),
-    });
+    })
   }
 
   /**
@@ -278,7 +311,7 @@ class Schema {
   static response_schema() {
     return Joi.object({
       response: Joi.string().valid('approve', 'decline').required(),
-    });
+    })
   }
 
   /**
@@ -291,21 +324,21 @@ class Schema {
   static weight_change_schema() {
     return Joi.object({
       new_weight: Joi.string().required(),
-    });
+    })
   }
 
-   /**
+  /**
    * @method price_change_schema
    * @description This method return Joi object which delivers a schema when a dispatcher changes weight of a package
    * @memberof Schema
    * @return Joi Object
    */
 
-    static price_change_schema() {
-      return Joi.object({
-        new_price: Joi.number().required(),
-      });
-    }
+  static price_change_schema() {
+    return Joi.object({
+      new_price: Joi.number().required(),
+    })
+  }
   /**
    * @method amount_schema
    * @description This method return Joi object which delivers a schema to validate amount on topup
@@ -316,7 +349,7 @@ class Schema {
   static amount_schema() {
     return Joi.object({
       amount: Joi.number().integer().required(),
-    });
+    })
   }
 
   /**
@@ -326,10 +359,10 @@ class Schema {
    * @return Joi Object
    */
 
-   static company_amount_schema() {
+  static company_amount_schema() {
     return Joi.object({
       bank_code: Joi.string().required(),
-    });
+    })
   }
 
   /**
@@ -341,9 +374,8 @@ class Schema {
   static top_up_amount_schema_two() {
     return Joi.object({
       reference: Joi.string().required(),
-    });
+    })
   }
-
 
   /**
    * @method pay_dispatcher_schema
@@ -355,9 +387,8 @@ class Schema {
   static pay_dispatcher_schema() {
     return Joi.object({
       package_id: Joi.string().required(),
-    });
+    })
   }
-
 
   /**
    * @method sign_in_schema
@@ -368,9 +399,13 @@ class Schema {
 
   static sign_in_schema() {
     return Joi.object({
-      email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-      password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
-    });
+      email: Joi.string()
+        .email({minDomainSegments: 2, tlds: {allow: ['com', 'net']}})
+        .required(),
+      password: Joi.string()
+        .pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/)
+        .required(),
+    })
   }
 
   /**
@@ -383,9 +418,9 @@ class Schema {
   static dispatcher_id_schema() {
     return Joi.object({
       dispatcher_id: Joi.number().required(),
-    });
+    })
   }
-   /**
+  /**
    * @method  courier_rating_schema_params
    * @description This method return Joi object which delivers a schema to rate a courier
    * @memberof Schema
@@ -396,9 +431,9 @@ class Schema {
     return Joi.object({
       dispatcher_id: Joi.number().required(),
       package_id: Joi.string().required(),
-    });
+    })
   }
-     /**
+  /**
    * @method  customer_rating_schema_params
    * @description This method return Joi object which delivers a schema to rate a courier
    * @memberof Schema
@@ -409,7 +444,7 @@ class Schema {
     return Joi.object({
       customer_id: Joi.number().required(),
       package_id: Joi.string().required(),
-    });
+    })
   }
 
   /**
@@ -422,7 +457,7 @@ class Schema {
   static rating_schema() {
     return Joi.object({
       rating: Joi.string().valid('1', '2', '3', '4', '5').required(),
-    });
+    })
   }
 
   /**
@@ -433,8 +468,8 @@ class Schema {
    */
   static decline_pickup_body_schema() {
     return Joi.object({
-      decline_cause: Joi.string().required()
-    });
+      decline_cause: Joi.string().required(),
+    })
   }
 
   /**
@@ -447,7 +482,7 @@ class Schema {
   static notify_id_schema() {
     return Joi.object({
       id: Joi.number().required(),
-    });
+    })
   }
   /**
    * @method profile_id_schema
@@ -459,7 +494,7 @@ class Schema {
   static profile_id_schema() {
     return Joi.object({
       id: Joi.number().required(),
-    });
+    })
   }
 
   /**
@@ -470,11 +505,16 @@ class Schema {
    */
   static package_status_schema() {
     return Joi.object({
-      status: Joi.string().valid('picked-up', 'not-picked', 'delivered', 'tracking', 'all'),
-      
-    });
+      status: Joi.string().valid(
+        'picked-up',
+        'not-picked',
+        'delivered',
+        'tracking',
+        'all',
+      ),
+    })
   }
-  
+
   /**
    * @method deliver_package_schema
    * @description This method return Joi object which delivers a schema for package status
@@ -485,7 +525,7 @@ class Schema {
     return Joi.object({
       package_id: Joi.string().required(),
       delivery_key: Joi.string().required(),
-    });
+    })
   }
   /**
    * @method courier_profile_update_schema
@@ -503,9 +543,9 @@ class Schema {
       profile_image: Joi.string(),
       account_number: Joi.string(),
       bank_name: Joi.string(),
-    });
+    })
   }
-  
+
   /**
    * @method company_profile_update_schema
    * @description This method return Joi object which delivers a schema for company profile update
@@ -526,8 +566,8 @@ class Schema {
       business_address: Joi.string().trim(),
       business_state: Joi.sstring().trim(),
       business_town: Joi.string().trim(),
-      business_country:Joi.string().trim(),
-    });
+      business_country: Joi.string().trim(),
+    })
   }
 
   /**
@@ -541,14 +581,17 @@ class Schema {
     return Joi.object({
       mobile_number_one: Joi.string().min(10).max(11),
       mobile_number_two: Joi.string().min(10).max(11),
-      email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }),
+      email: Joi.string().email({
+        minDomainSegments: 2,
+        tlds: {allow: ['com', 'net']},
+      }),
       first_name: Joi.string(),
       last_name: Joi.string(),
       state: Joi.string(),
       town: Joi.string(),
       address: Joi.string(),
       profile_image: Joi.string().allow(null, ''),
-    });
+    })
   }
 
   /**
@@ -560,7 +603,7 @@ class Schema {
   static report_user_schema() {
     return Joi.object({
       report: Joi.string().required(),
-    });
+    })
   }
 
   /**
@@ -573,7 +616,7 @@ class Schema {
     return Joi.object({
       package_id: Joi.string().required(),
       dispatcher_id: Joi.string().required(),
-    });
+    })
   }
 
   /**
@@ -585,8 +628,10 @@ class Schema {
 
   static password_reset_request_schema() {
     return Joi.object({
-      email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-      account_type: Joi.string().valid('courier', 'customer').required()
+      email: Joi.string()
+        .email({minDomainSegments: 2, tlds: {allow: ['com', 'net']}})
+        .required(),
+      account_type: Joi.string().valid('courier', 'customer').required(),
     })
   }
 
@@ -599,7 +644,9 @@ class Schema {
 
   static reset_password_schema() {
     return Joi.object({
-      new_password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
+      new_password: Joi.string()
+        .pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/)
+        .required(),
     })
   }
 
@@ -635,12 +682,16 @@ class Schema {
    * @description This method return Joi object which enables a user to change password
    * @memberof Schema
    * @return Joi Object
-  */
-  
-  static change_password_schema() { 
+   */
+
+  static change_password_schema() {
     return Joi.object({
-      old_password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
-      new_password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
+      old_password: Joi.string()
+        .pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/)
+        .required(),
+      new_password: Joi.string()
+        .pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/)
+        .required(),
     })
   }
 
@@ -649,8 +700,8 @@ class Schema {
    * @description This method return Joi object which enables a company signup
    * @memberof Schema
    * @return Joi Object
-  */
-  
+   */
+
   static company_signup_schema() {
     return Joi.object({
       business_name: Joi.string().trim().required(),
@@ -658,24 +709,30 @@ class Schema {
       first_name: Joi.string().trim().min(2).max(30).required(),
       last_name: Joi.string().trim().min(2).max(30).required(),
       country_code: Joi.string().trim().required(),
-      email: Joi.string().trim().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
+      email: Joi.string()
+        .trim()
+        .email({minDomainSegments: 2, tlds: {allow: ['com', 'net']}})
+        .required(),
       phone: Joi.string().min(10).max(11).required(),
       business_address: Joi.string().trim().required(),
       business_state: Joi.string().trim().required(),
       business_town: Joi.string().trim().required(),
       business_country: Joi.string().trim().required(),
-    });
+    })
   }
   /**
    * @method email_verify_schema
    * @description This method return Joi object which verifies email alone
    * @memberof Schema
    * @return Joi Object
-  */
+   */
   static email_verify_schema() {
     return Joi.object({
-      email: Joi.string().trim().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-    });
+      email: Joi.string()
+        .trim()
+        .email({minDomainSegments: 2, tlds: {allow: ['com', 'net']}})
+        .required(),
+    })
   }
 
   /**
@@ -683,13 +740,16 @@ class Schema {
    * @description This method return Joi object which verifies email and verify code
    * @memberof Schema
    * @return Joi Object
-  */
-  
+   */
+
   static code_email_schema() {
     return Joi.object({
       email_verify_code: Joi.string().trim().required(),
-      email: Joi.string().trim().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-    });
+      email: Joi.string()
+        .trim()
+        .email({minDomainSegments: 2, tlds: {allow: ['com', 'net']}})
+        .required(),
+    })
   }
 
   /**
@@ -697,13 +757,16 @@ class Schema {
    * @description This method return Joi object which verifies email and verify code
    * @memberof Schema
    * @return Joi Object
-  */
-  
-   static mobile_code_email_schema() {
+   */
+
+  static mobile_code_email_schema() {
     return Joi.object({
       mobile_verify_code: Joi.string().trim().required(),
-      email: Joi.string().trim().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-    });
+      email: Joi.string()
+        .trim()
+        .email({minDomainSegments: 2, tlds: {allow: ['com', 'net']}})
+        .required(),
+    })
   }
 
   /**
@@ -711,37 +774,75 @@ class Schema {
    * @description This method return Joi object which verifies mobile number, email, country_code
    * @memberof Schema
    * @return Joi Object
-  */
-   static company_reg_dispatcher_step_three_schema() {
+   */
+  static company_reg_dispatcher_step_three_schema() {
     return Joi.object({
       mobile_number: Joi.string().trim().required(),
       country_code: Joi.string().trim().required(),
-      email: Joi.string().trim().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-    });
-   }
-  
+      email: Joi.string()
+        .trim()
+        .email({minDomainSegments: 2, tlds: {allow: ['com', 'net']}})
+        .required(),
+    })
+  }
+
   /**
    * @method company_reg_dispatcher_step_five_schema
    * @description This method return Joi object which verifies the complete company dispatcher
    * @memberof Schema
    * @return Joi Object
-  */
+   */
   static company_reg_dispatcher_step_five_schema() {
     return Joi.object({
       profile_image: Joi.string().trim().required(),
       first_name: Joi.string().trim().required(),
       last_name: Joi.string().trim().required(),
-      email: Joi.string().trim().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-      password: Joi.string().pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
+      email: Joi.string()
+        .trim()
+        .email({minDomainSegments: 2, tlds: {allow: ['com', 'net']}})
+        .required(),
+      password: Joi.string()
+        .pattern(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/)
+        .required(),
       state: Joi.string().trim().required(),
       town: Joi.string().trim().required(),
       address: Joi.string().trim().required(),
       nationality: Joi.string().trim().required(),
       sex: Joi.string().valid('M', 'F').required(),
-    });
+    })
   }
-  
+
+  /**
+   * @method create_single_package_of_multiple_schema
+   * @description This method return Joi object which verifies data sent to create a single package of multiple delivery
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static create_single_package_of_multiple_schema() {
+    return Joi.object({
+      value: Joi.string()
+        .valid('0-999', '1000-9999', '10000-99999', '100000-999999', '1000000')
+        .required(),
+      description: Joi.string().required(),
+      pickup_address: Joi.string().required(),
+      dropoff_address: Joi.string().required(),
+      from_state: Joi.string().required(),
+      from_town: Joi.string(),
+      to_town: Joi.string(),
+      image_urls: Joi.array().required(),
+      landmark: Joi.string(),
+      pickup_landmark: Joi.string(),
+      contact_name: Joi.string().required(),
+      contact_phone: Joi.string().required(),
+      receiver_contact_fullname: Joi.string().required(),
+      receiver_contact_phone: Joi.string().required(),
+      transport_mode_category: Joi.string()
+        .valid('sm', 'm', 'l', 'xl', 'xxl')
+        .required(),
+      multiple_delivery_id: Joi.number().optional(),
+    })
+  }
 }
 
-
-export default Schema;
+export default Schema

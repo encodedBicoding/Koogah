@@ -566,6 +566,27 @@ class PackageV2 {
               error: 'Invalid operation, cannot edit this package',
             })
           }
+          await Packages.update(
+            {
+              payment_mode,
+              ...data,
+            },
+            {
+              where: {
+                package_id,
+              },
+            },
+          )
+          const updated_package = await Packages.findOne({
+            where: {
+              package_id,
+            },
+          })
+          return res.status(200).json({
+            status: 200,
+            message: 'Package updated successfully',
+            data: updated_package,
+          })
         } else {
           return res.status(400).json({
             status: 404,

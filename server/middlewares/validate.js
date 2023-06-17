@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 /* eslint-disable no-prototype-builtins */
-import Schema from './schema';
+import Schema from './schema'
 
 const {
   courierSignupSchema,
@@ -48,7 +48,9 @@ const {
   edit_dispatcher_schema,
   promoSchema,
   price_change_schema,
-} = Schema;
+  create_single_package_of_multiple_schema,
+  multiple_delivery_id_schema,
+} = Schema
 
 /**
  * @class Validate
@@ -64,16 +66,15 @@ class Validate {
    * @return next
    */
   static courierSignup(req, res, next) {
-    const isvalid = courierSignupSchema().validate(req.body);
+    const isvalid = courierSignupSchema().validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
-
 
   /**
    * @method promoCodeSend
@@ -84,14 +85,14 @@ class Validate {
    */
 
   static promoCodeSend(req, res, next) {
-    const isvalid = promoSchema().validate(req.body);
+    const isvalid = promoSchema().validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
   /**
@@ -102,15 +103,15 @@ class Validate {
    * @return next
    */
 
-   static courierApproveAccount(req, res, next) {
-    const isvalid = courierApprovalSchema().validate(req.body);
+  static courierApproveAccount(req, res, next) {
+    const isvalid = courierApprovalSchema().validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
   /**
@@ -121,14 +122,14 @@ class Validate {
    * @return next
    */
   static validateMobileCode(req, res, next) {
-    const isvalid = courierMobileCodeSchema().validate(req.body);
+    const isvalid = courierMobileCodeSchema().validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
   /**
@@ -140,14 +141,14 @@ class Validate {
    */
 
   static customerSignup(req, res, next) {
-    const isvalid = customerSignupSchema().validate(req.body);
+    const isvalid = customerSignupSchema().validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
   /**
    * @method edit_package
@@ -158,17 +159,17 @@ class Validate {
    */
 
   static check_edit_package(req, res, next) {
-    const isvalid = edit_package_schema().validate(req.body);
+    const isvalid = edit_package_schema().validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
-    /**
+  /**
    * @method check_edit_dispatcher
    * @description This method validates the input from company edit dispatcher
    * @memberof Validate
@@ -176,16 +177,16 @@ class Validate {
    * @return next
    */
 
-     static check_edit_dispatcher(req, res, next) {
-      const isvalid = edit_dispatcher_schema().validate(req.body);
-      if (isvalid.hasOwnProperty('error')) {
-        return res.status(400).json({
-          status: 400,
-          error: isvalid.error.details,
-        });
-      }
-      return next();
+  static check_edit_dispatcher(req, res, next) {
+    const isvalid = edit_dispatcher_schema().validate(req.body)
+    if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      })
     }
+    return next()
+  }
 
   /**
    * @method create_package
@@ -196,36 +197,36 @@ class Validate {
    */
 
   static create_package(req, res, next) {
-    const { type } = req.params;
-    let isvalid;
+    const {type} = req.params
+    let isvalid
     if (type === 'intra') {
-      isvalid = intra_package_schema().validate(req.body);
+      isvalid = intra_package_schema().validate(req.body)
       if (isvalid.hasOwnProperty('error')) {
         return res.status(400).json({
           status: 400,
           error: isvalid.error.details,
-        });
+        })
       }
     }
     if (type === 'inter') {
-      isvalid = inter_package_schema().validate(req.body);
+      isvalid = inter_package_schema().validate(req.body)
       if (isvalid.hasOwnProperty('error')) {
         return res.status(400).json({
           status: 400,
           error: isvalid.error.details,
-        });
+        })
       }
     }
     if (type === 'international') {
-      isvalid = international_package_schema().validate(req.body);
+      isvalid = international_package_schema().validate(req.body)
       if (isvalid.hasOwnProperty('error')) {
         return res.status(400).json({
           status: 400,
           error: isvalid.error.details,
-        });
+        })
       }
     }
-    return next();
+    return next()
   }
   /**
    * @method check_package_id
@@ -236,17 +237,36 @@ class Validate {
    */
 
   static check_package_id(req, res, next) {
-    const isvalid = package_id_schema().validate(req.params);
+    const isvalid = package_id_schema().validate(req.params)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
-    /**
+  /**
+   * @method check_multiple_delivery_id
+   * @description This method validates multiple_delivery_id
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_multiple_delivery_id(req, res, next) {
+    const isvalid = multiple_delivery_id_schema().validate(req.params)
+    if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      })
+    }
+    return next()
+  }
+
+  /**
    * @method check_approve_decline_package
    * @description This method validates package_id and dispatcher_id
    * @memberof Validate
@@ -255,14 +275,14 @@ class Validate {
    */
 
   static check_approve_decline_package(req, res, next) {
-    const isvalid = approve_decline_package_schema().validate(req.params);
+    const isvalid = approve_decline_package_schema().validate(req.params)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
   /**
@@ -273,14 +293,14 @@ class Validate {
    * @return next
    */
   static check_response(req, res, next) {
-    const isvalid = response_schema().validate(req.query);
+    const isvalid = response_schema().validate(req.query)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
   /**
@@ -292,17 +312,17 @@ class Validate {
    */
 
   static check_weight(req, res, next) {
-    const isvalid = weight_change_schema().validate(req.body);
+    const isvalid = weight_change_schema().validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
-    /**
+  /**
    * @method check_price
    * @description This method validates new weight set by dispatcher
    * @memberof Validate
@@ -310,16 +330,16 @@ class Validate {
    * @return next
    */
 
-     static check_price(req, res, next) {
-      const isvalid = price_change_schema().validate(req.body);
-      if (isvalid.hasOwnProperty('error')) {
-        return res.status(400).json({
-          status: 400,
-          error: isvalid.error.details,
-        });
-      }
-      return next();
+  static check_price(req, res, next) {
+    const isvalid = price_change_schema().validate(req.body)
+    if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      })
     }
+    return next()
+  }
 
   /**
    * @method check_top_up_amount
@@ -329,14 +349,14 @@ class Validate {
    * @return next
    */
   static check_top_up_amount(req, res, next) {
-    const isvalid = amount_schema().validate(req.body);
+    const isvalid = amount_schema().validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
   /**
    * @method check_top_up_amount_two
@@ -347,14 +367,14 @@ class Validate {
    */
 
   static check_top_up_amount_two(req, res, next) {
-    const isvalid = top_up_amount_schema_two().validate(req.query);
+    const isvalid = top_up_amount_schema_two().validate(req.query)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
   /**
@@ -366,14 +386,14 @@ class Validate {
    */
 
   static check_pay_dispatcher_query(req, res, next) {
-    const isvalid = pay_dispatcher_schema().validate(req.params);
+    const isvalid = pay_dispatcher_schema().validate(req.params)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
   /**
@@ -385,14 +405,14 @@ class Validate {
    */
 
   static check_sign_in(req, res, next) {
-    const isvalid = sign_in_schema().validate(req.body);
+    const isvalid = sign_in_schema().validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
   /**
@@ -404,16 +424,16 @@ class Validate {
    */
 
   static check_dispatcher_id(req, res, next) {
-    const isvalid = dispatcher_id_schema().validate(req.params);
+    const isvalid = dispatcher_id_schema().validate(req.params)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
- /**
+  /**
    * @method check_courier_rating_params
    * @description This method validates rating
    * @memberof Validate
@@ -421,14 +441,14 @@ class Validate {
    * @return next
    */
   static check_courier_rating_params(req, res, next) {
-    const isvalid = courier_rating_schema_params().validate(req.params);
+    const isvalid = courier_rating_schema_params().validate(req.params)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
   /**
@@ -439,14 +459,14 @@ class Validate {
    * @return next
    */
   static check_customer_rating_params(req, res, next) {
-    const isvalid = customer_rating_schema_params().validate(req.params);
+    const isvalid = customer_rating_schema_params().validate(req.params)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
   /**
    * @method check_rating
@@ -457,14 +477,14 @@ class Validate {
    */
 
   static check_rating(req, res, next) {
-    const isvalid = rating_schema().validate(req.body);
+    const isvalid = rating_schema().validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
   /**
@@ -476,14 +496,14 @@ class Validate {
    */
 
   static check_delivery_type(req, res, next) {
-    const isvalid = delivery_type_schema().validate(req.params);
+    const isvalid = delivery_type_schema().validate(req.params)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
   /**
@@ -495,14 +515,14 @@ class Validate {
    */
 
   static check_payout_amount(req, res, next) {
-    const isvalid = amount_schema().validate(req.query);
+    const isvalid = amount_schema().validate(req.query)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
   /**
@@ -513,15 +533,15 @@ class Validate {
    * @return next
    */
 
-   static check_company_payout_amount(req, res, next) {
-    const isvalid = company_amount_schema().validate(req.body);
+  static check_company_payout_amount(req, res, next) {
+    const isvalid = company_amount_schema().validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
   /**
@@ -533,14 +553,14 @@ class Validate {
    */
 
   static check_notify_id(req, res, next) {
-    const isvalid = notify_id_schema().validate(req.query);
+    const isvalid = notify_id_schema().validate(req.query)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
   /**
@@ -552,16 +572,15 @@ class Validate {
    */
 
   static check_profile_id(req, res, next) {
-    const isvalid = profile_id_schema().validate(req.params);
+    const isvalid = profile_id_schema().validate(req.params)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
-
 
   /**
    * @method check_package_status
@@ -572,14 +591,14 @@ class Validate {
    */
 
   static check_package_status(req, res, next) {
-    const isvalid = package_status_schema().validate(req.query);
+    const isvalid = package_status_schema().validate(req.query)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
   /**
    * @method check_courier_profile
@@ -590,14 +609,14 @@ class Validate {
    */
 
   static check_courier_profile(req, res, next) {
-    const isvalid = courier_profile_update_schema().validate(req.body);
+    const isvalid = courier_profile_update_schema().validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
   /**
    * @method check_company_profile
@@ -606,15 +625,15 @@ class Validate {
    * @param {req, res, next}
    * @return next
    */
-   static check_company_profile(req, res, next) {
-    const isvalid = company_profile_update_schema.validate(req.body);
+  static check_company_profile(req, res, next) {
+    const isvalid = company_profile_update_schema.validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
   /**
    * @method check_customer_profile
@@ -625,14 +644,14 @@ class Validate {
    */
 
   static check_customer_profile(req, res, next) {
-    const isvalid = customer_profile_update_schema().validate(req.body);
+    const isvalid = customer_profile_update_schema().validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
   /**
@@ -644,14 +663,14 @@ class Validate {
    */
 
   static check_report(req, res, next) {
-    const isvalid = report_user_schema().validate(req.body);
+    const isvalid = report_user_schema().validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
   /**
@@ -663,17 +682,17 @@ class Validate {
    */
 
   static check_decline_pickup_query(req, res, next) {
-    const isvalid = package_id_schema().validate(req.query);
+    const isvalid = package_id_schema().validate(req.query)
     if (isvalid.hasOwnProperty('error')) {
-     return res.status(400).json({
-       status: 400,
-       error: isvalid.error.details,
-     });
-   }
-   return next();
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      })
+    }
+    return next()
   }
 
-   /**
+  /**
    * @method check_decline_pickup_body
    * @description This method validates decline pickup body
    * @memberof Validate
@@ -681,17 +700,17 @@ class Validate {
    * @return next
    */
 
-   static check_decline_pickup_body(req, res, next) {
-     const isvalid = decline_pickup_body_schema().validate(req.body);
-     if (isvalid.hasOwnProperty('error')) {
+  static check_decline_pickup_body(req, res, next) {
+    const isvalid = decline_pickup_body_schema().validate(req.body)
+    if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isvalid.error.details,
-      });
+      })
     }
-    return next();
-   }
-  
+    return next()
+  }
+
   /**
    * @method check_password_reset_request
    * @description This method validates password reset request body
@@ -701,16 +720,16 @@ class Validate {
    */
 
   static check_password_reset_request(req, res, next) {
-    const isvalid = password_reset_request_schema().validate(req.body);
+    const isvalid = password_reset_request_schema().validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
-     return res.status(400).json({
-       status: 400,
-       error: isvalid.error.details,
-     });
-   }
-   return next();
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      })
+    }
+    return next()
   }
-  
+
   /**
    * @method check_reset_password
    * @description This method validates reset password body
@@ -720,16 +739,16 @@ class Validate {
    */
 
   static check_reset_password(req, res, next) {
-    const isvalid = reset_password_schema().validate(req.body);
+    const isvalid = reset_password_schema().validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
-     return res.status(400).json({
-       status: 400,
-       error: isvalid.error.details,
-     });
-   }
-   return next();
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      })
+    }
+    return next()
   }
-  
+
   /**
    * @method check_deliver_package
    * @description This method validates deliver package schema
@@ -739,16 +758,16 @@ class Validate {
    */
 
   static check_deliver_package(req, res, next) {
-    const isvalid = deliver_package_schema().validate(req.params);
+    const isvalid = deliver_package_schema().validate(req.params)
     if (isvalid.hasOwnProperty('error')) {
-     return res.status(400).json({
-       status: 400,
-       error: isvalid.error.details,
-     });
-   }
-   return next();
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      })
+    }
+    return next()
   }
-  
+
   /**
    * @method check_refresh_token
    * @description This method validates refresh token
@@ -758,14 +777,14 @@ class Validate {
    */
 
   static check_refresh_token(req, res, next) {
-    const isvalid = refresh_token_schema().validate(req.query);
+    const isvalid = refresh_token_schema().validate(req.query)
     if (isvalid.hasOwnProperty('error')) {
-     return res.status(400).json({
-       status: 400,
-       error: isvalid.error.details,
-     });
-   }
-   return next();
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      })
+    }
+    return next()
   }
 
   /**
@@ -776,14 +795,14 @@ class Validate {
    * @return next
    */
   static check_start_dispatch(req, res, next) {
-    const isvalid = start_dispatch_schema().validate(req.body);
+    const isvalid = start_dispatch_schema().validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
-     return res.status(400).json({
-       status: 400,
-       error: isvalid.error.details,
-     });
-   }
-   return next();
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      })
+    }
+    return next()
   }
 
   /**
@@ -795,14 +814,14 @@ class Validate {
    */
 
   static check_change_password(req, res, next) {
-    const isvalid = change_password_schema().validate(req.body);
+    const isvalid = change_password_schema().validate(req.body)
     if (isvalid.hasOwnProperty('error')) {
-     return res.status(400).json({
-       status: 400,
-       error: isvalid.error.details,
-     });
-   }
-   return next();
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      })
+    }
+    return next()
   }
 
   /**
@@ -814,14 +833,14 @@ class Validate {
    */
 
   static check_company_signup(req, res, next) {
-    const isValid = company_signup_schema().validate(req.body);
+    const isValid = company_signup_schema().validate(req.body)
     if (isValid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isValid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
   /**
@@ -831,53 +850,53 @@ class Validate {
    * @param {req, res, next}
    * @return next
    */
-   static check_email(req, res, next) {
-    const isValid = email_verify_schema().validate(req.body);
-     if (isValid.hasOwnProperty('error')) {
-      return res.status(400).json({
-        status: 400,
-        error: isValid.error.details,
-      });
-    }
-    return next();
-   }
-   /**
-   * @method check_email_and_code
-   * @description This method validates email and email verify code
-   * @memberof Validate
-   * @param {req, res, next}
-    * @return next
-   */
-
-  static check_email_and_code(req, res, next) {
-    const isValid = code_email_schema().validate(req.body);
+  static check_email(req, res, next) {
+    const isValid = email_verify_schema().validate(req.body)
     if (isValid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isValid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
+  }
+  /**
+   * @method check_email_and_code
+   * @description This method validates email and email verify code
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_email_and_code(req, res, next) {
+    const isValid = code_email_schema().validate(req.body)
+    if (isValid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isValid.error.details,
+      })
+    }
+    return next()
   }
 
-    /**
+  /**
    * @method check_email_and_mobile_code
    * @description This method validates email and email verify code
    * @memberof Validate
    * @param {req, res, next}
-    * @return next
+   * @return next
    */
 
-     static check_email_and_mobile_code(req, res, next) {
-      const isValid = mobile_code_email_schema().validate(req.body);
-      if (isValid.hasOwnProperty('error')) {
-        return res.status(400).json({
-          status: 400,
-          error: isValid.error.details,
-        });
-      }
-      return next();
+  static check_email_and_mobile_code(req, res, next) {
+    const isValid = mobile_code_email_schema().validate(req.body)
+    if (isValid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isValid.error.details,
+      })
     }
+    return next()
+  }
 
   /**
    * @method check_company_reg_dispatcher_step_three
@@ -887,14 +906,16 @@ class Validate {
    * @return next
    */
   static check_company_reg_dispatcher_step_three(req, res, next) {
-    const isValid = company_reg_dispatcher_step_three_schema().validate(req.body);
+    const isValid = company_reg_dispatcher_step_three_schema().validate(
+      req.body,
+    )
     if (isValid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isValid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
   /**
    * @method check_company_reg_dispatcher_step_five
@@ -905,16 +926,36 @@ class Validate {
    */
 
   static check_company_reg_dispatcher_step_five(req, res, next) {
-    const isValid = company_reg_dispatcher_step_five_schema().validate(req.body);
+    const isValid = company_reg_dispatcher_step_five_schema().validate(req.body)
     if (isValid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,
         error: isValid.error.details,
-      });
+      })
     }
-    return next();
+    return next()
   }
 
+  /**
+   * @method create_single_package_of_multiple
+   * @description This method validates the complete data for company dispatcher reg
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static create_single_package_of_multiple(req, res, next) {
+    const isValid = create_single_package_of_multiple_schema().validate(
+      req.body,
+    )
+    if (isValid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isValid.error.details,
+      })
+    }
+    return next()
+  }
 }
 
-export default Validate;
+export default Validate

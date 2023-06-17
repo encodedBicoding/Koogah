@@ -18,7 +18,8 @@
     "migrate:undo": "npx sequelize-cli db:migrate:undo",
     "seed": "npx sequelize-cli db:seed:all",
     "seed:undo": "npx sequelize-cli db:seed:undo:all",
-    "start:redis": "brew services start redis && redis-cli"
+    "start:redis": "brew services start redis && redis-cli",
+    "make-migration": "npx sequelize-cli migration:generate --name"
   },
   "author": "Dominic Olije <dominicisioma000@gmail.com>",
   "license": "ISC",

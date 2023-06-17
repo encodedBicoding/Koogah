@@ -17,13 +17,14 @@ import {
   Couriers,
   Notifications,
   Customers,
-  PushDevices,
+  MultipleDeliveries,
 } from '../../../database/models'
 import PushNotify from '../../../PushNotifications'
 import {
   getCorporatePriceSlashed,
   getIndividualPriceSlashed,
 } from '../../v1/helpers/slashed_delivery_price'
+import packageCreationNotifier from '../../v1/helpers/package_creation_notify'
 
 config()
 distanceApi.key(process.env.GOOGLE_API_KEY)
@@ -138,44 +139,36 @@ class PackageV2 {
       if (!value) {
         value = '0-999'
       }
-      if (data.payment_mode === 'virtual_balance') {
-        if (Number(delivery_price) > Number(user.virtual_balance)) {
-          return res.status(400).json({
-            status: 400,
-            error: `You must top-up your account with at least ₦${
-              Number(delivery_price) - Number(user.virtual_balance)
-            } before requesting this dispatch`,
-          })
-        }
-        if (
-          Number(user.virtual_balance) -
-            Number(user.virtual_allocated_balance) <
-          Number(delivery_price)
-        ) {
-          return res.status(400).json({
-            status: 400,
-            error:
-              'Package limit exceeded for the amount in your wallet, \nTop-up your wallet or delete a package that has not been picked-up',
-          })
-        }
-        const updated_V_A_B =
-          Number(user.virtual_allocated_balance) + Number(delivery_price)
-        await Customers.update(
-          {
-            virtual_allocated_balance: updated_V_A_B,
-          },
-          {
-            where: {
-              id: user.id,
-            },
-          },
-        )
-      } else {
+      if (Number(delivery_price) > Number(user.virtual_balance)) {
         return res.status(400).json({
           status: 400,
-          error: 'Invalid payment mode',
+          error: `You must top-up your account with at least ₦${
+            Number(delivery_price) - Number(user.virtual_balance)
+          } before requesting this dispatch`,
         })
       }
+      if (
+        Number(user.virtual_balance) - Number(user.virtual_allocated_balance) <
+        Number(delivery_price)
+      ) {
+        return res.status(400).json({
+          status: 400,
+          error:
+            'Package creation limit exceeded for the amount in your wallet, \nTop-up your wallet or delete a package that has not been picked-up',
+        })
+      }
+      const updated_V_A_B =
+        Number(user.virtual_allocated_balance) + Number(delivery_price)
+      await Customers.update(
+        {
+          virtual_allocated_balance: updated_V_A_B,
+        },
+        {
+          where: {
+            id: user.id,
+          },
+        },
+      )
       // create the package.
       const package_id = uuid()
       const delivery_key = generate_ref('delivery')
@@ -201,9 +194,9 @@ class PackageV2 {
           Number(delivery_price),
         )}. You might want to pick it up, do check it out!.`,
       }
-      const task = cron.schedule('1 * * * * *', () => {
-        PackageV2.sendNewPackageCreationToDispatchersV2(message, task)
-      })
+      await packageCreationNotifier.sendNewPackageCreationToDispatchersV2(
+        message,
+      )
       sendNewPackageNotification(package_detail, user, data)
 
       // push event to all companies;
@@ -558,6 +551,28 @@ class PackageV2 {
           error: 'Invalid operation, cannot edit a tracking package',
         })
       }
+
+      if (_package.multiple_delivery_id) {
+        const multiple_delivery = await MultipleDeliveries.findOne({
+          where: {
+            id: _package.multiple_delivery_id,
+          },
+        })
+        if (multiple_delivery) {
+          let benchmark = ['delivered', 'tracking']
+          if (benchmark.includes(multiple_delivery.status)) {
+            return res.status(400).json({
+              status: 400,
+              error: 'Invalid operation, cannot edit this package',
+            })
+          }
+        } else {
+          return res.status(400).json({
+            status: 404,
+            error: 'Bulk delivery attached to this package does not exist',
+          })
+        }
+      }
       let type = data.type_of_dispatch
       // same state
       if (type === 'intra-state') {
@@ -584,16 +599,15 @@ class PackageV2 {
                   distance,
                   data.value,
                   data.is_express_delivery,
-                  data.from_state.toLowerCase()
-                );
+                  data.from_state.toLowerCase(),
+                )
                 if (!delivery_price) {
                   return res.status(400).json({
                     status: 400,
-                    error:
-                      'Weight must match one of ["0-5","6-10", "11-15", "16-25", "26-40", "50-100", "101-200", "201-300", "301-400", "401-500", "501>"],',
+                    error: 'An error occurred, please try again',
                   })
                 }
-                if (payment_mode === 'virtual_balance') {
+                if (!_package.multiple_delivery_id) {
                   if (Number(delivery_price) > Number(user.virtual_balance)) {
                     return res.status(400).json({
                       status: 400,
@@ -630,36 +644,8 @@ class PackageV2 {
                       },
                     },
                   )
-
-                  if (
-                    payment_mode !== _package.payment_mode &&
-                    _package.payment_mode === 'koogah_coin'
-                  ) {
-                    const KOOGAH_COIN_WORTH = process.env.KOOGAH_COIN_WORTH
-                    let user_allocated_kc_balance =
-                      Number(KOOGAH_COIN_WORTH) *
-                      Number(user.virtual_allocated_kc_balance)
-                    let updated_V_A_KC_B =
-                      Number(user_allocated_kc_balance) -
-                      Number(_package.delivery_price)
-                    updated_V_A_KC_B = updated_V_A_KC_B / KOOGAH_COIN_WORTH
-                    await Customers.update(
-                      {
-                        virtual_allocated_kc_balance: updated_V_A_KC_B,
-                      },
-                      {
-                        where: {
-                          id: user.id,
-                        },
-                      },
-                    )
-                  }
-                } else {
-                  return res.status(400).json({
-                    status: 400,
-                    error: 'Invalid payment mode',
-                  })
                 }
+
                 await Packages.update(
                   {
                     distance,
@@ -779,41 +765,6 @@ class PackageV2 {
         status: 400,
         error,
       })
-    })
-  }
-
-  /**
-   * @method sendNewPackageCreationToDispatchersV2
-   * @memberof Package
-   * @params req, res
-   * @description Customers new package creation to dispatcher.
-   * @return JSON object
-   */
-  static sendNewPackageCreationToDispatchersV2(msg, task) {
-    return Promise.try(async () => {
-      const allPushDevices = await PushDevices.findAll({
-        where: {
-          is_active: true,
-          current_state_location: {
-            [Op.iLike]: `%${msg.pickup_state}%`,
-          },
-        },
-      })
-      const device_notify_obj = {
-        title: 'New Pickup - Koogah',
-        body: `Hi, ${msg.detail}`,
-        click_action: 'FLUTTER_NOTIFICATION_CLICK',
-        icon: 'ic_launcher',
-      }
-      const all_tokens = allPushDevices.map((pd) => pd.token)
-      const notification_message = PushNotify.createMessage(device_notify_obj, {
-        notification_id: Math.floor(Math.random() * 1234 * 60),
-        desc: 'CD012',
-      })
-      PushNotify.sendMessageDispatcher(notification_message, all_tokens)
-      task.stop()
-    }).catch((err) => {
-      log(err)
     })
   }
 

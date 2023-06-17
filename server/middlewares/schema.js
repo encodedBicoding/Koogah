@@ -302,6 +302,19 @@ class Schema {
   }
 
   /**
+   * @method multiple_delivery_id_schema
+   * @description This method return Joi object which delivers a schema to verify package_id
+   * @memberof Schema
+   * @return Joi Object
+   */
+
+  static multiple_delivery_id_schema() {
+    return Joi.object({
+      multiple_delivery_id: Joi.number().required(),
+    })
+  }
+
+  /**
    * @method response_schema
    * @description This method return Joi object which delivers a schema when a customer responds to a dispatcher request
    * @memberof Schema

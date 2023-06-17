@@ -8,6 +8,14 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: 'intra-state',
       },
+      master_delivery_key: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      pickup_address: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
       is_active: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
@@ -42,6 +50,7 @@ module.exports = (sequelize, DataTypes) => {
     // associations can be defined here
     MultipleDelivery.hasMany(models.Packages, {
       onDelete: 'CASCADE',
+      as: 'packages',
     })
   }
   return MultipleDelivery

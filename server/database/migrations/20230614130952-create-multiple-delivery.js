@@ -12,6 +12,12 @@ module.exports = {
         type: Sequelize.ENUM('inter-state', 'intra-state', 'international'),
         defaultValue: 'intra-state',
       },
+      master_delivery_key: {
+        type: Sequelize.STRING,
+      },
+      pickup_address: {
+        type: Sequelize.TEXT,
+      },
       dispatcher_id: {
         type: Sequelize.BIGINT,
       },

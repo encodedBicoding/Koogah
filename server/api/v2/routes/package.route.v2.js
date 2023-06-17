@@ -19,7 +19,13 @@ const {
   courier_view_packages_in_marketplace_v2,
 } = PackageV2
 
-const {create_package_of_multiple_delivery} = MultipleDeliveriesController
+const {
+  create_package_of_multiple_delivery,
+  cummulate_delivery_price_for_multiple_delivery,
+  get,
+  delete_package_of_multiple_delivery,
+  activate_multiple_delivery
+} = MultipleDeliveriesController
 
 const {
   create_package,
@@ -28,6 +34,7 @@ const {
   check_edit_package,
   check_price,
   create_single_package_of_multiple,
+  check_multiple_delivery_id,
 } = Validate
 
 const packageRouteV2 = express()
@@ -95,6 +102,41 @@ packageRouteV2.post(
   check_delivery_type,
   create_single_package_of_multiple,
   create_package_of_multiple_delivery,
+)
+
+packageRouteV2.get(
+  '/multiple-delivery/:multiple_delivery_id/delivery-total-sum',
+  passport.authenticate('bearer', {session: false}),
+  checkSession,
+  isCustomerLoggedIn,
+  check_multiple_delivery_id,
+  cummulate_delivery_price_for_multiple_delivery,
+)
+
+packageRouteV2.get(
+  '/multiple-delivery/:multiple_delivery_id',
+  passport.authenticate('bearer', {session: false}),
+  checkSession,
+  isCustomerLoggedIn,
+  check_multiple_delivery_id,
+  get,
+)
+packageRouteV2.delete(
+  '/:package_id/multiple-delivery',
+  passport.authenticate('bearer', {session: false}),
+  checkSession,
+  isCustomerLoggedIn,
+  check_package_id,
+  delete_package_of_multiple_delivery,
+)
+
+packageRouteV2.post(
+  '/multiple-delivery/:multiple_delivery_id/activate',
+  passport.authenticate('bearer', {session: false}),
+  checkSession,
+  isCustomerLoggedIn,
+  check_multiple_delivery_id,
+  activate_multiple_delivery,
 )
 
 export default packageRouteV2

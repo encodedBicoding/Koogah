@@ -49,6 +49,7 @@ const {
   promoSchema,
   price_change_schema,
   create_single_package_of_multiple_schema,
+  multiple_delivery_id_schema,
 } = Schema
 
 /**
@@ -237,6 +238,25 @@ class Validate {
 
   static check_package_id(req, res, next) {
     const isvalid = package_id_schema().validate(req.params)
+    if (isvalid.hasOwnProperty('error')) {
+      return res.status(400).json({
+        status: 400,
+        error: isvalid.error.details,
+      })
+    }
+    return next()
+  }
+
+  /**
+   * @method check_multiple_delivery_id
+   * @description This method validates multiple_delivery_id
+   * @memberof Validate
+   * @param {req, res, next}
+   * @return next
+   */
+
+  static check_multiple_delivery_id(req, res, next) {
+    const isvalid = multiple_delivery_id_schema().validate(req.params)
     if (isvalid.hasOwnProperty('error')) {
       return res.status(400).json({
         status: 400,

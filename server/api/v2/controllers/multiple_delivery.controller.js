@@ -524,6 +524,12 @@ class MultipleDeliveriesController {
           error: "Oops!, this item doesn't exist",
         })
       }
+      if (multiple_delivery.is_active) {
+        return res.status(400).json({
+          status: 400,
+          error: 'This order has already been activated',
+        })
+      }
       const delivery_price = await thiz._get_total_price_for_delivery(
         multiple_delivery_id,
       )
